@@ -1,6 +1,9 @@
 ﻿@page "/login"
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject AuthStateService AuthStateService
+@using Thesis.Models
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Thesis - Login</PageTitle>
 
@@ -72,9 +75,10 @@
                 return;
             }
 
-            var user = await AuthService.LoginAsync(loginModel.Name, loginModel.Password);
+            var user = await AuthService.LoginAsync(loginModel.Name.Trim(), loginModel.Password.Trim());
             if (user != null)
             {
+                await AuthStateService.LoginAsync(user);
                 Navigation.NavigateTo("/", true);
             }
             else
@@ -84,8 +88,8 @@
         }
         catch (Exception ex)
         {
-            errorMessage = "An error occurred during login. Please try again.";
-            Console.WriteLine($"Login error: {ex.Message}");
+            errorMessage = "An error occurred during login. Check console for details.";
+            Console.WriteLine($"Login error: {ex}");
         }
         finally
         {
@@ -94,6 +98,8 @@
         }
     }
 }
+
+
 
 <style>
     html, body {

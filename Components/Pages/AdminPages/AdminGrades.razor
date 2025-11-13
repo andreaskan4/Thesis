@@ -1,0 +1,632 @@
+﻿@page "/admingrades"
+@inject AuthStateService AuthStateService
+@inject GradesService GradesService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Thesis - Manage Grades</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading Grades Management...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to manage grades.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">Return to Home</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-grades">
+        <div class="header-bar">
+            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <h2>Manage Student Grades</h2>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="loading">Loading grades data...</div>
+        }
+        else if (!Students.Any() || !Courses.Any())
+        {
+            <div class="no-data-message">
+                <h3>No Data Available</h3>
+                <p>There are no students or courses available for grade management.</p>
+                <div class="data-status">
+                    <div>Students: @Students.Count</div>
+                    <div>Courses: @Courses.Count</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="grades-container">
+                <div class="grades-table-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Professor</th>
+                                <th>Method</th>
+                                <th>Grade</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in Students)
+                            {
+                                @foreach (var course in Courses)
+                                {
+                                    var existingGrade = Grades.FirstOrDefault(g => g.StudentId == student.Id && g.CourseId == course.Id);
+                                    <tr>
+                                        <td>@student.Name @student.LastName</td>
+                                        <td>@course.Name</td>
+                                        <td>@GetProfessorName(course.ProfessorId)</td>
+                                        <td>@course.GradingMethod</td>
+                                        <td>
+                                            @if (existingGrade != null)
+                                            {
+                                                <strong>@existingGrade.GradeValue</strong>
+                                            }
+                                            else
+                                            {
+                                                <span class="no-grade">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (existingGrade != null)
+                                            {
+                                                <button class="edit-btn" @onclick="() => EditGrade(existingGrade)">Edit</button>
+                                                <button class="delete-btn" @onclick="() => DeleteGrade(existingGrade.Id)">Delete</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="add-btn" @onclick="() => AddGradeForStudentCourse(student.Id, course.Id)">Add Grade</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="form-section">
+                    <h4>@(EditingGrade?.Id == 0 ? "Add New Grade" : "Edit Grade")</h4>
+
+                    <div class="form-field">
+                        <label>Student:</label>
+                        <select @bind="EditingGrade.StudentId">
+                            <option value="0">-- Select Student --</option>
+                            @foreach (var student in Students)
+                            {
+                                <option value="@student.Id">@student.Name @student.LastName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Course:</label>
+                        <select @bind="EditingGrade.CourseId">
+                            <option value="0">-- Select Course --</option>
+                            @foreach (var course in Courses)
+                            {
+                                <option value="@course.Id">@course.Name (@course.GradingMethod)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Grade (0-10):</label>
+                        <input type="number" step="0.1" min="0" max="10" @bind="EditingGrade.GradeValue" />
+                        <small style="color: #666; font-size: 0.8rem;">Scale: 0-10 (e.g., 8.5 = 85%)</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="save-btn" @onclick="SaveGrade" disabled="@(!IsFormValid())">Save</button>
+                        @if (EditingGrade.Id != 0)
+                        {
+                            <button class="cancel-btn" @onclick="CancelEdit">Cancel</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool isAuthorized = false;
+    private bool isAuthChecked = false;
+    private bool isLoading = false;
+
+    private List<Grade> Grades = new();
+    private List<User> Students = new();
+    private List<User> Professors = new();
+    private List<Course> Courses = new();
+    private Grade EditingGrade = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AuthStateService.InitializeAsync();
+            var user = AuthStateService.CurrentUser;
+
+            isAuthorized = user != null && user.Role == "Admin";
+            isAuthChecked = true;
+
+            if (isAuthorized)
+            {
+                await LoadDataAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing: {ex.Message}");
+            isAuthChecked = true;
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Load all data
+            var gradesTask = GradesService.GetAllGradesAsync();
+            var studentsTask = GradesService.GetStudentsAsync();
+            var coursesTask = GradesService.GetCoursesAsync();
+            var professorsTask = GradesService.GetProfessorsAsync();
+
+            await Task.WhenAll(gradesTask, studentsTask, coursesTask, professorsTask);
+
+            Grades = await gradesTask ?? new List<Grade>();
+            Students = await studentsTask ?? new List<User>();
+            Courses = await coursesTask ?? new List<Course>();
+            Professors = await professorsTask ?? new List<User>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AddGradeForStudentCourse(int studentId, int courseId)
+    {
+        EditingGrade = new Grade
+        {
+            StudentId = studentId,
+            CourseId = courseId,
+            GradeValue = 0
+        };
+        StateHasChanged();
+    }
+
+    private string GetProfessorName(int professorId)
+    {
+        var professor = Professors.FirstOrDefault(p => p.Id == professorId);
+        return professor != null ? $"{professor.Name} {professor.LastName}" : "Unknown";
+    }
+
+    private void EditGrade(Grade grade)
+    {
+        EditingGrade = new Grade
+        {
+            Id = grade.Id,
+            StudentId = grade.StudentId,
+            CourseId = grade.CourseId,
+            GradeValue = grade.GradeValue
+        };
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        EditingGrade = new Grade();
+        StateHasChanged();
+    }
+
+    private async Task SaveGrade()
+    {
+        Console.WriteLine("SaveGrade method called");
+
+        if (!IsFormValid())
+        {
+            Console.WriteLine("Form validation failed");
+            return;
+        }
+
+        try
+        {
+            Console.WriteLine($"Attempting to save grade - StudentId: {EditingGrade.StudentId}, CourseId: {EditingGrade.CourseId}, GradeValue: {EditingGrade.GradeValue}");
+
+            if (EditingGrade.Id == 0)
+            {
+                Console.WriteLine("Calling AddGradeAsync...");
+                await GradesService.AddGradeAsync(EditingGrade);
+                Console.WriteLine("AddGradeAsync completed");
+            }
+            else
+            {
+                Console.WriteLine("Calling UpdateGradeAsync...");
+                await GradesService.UpdateGradeAsync(EditingGrade);
+                Console.WriteLine("UpdateGradeAsync completed");
+            }
+
+            Console.WriteLine("Grade saved successfully, resetting form...");
+            EditingGrade = new Grade();
+
+            Console.WriteLine("Reloading data...");
+            await LoadDataAsync();
+            Console.WriteLine("Data reloaded successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ ERROR saving grade: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            // Show a user-friendly error message
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving grade: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteGrade(int id)
+    {
+        try
+        {
+            await GradesService.DeleteGradeAsync(id);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting grade: {ex.Message}");
+        }
+    }
+
+    private bool IsFormValid()
+    {
+        return EditingGrade.StudentId > 0 &&
+               EditingGrade.CourseId > 0 &&
+               EditingGrade.GradeValue >= 0 &&
+               EditingGrade.GradeValue <= 10;
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/adminhome");
+    private void RedirectToHome() => Navigation.NavigateTo("/");
+}
+<style>
+    .debug-section {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+        .debug-section h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+    .debug-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .debug-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+        .debug-card h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+    .debug-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    .user-item {
+        margin-bottom: 5px;
+        padding: 5px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .role-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
+
+        .role-badge.student {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .role-badge.professor {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .role-badge.admin {
+            background: #faf089;
+            color: #744210;
+        }
+
+    .no-data {
+        color: #a0aec0;
+        font-style: italic;
+    }
+
+    .debug-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .setup-actions {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+        .setup-actions h4 {
+            margin-bottom: 10px;
+        }
+
+    .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background: #4299e1;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+    .admin-grades {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 30px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    .header-bar {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        background: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+        .header-bar h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+    .info-badge {
+        margin-left: auto;
+        background: #667eea;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+    .grades-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 30px;
+    }
+
+    .grades-table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        overflow-x: auto;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .grades-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .grades-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+        }
+
+        .grades-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+
+        .grades-table tr:hover {
+            background: #f7fafc;
+        }
+
+    .no-grade {
+        color: #a0aec0;
+        font-style: italic;
+    }
+
+    .add-btn {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .edit-btn {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-right: 5px;
+    }
+
+    .delete-btn {
+        background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        height: fit-content;
+        position: sticky;
+        top: 30px;
+    }
+
+    .form-field {
+        margin-bottom: 20px;
+    }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-field select,
+        .form-field input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .save-btn, .cancel-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .save-btn {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+
+        .save-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+    .cancel-btn {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .loading, .no-data-message {
+        text-align: center;
+        padding: 40px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    @@media (max-width: 1024px) {
+        .grades-container {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section {
+            position: static;
+        }
+    }
+</style>

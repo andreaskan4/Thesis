@@ -1,0 +1,1067 @@
+﻿@page "/adminmessages"
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject Data.AppDbContext Context
+@using Thesis.Models
+@using System.Text.Json
+
+<PageTitle>Thesis - Admin Messages</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading Messages...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to access messages.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">Return to Home</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-messages">
+        <div class="header-bar">
+            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <h2>📨 Message Center</h2>
+            <div class="header-actions">
+                <div class="message-stats">
+                    <span class="stat-item @(activeFilter == "all" ? "active" : "")" @onclick='() => SetFilter(" all")'>
+                        📬 All: @allMessagesCount
+                    </span>
+                    <span class="stat-item @(activeFilter == "unread" ? "active" : "")" @onclick='() => SetFilter(" unread")'>
+                        📪 Unread: @unreadMessagesCount
+                    </span>
+                    <span class="stat-item @(activeFilter == "students" ? "active" : "")" @onclick='() => SetFilter(" students")'>
+                        🎓 Students: @studentMessagesCount
+                    </span>
+                    <span class="stat-item @(activeFilter == "teachers" ? "active" : "")" @onclick='() => SetFilter(" teachers")'>
+                        👨‍🏫 Teachers: @teacherMessagesCount
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="messages-container">
+            @if (isLoading)
+            {
+                <div class="loading">Loading messages...</div>
+            }
+            else
+            {
+                <div class="messages-layout">
+                    <!-- Messages List -->
+                    <div class="messages-list">
+                        <div class="list-header">
+                            <h3>Messages</h3>
+                            <div class="search-box">
+                                <input type="text" @bind="searchTerm" @oninput="OnSearch" placeholder="Search messages..." class="search-input" />
+                            </div>
+                        </div>
+
+                        <div class="messages-scroll">
+                            @foreach (var message in filteredMessages)
+                            {
+                                <div class="message-item @(selectedMessage?.Id == message.Id ? "selected" : "") @(message.IsRead ? "" : "unread")"
+                                     @onclick="() => SelectMessage(message)">
+                                    <div class="message-avatar">
+                                        @if (message.SenderRole == "Student")
+                                        {
+                                            <div class="avatar student">🎓</div>
+                                        }
+                                        else if (message.SenderRole == "Teacher")
+                                        {
+                                            <div class="avatar teacher">👨‍🏫</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="avatar admin">👤</div>
+                                        }
+                                    </div>
+                                    <div class="message-preview">
+                                        <div class="message-header">
+                                            <span class="sender-name">@message.SenderName</span>
+                                            <span class="message-time">@FormatMessageTime(message.CreatedAt)</span>
+                                        </div>
+                                        <div class="message-subject">@message.Subject</div>
+                                        <div class="message-excerpt">@GetMessageExcerpt(message.Content)</div>
+                                        <div class="message-meta">
+                                            <span class="sender-role">@message.SenderRole</span>
+                                            @if (!message.IsRead)
+                                            {
+                                                <span class="unread-badge">NEW</span>
+                                            }
+                                            @if (message.Replies.Any())
+                                            {
+                                                <span class="replies-count">💬 @message.Replies.Count</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!filteredMessages.Any())
+                            {
+                                <div class="empty-messages">
+                                    <div class="empty-icon">📨</div>
+                                    <h3>No Messages Found</h3>
+                                    <p>@(string.IsNullOrEmpty(searchTerm) ? "You don't have any messages yet." : "No messages match your search.")</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Message Detail -->
+                    <div class="message-detail">
+                        @if (selectedMessage != null)
+                        {
+                            <div class="detail-header">
+                                <div class="message-info">
+                                    <h3>@selectedMessage.Subject</h3>
+                                    <div class="message-sender">
+                                        <div class="sender-avatar">
+                                            @if (selectedMessage.SenderRole == "Student")
+                                            {
+                                                <div class="avatar student">🎓</div>
+                                            }
+                                            else if (selectedMessage.SenderRole == "Teacher")
+                                            {
+                                                <div class="avatar teacher">👨‍🏫</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="avatar admin">👤</div>
+                                            }
+                                        </div>
+                                        <div class="sender-details">
+                                            <div class="sender-name">@selectedMessage.SenderName</div>
+                                            <div class="sender-email">@selectedMessage.SenderEmail • @selectedMessage.SenderRole</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-actions">
+                                    <button class="btn btn-outline" @onclick="MarkAsRead" title="Mark as read">
+                                        @if (selectedMessage.IsRead)
+                                        {
+                                            <span>📭 Mark Unread</span>
+                                        }
+                                        else
+                                        {
+                                            <span>📬 Mark Read</span>
+                                        }
+                                    </button>
+                                    <button class="btn btn-danger" @onclick="DeleteMessage" title="Delete message">
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="message-conversation">
+                                <!-- Original Message -->
+                                <div class="conversation-item original">
+                                    <div class="message-content">
+                                        <div class="message-text">@selectedMessage.Content</div>
+                                        <div class="message-time">@FormatDetailedTime(selectedMessage.CreatedAt)</div>
+                                    </div>
+                                </div>
+
+                                <!-- Replies -->
+                                @foreach (var reply in selectedMessage.Replies.OrderBy(r => r.CreatedAt))
+                                {
+                                    <div class="conversation-item @(reply.SenderRole == "Admin" ? "reply admin-reply" : "reply")">
+                                        <div class="message-content">
+                                            <div class="reply-header">
+                                                <span class="replier-name">@reply.SenderName</span>
+                                                <span class="replier-role">@reply.SenderRole</span>
+                                            </div>
+                                            <div class="message-text">@reply.ReplyContent</div>
+                                            <div class="message-time">@FormatDetailedTime(reply.CreatedAt)</div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Reply Form -->
+                                <div class="reply-section">
+                                    <h4>✏️ Write a Reply</h4>
+                                    <form class="reply-form">
+                                        <div class="form-group">
+                                            <textarea @bind="replyMessage" class="form-control" rows="4"
+                                                      placeholder="Type your reply here..."></textarea>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="button" class="btn btn-outline" @onclick="ClearReply">
+                                                Clear
+                                            </button>
+                                            <button type="button" class="btn btn-primary" @onclick="SendReply"
+                                                    disabled="@string.IsNullOrWhiteSpace(replyMessage)">
+                                                Send Reply
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="no-message-selected">
+                                <div class="select-message-prompt">
+                                    <div class="prompt-icon">📨</div>
+                                    <h3>Select a Message</h3>
+                                    <p>Choose a message from the list to view its contents and reply.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthChecked = false;
+    private bool isAuthorized = false;
+    private bool isLoading = true;
+
+    // Messages
+    private List<Message> allMessages = new();
+    private List<Message> filteredMessages = new();
+    private Message? selectedMessage = null;
+    private string activeFilter = "all";
+    private string searchTerm = "";
+    private string replyMessage = "";
+
+    // Stats
+    private int allMessagesCount = 0;
+    private int unreadMessagesCount = 0;
+    private int studentMessagesCount = 0;
+    private int teacherMessagesCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+        if (isAuthorized)
+        {
+            await LoadMessages();
+        }
+    }
+
+    private async Task CheckAuthorization()
+    {
+        try
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                if (AuthStateService.CurrentUser != null)
+                    break;
+                await Task.Delay(100);
+            }
+
+            var user = AuthStateService.CurrentUser;
+            isAuthorized = user != null && user.Role == "Admin";
+            isAuthChecked = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Authorization error: {ex.Message}");
+            isAuthChecked = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMessages()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Load messages with replies
+            allMessages = await Context.Messages
+                .Include(m => m.Replies)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToListAsync();
+
+            UpdateMessageStats();
+            ApplyFilters();
+
+            isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading messages: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading messages: {ex.Message}");
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateMessageStats()
+    {
+        allMessagesCount = allMessages.Count;
+        unreadMessagesCount = allMessages.Count(m => !m.IsRead);
+        studentMessagesCount = allMessages.Count(m => m.SenderRole == "Student");
+        teacherMessagesCount = allMessages.Count(m => m.SenderRole == "Teacher");
+    }
+
+    private void ApplyFilters()
+    {
+        var query = allMessages.AsQueryable();
+
+        // Apply role filter
+        switch (activeFilter)
+        {
+            case "unread":
+                query = query.Where(m => !m.IsRead);
+                break;
+            case "students":
+                query = query.Where(m => m.SenderRole == "Student");
+                break;
+            case "teachers":
+                query = query.Where(m => m.SenderRole == "Teacher");
+                break;
+            case "all":
+            default:
+                break;
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(m =>
+                m.Subject.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                m.Content.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                m.SenderName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                m.SenderEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+
+        filteredMessages = query.OrderByDescending(m => m.CreatedAt).ToList();
+    }
+
+    private void SetFilter(string filter)
+    {
+        activeFilter = filter;
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private async void SelectMessage(Message message)
+    {
+        selectedMessage = message;
+
+        // Mark as read when selected
+        if (!message.IsRead)
+        {
+            await MarkMessageAsRead(message);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task MarkMessageAsRead(Message message)
+    {
+        try
+        {
+            message.IsRead = true;
+            message.ReadAt = DateTime.Now;
+            await Context.SaveChangesAsync();
+            UpdateMessageStats();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking message as read: {ex.Message}");
+        }
+    }
+
+    private async Task MarkAsRead()
+    {
+        if (selectedMessage == null) return;
+
+        try
+        {
+            selectedMessage.IsRead = !selectedMessage.IsRead;
+            if (selectedMessage.IsRead)
+            {
+                selectedMessage.ReadAt = DateTime.Now;
+            }
+            else
+            {
+                selectedMessage.ReadAt = null;
+            }
+
+            await Context.SaveChangesAsync();
+            UpdateMessageStats();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating message: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteMessage()
+    {
+        if (selectedMessage == null) return;
+
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to delete this message from {selectedMessage.SenderName}?");
+
+        if (confirm)
+        {
+            try
+            {
+                // Remove all replies first
+                Context.MessageReplies.RemoveRange(selectedMessage.Replies);
+
+                // Then remove the message
+                Context.Messages.Remove(selectedMessage);
+
+                await Context.SaveChangesAsync();
+                await LoadMessages();
+
+                selectedMessage = null;
+                await JSRuntime.InvokeVoidAsync("alert", "Message deleted successfully!");
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting message: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task SendReply()
+    {
+        if (selectedMessage == null || string.IsNullOrWhiteSpace(replyMessage)) return;
+
+        try
+        {
+            var adminUser = AuthStateService.CurrentUser;
+            if (adminUser == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Admin user not found.");
+                return;
+            }
+
+            var reply = new MessageReply
+            {
+                MessageId = selectedMessage.Id,
+                SenderName = adminUser.Name ?? "Administrator",
+                SenderEmail = adminUser.Email ?? "admin@university.edu",
+                SenderRole = "Admin",
+                ReplyContent = replyMessage.Trim(),
+                CreatedAt = DateTime.Now
+            };
+
+            Context.MessageReplies.Add(reply);
+            await Context.SaveChangesAsync();
+
+            // Reload the message to get the updated replies
+            await LoadMessages();
+
+            // Reselect the message to show the new reply
+            selectedMessage = allMessages.FirstOrDefault(m => m.Id == selectedMessage.Id);
+
+            replyMessage = "";
+            await JSRuntime.InvokeVoidAsync("alert", "Reply sent successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error sending reply: {ex.Message}");
+        }
+    }
+
+    private void ClearReply()
+    {
+        replyMessage = "";
+        StateHasChanged();
+    }
+
+    // Helper methods
+    private string GetMessageExcerpt(string content, int length = 80)
+    {
+        if (string.IsNullOrEmpty(content)) return "";
+        return content.Length <= length ? content : content.Substring(0, length) + "...";
+    }
+
+    private string FormatMessageTime(DateTime dateTime)
+    {
+        var now = DateTime.Now;
+        var difference = now - dateTime;
+
+        if (difference.TotalMinutes < 1)
+            return "Just now";
+        if (difference.TotalHours < 1)
+            return $"{(int)difference.TotalMinutes}m ago";
+        if (difference.TotalDays < 1)
+            return $"{(int)difference.TotalHours}h ago";
+        if (difference.TotalDays < 7)
+            return $"{(int)difference.TotalDays}d ago";
+
+        return dateTime.ToString("MMM dd, yyyy");
+    }
+
+    private string FormatDetailedTime(DateTime dateTime)
+    {
+        return dateTime.ToString("MMM dd, yyyy 'at' h:mm tt");
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/adminhome");
+    private void RedirectToHome() => Navigation.NavigateTo("/");
+}
+<style>
+.admin-messages {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 30px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 25px 35px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.header-bar h2 {
+    color: #2d3748;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.message-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.stat-item {
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: #6c757d;
+    background: #f8f9fa;
+}
+
+.stat-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.stat-item.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.messages-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.messages-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    height: 70vh;
+}
+
+.messages-list {
+    border-right: 2px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-header {
+    padding: 25px;
+    border-bottom: 2px solid #e2e8f0;
+    background: #f8f9fa;
+}
+
+.list-header h3 {
+    margin-bottom: 15px;
+    color: #2d3748;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.messages-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.message-item {
+    display: flex;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.message-item:hover {
+    background: #f8f9fa;
+}
+
+.message-item.selected {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-right: 4px solid #667eea;
+}
+
+.message-item.unread {
+    background: rgba(59, 130, 246, 0.05);
+    border-left: 4px solid #3b82f6;
+}
+
+.message-avatar {
+    margin-right: 15px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.avatar.student {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.avatar.teacher {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.avatar.admin {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.message-preview {
+    flex: 1;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.sender-name {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.message-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.message-subject {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+.message-excerpt {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.message-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sender-role {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e9ecef;
+    color: #495057;
+    font-weight: 600;
+}
+
+.unread-badge {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: #dc3545;
+    color: white;
+    font-weight: 700;
+}
+
+.replies-count {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.empty-messages {
+    text-align: center;
+    padding: 60px 20px;
+    color: #adb5bd;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-messages h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+
+.message-detail {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.detail-header {
+    padding: 25px;
+    border-bottom: 2px solid #e2e8f0;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.message-info h3 {
+    color: #2d3748;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.message-sender {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sender-avatar .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+}
+
+.sender-details .sender-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.sender-email {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.message-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.message-conversation {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.conversation-item {
+    max-width: 80%;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.conversation-item.original {
+    align-self: flex-start;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 16px;
+    border: 2px solid #e9ecef;
+}
+
+.conversation-item.reply {
+    align-self: flex-end;
+}
+
+.conversation-item.admin-reply {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    padding: 20px;
+    border-radius: 16px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.message-content .message-text {
+    color: #2d3748;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
+.message-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+.reply-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.replier-name {
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.replier-role {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: #667eea;
+    color: white;
+    font-weight: 600;
+}
+
+.reply-section {
+    margin-top: auto;
+    padding-top: 25px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.reply-section h4 {
+    margin-bottom: 15px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.reply-form .form-group {
+    margin-bottom: 15px;
+}
+
+.reply-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.no-message-selected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #adb5bd;
+}
+
+.select-message-prompt {
+    text-align: center;
+}
+
+.prompt-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.select-message-prompt h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+
+/* Loading and unauthorized styles (same as previous components) */
+.loading-container, .unauthorized-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.unauthorized-card {
+    background: white;
+    padding: 60px 50px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+    max-width: 450px;
+}
+
+.back-btn, .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-outline {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(252, 129, 129, 0.3);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Animations */
+@@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@@media (max-width: 1024px) {
+    .messages-layout {
+        grid-template-columns: 350px 1fr;
+    }
+}
+
+@@media (max-width: 768px) {
+    .admin-messages {
+        padding: 20px;
+    }
+
+    .header-bar {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .message-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .messages-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .messages-list {
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+        max-height: 400px;
+    }
+
+    .conversation-item {
+        max-width: 95%;
+    }
+
+    .detail-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .message-actions {
+        align-self: stretch;
+        justify-content: center;
+    }
+}
+</style>

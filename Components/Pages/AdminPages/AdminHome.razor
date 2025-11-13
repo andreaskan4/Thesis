@@ -1,0 +1,1159 @@
+﻿@page "/adminhome"
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject GradesService GradesService
+@inject Data.AppDbContext Context
+
+<PageTitle>Thesis - Admin Dashboard</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading Admin Dashboard...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to access the admin dashboard.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">
+                Return to Home
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-dashboard">
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <h1>Admin Dashboard</h1>
+                    <p class="welcome-message">Welcome back, <strong>@AuthStateService.CurrentUser?.Name</strong>!</p>
+                </div>
+                <div class="top-bar-right">
+                    <div class="date-time">
+                        <div class="date">@currentDate</div>
+                        <div class="time">@currentTime</div>
+                    </div>
+                    <div class="notification-bell">
+                        <span class="bell-icon">🔔</span>
+                        @if (pendingNotifications > 0)
+                        {
+                            <span class="notification-badge">@pendingNotifications</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Stats Overview -->
+                <div class="stats-overview">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <div class="stat-value">@totalUsers</div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-trend">@usersTrend</div>
+                        </div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-info">
+                            <div class="stat-value">@totalStudents</div>
+                            <div class="stat-label">Students</div>
+                            <div class="stat-trend">@studentsTrend</div>
+                        </div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon">👨‍🏫</div>
+                        <div class="stat-info">
+                            <div class="stat-value">@totalTeachers</div>
+                            <div class="stat-label">Teachers</div>
+                            <div class="stat-trend">@teachersTrend</div>
+                        </div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-info">
+                            <div class="stat-value">@totalCourses</div>
+                            <div class="stat-label">Courses</div>
+                            <div class="stat-trend">@coursesTrend</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions-section">
+                    <div class="section-header">
+                        <h3>Quick Actions</h3>
+                        <p>Frequently used administrative tasks</p>
+                    </div>
+                    <div class="actions-grid">
+                        <div class="action-card" @onclick="NavigateToUsers">
+                            <div class="action-icon">👥</div>
+                            <div class="action-content">
+                                <h4>User Management</h4>
+                                <p>Manage users, roles, and permissions</p>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+                        <div class="action-card" @onclick="NavigateToGrades">
+                            <div class="action-icon">📝</div>
+                            <div class="action-content">
+                                <h4>Grade Management</h4>
+                                <p>View and manage student grades</p>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+                        <div class="action-card" @onclick="NavigateToCourses">
+                            <div class="action-icon">📚</div>
+                            <div class="action-content">
+                                <h4>Course Management</h4>
+                                <p>Manage courses and assignments</p>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+                        <div class="action-card" @onclick="NavigateToReports">
+                            <div class="action-icon">📈</div>
+                            <div class="action-content">
+                                <h4>Reports & Analytics</h4>
+                                <p>View system analytics and reports</p>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & System Status -->
+                <div class="dashboard-grid">
+                    <div class="recent-activity">
+                        <div class="section-header">
+                            <h3>Recent Activity</h3>
+                            <button class="refresh-btn" @onclick="RefreshData" title="Refresh data">
+                                ↻ Refresh
+                            </button>
+                        </div>
+                        <div class="activity-list">
+                            @if (recentActivities.Any())
+                            {
+                                @foreach (var activity in recentActivities)
+                                {
+                                    <div class="activity-item">
+                                        <div class="activity-icon @activity.Type">@activity.Icon</div>
+                                        <div class="activity-content">
+                                            <div class="activity-title">@activity.Title</div>
+                                            <div class="activity-time">@activity.Time</div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="no-activity">No recent activity</div>
+                            }
+                        </div>
+                        @if (isRefreshing)
+                        {
+                            <div class="refreshing-indicator">
+                                <div class="refresh-spinner"></div>
+                                <span>Refreshing...</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="system-status">
+                        <div class="section-header">
+                            <h3>System Status</h3>
+                            <div class="status-indicator online">Online</div>
+                        </div>
+                        <div class="status-list">
+                            <div class="status-item">
+                                <div class="status-label">Database</div>
+                                <div class="status-value online">Healthy</div>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-label">Total Users</div>
+                                <div class="status-value">@totalUsers</div>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-label">Active Courses</div>
+                                <div class="status-value">@totalCourses</div>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-label">Last Update</div>
+                                <div class="status-value">@lastUpdate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthChecked = false;
+    private bool isAuthorized = false;
+    private bool isRefreshing = false;
+    private Timer? clockTimer;
+
+    // Real dashboard data
+    private string currentDate = "";
+    private string currentTime = "";
+    private int totalUsers = 0;
+    private int totalStudents = 0;
+    private int totalTeachers = 0;
+    private int totalCourses = 0;
+    private int pendingNotifications = 0;
+    private string lastUpdate = "Just now";
+
+    // Trend indicators
+    private string usersTrend = "Loading...";
+    private string studentsTrend = "Loading...";
+    private string teachersTrend = "Loading...";
+    private string coursesTrend = "Loading...";
+
+    private List<ActivityItem> recentActivities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+        if (isAuthorized)
+        {
+            InitializeDashboard();
+            StartClock();
+            await LoadRealDashboardData();
+        }
+    }
+
+    private async Task CheckAuthorization()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            if (AuthStateService.CurrentUser != null)
+                break;
+            await Task.Delay(100);
+        }
+
+        var user = AuthStateService.CurrentUser;
+        isAuthorized = user != null && user.Role == "Admin";
+
+        isAuthChecked = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void InitializeDashboard()
+    {
+        UpdateDateTime();
+    }
+
+    private async Task LoadRealDashboardData()
+    {
+        try
+        {
+            Console.WriteLine("Loading real dashboard data from database...");
+
+            // Load all users and count by role
+            var allUsers = await Context.Users.ToListAsync();
+            totalUsers = allUsers.Count;
+            totalStudents = allUsers.Count(u => u.Role == "Student");
+            totalTeachers = allUsers.Count(u => u.Role == "Teacher");
+
+            // Load courses
+            var allCourses = await Context.Courses.ToListAsync();
+            totalCourses = allCourses.Count;
+
+            // Load recent activities from database
+            await LoadRecentActivities(allUsers, allCourses);
+
+            // Calculate trends (you can enhance this with historical data later)
+            CalculateTrends();
+
+            lastUpdate = DateTime.Now.ToString("hh:mm tt");
+
+            Console.WriteLine($"Dashboard data loaded: {totalUsers} users, {totalStudents} students, {totalTeachers} teachers, {totalCourses} courses");
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+            // Fallback to sample data if there's an error
+            LoadSampleData();
+        }
+    }
+
+    private async Task LoadRecentActivities(List<User> users, List<Course> courses)
+    {
+        recentActivities.Clear();
+
+        try
+        {
+            // Get recent grades
+            var recentGrades = await Context.Grades
+                .Include(g => g.Student)
+                .Include(g => g.Course)
+                .OrderByDescending(g => g.Id)
+                .Take(3)
+                .ToListAsync();
+
+            foreach (var grade in recentGrades)
+            {
+                recentActivities.Add(new ActivityItem
+                {
+                    Icon = "📝",
+                    Type = "grade",
+                    Title = $"Grade added for {grade.Student?.Name} in {grade.Course?.Name}",
+                    Time = "Recently"
+                });
+            }
+
+            // Get recent courses (if any new ones)
+            var newCourses = courses.OrderByDescending(c => c.Id).Take(2);
+            foreach (var course in newCourses)
+            {
+                recentActivities.Add(new ActivityItem
+                {
+                    Icon = "📚",
+                    Type = "course",
+                    Title = $"New course: {course.Name}",
+                    Time = "Recently"
+                });
+            }
+
+            // If no recent activities, add some generic ones
+            if (!recentActivities.Any())
+            {
+                recentActivities.AddRange(new List<ActivityItem>
+                {
+                    new() { Icon = "👋", Type = "system", Title = "Welcome to Admin Dashboard", Time = "Just now" },
+                    new() { Icon = "📊", Type = "system", Title = "System initialized successfully", Time = "Just now" }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading recent activities: {ex.Message}");
+            // Add fallback activities
+            recentActivities.Add(new ActivityItem
+            {
+                Icon = "🔔",
+                Type = "system",
+                Title = "System is running",
+                Time = "Just now"
+            });
+        }
+    }
+
+    private void CalculateTrends()
+    {
+        // These are placeholder trends - you can enhance this with real historical data
+        usersTrend = totalUsers > 0 ? "Active" : "No users";
+        studentsTrend = totalStudents > 0 ? $"{totalStudents} enrolled" : "No students";
+        teachersTrend = totalTeachers > 0 ? $"{totalTeachers} active" : "No teachers";
+        coursesTrend = totalCourses > 0 ? $"{totalCourses} available" : "No courses";
+    }
+
+    private void LoadSampleData()
+    {
+        // Fallback data in case of errors
+        totalUsers = Context.Users.Count();
+        totalStudents = Context.Users.Count(u => u.Role == "Student");
+        totalTeachers = Context.Users.Count(u => u.Role == "Teacher");
+        totalCourses = Context.Courses.Count();
+
+        CalculateTrends();
+
+        recentActivities = new List<ActivityItem>
+        {
+            new() { Icon = "⚠️", Type = "warning", Title = "Using cached data", Time = "Just now" },
+            new() { Icon = "🔔", Type = "system", Title = "Database connection issue", Time = "Just now" }
+        };
+    }
+
+    private async Task RefreshData()
+    {
+        isRefreshing = true;
+        StateHasChanged();
+
+        try
+        {
+            Console.WriteLine("=== REFRESHING DASHBOARD DATA ===");
+
+            // Clear existing data to force refresh
+            totalUsers = 0;
+            totalStudents = 0;
+            totalTeachers = 0;
+            totalCourses = 0;
+            recentActivities.Clear();
+
+            StateHasChanged();
+            await Task.Delay(100); // Small delay to show clearing
+
+            // Reload all data
+            await LoadRealDashboardData();
+
+            Console.WriteLine("=== REFRESH COMPLETE ===");
+            Console.WriteLine($"Users: {totalUsers}, Students: {totalStudents}, Teachers: {totalTeachers}, Courses: {totalCourses}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"=== ERROR REFRESHING DATA ===");
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Stack: {ex.StackTrace}");
+
+            // Fallback to sample data
+            LoadSampleData();
+        }
+        finally
+        {
+            isRefreshing = false;
+            StateHasChanged();
+        }
+    }
+
+    // Navigation methods
+    private void NavigateToUsers() => Navigation.NavigateTo("/adminusers");
+    private void NavigateToGrades() => Navigation.NavigateTo("/admingrades");
+    private void NavigateToCourses() => Navigation.NavigateTo("/admincourses");
+    private void NavigateToReports() => Navigation.NavigateTo("/adminreports");
+
+    private void StartClock()
+    {
+        clockTimer = new Timer(async _ =>
+        {
+            UpdateDateTime();
+            await InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+    private void UpdateDateTime()
+    {
+        currentDate = DateTime.Now.ToString("dddd, MMMM dd, yyyy");
+        currentTime = DateTime.Now.ToString("hh:mm:ss tt");
+    }
+
+    private void RedirectToHome() => Navigation.NavigateTo("/", true);
+
+    public void Dispose() => clockTimer?.Dispose();
+
+    private class ActivityItem
+    {
+        public string Icon { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Time { get; set; } = "";
+    }
+}
+
+<style>
+    .no-activity {
+        text-align: center;
+        padding: 20px;
+        color: #a0aec0;
+        font-style: italic;
+    }
+    /*refresh data css*/
+    .refresh-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+        .refresh-btn:hover:not(:disabled) {
+            background: #2563eb;
+        }
+
+        .refresh-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+    /* Base Styles */
+    .admin-dashboard {
+        display: flex;
+        height: 100vh;
+        background: #f8fafc;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    /* Sidebar Styles */
+    .admin-sidebar {
+        width: 280px;
+        background: linear-gradient(180deg, #1e3a8a 0%, #3730a3 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .app-logo h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        padding: 1rem 0;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1.5rem;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+    }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: #60a5fa;
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+        }
+
+    .nav-icon {
+        margin-right: 0.75rem;
+        font-size: 1.125rem;
+    }
+
+    .nav-text {
+        font-weight: 500;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: rgba(255,255,255,0.1);
+        margin: 1rem 1.5rem;
+    }
+
+    .sidebar-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #60a5fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .user-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .user-role {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .logout-btn {
+        width: 100%;
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+    /* Main Content Styles */
+    .admin-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .top-bar {
+        background: white;
+        padding: 1.25rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .top-bar-left h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .welcome-message {
+        margin: 0.25rem 0 0 0;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .top-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .date-time {
+        text-align: right;
+    }
+
+    .date {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .time {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .notification-bell {
+        position: relative;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+    }
+
+        .notification-bell:hover {
+            background: #f1f5f9;
+        }
+
+    .bell-icon {
+        font-size: 1.25rem;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Dashboard Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        background: #f8fafc;
+    }
+
+    /* Stats Overview */
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-left: 4px solid;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.primary {
+            border-left-color: #3b82f6;
+        }
+
+        .stat-card.success {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.danger {
+            border-left-color: #ef4444;
+        }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin: 0.25rem 0;
+    }
+
+    .stat-trend {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .stat-card.primary .stat-trend {
+        color: #3b82f6;
+    }
+
+    .stat-card.success .stat-trend {
+        color: #10b981;
+    }
+
+    .stat-card.warning .stat-trend {
+        color: #f59e0b;
+    }
+
+    .stat-card.danger .stat-trend {
+        color: #ef4444;
+    }
+
+    /* Quick Actions */
+    .quick-actions-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .section-header p {
+            margin: 0.25rem 0 0 0;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+    .view-all {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+        .view-all:hover {
+            text-decoration: underline;
+        }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .action-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .action-card:hover {
+            background: #f1f5f9;
+            border-color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+    .action-icon {
+        font-size: 1.5rem;
+        background: #3b82f6;
+        color: white;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-content {
+        flex: 1;
+    }
+
+        .action-content h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .action-content p {
+            margin: 0.25rem 0 0 0;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+    .action-arrow {
+        color: #64748b;
+        font-size: 1.25rem;
+        font-weight: 300;
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    .recent-activity, .system-status {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .activity-list {
+        space-y: 0.75rem;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+    }
+
+        .activity-icon.user {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .activity-icon.grade {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .activity-icon.system {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .activity-icon.warning {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+    .activity-title {
+        font-weight: 500;
+        color: #1e293b;
+        font-size: 0.875rem;
+    }
+
+    .activity-time {
+        color: #64748b;
+        font-size: 0.75rem;
+        margin-top: 0.125rem;
+    }
+
+    .status-indicator {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+        .status-indicator.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+    .status-list {
+        space-y: 1rem;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+    .status-label {
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .status-value {
+        font-weight: 500;
+        color: #1e293b;
+        font-size: 0.875rem;
+    }
+
+        .status-value.online {
+            color: #10b981;
+        }
+
+        .status-value.normal {
+            color: #3b82f6;
+        }
+
+    /* Loading and Unauthorized States */
+    .loading-container, .unauthorized-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+    }
+
+    .unauthorized-card {
+        background: rgba(255,255,255,0.1);
+        padding: 2rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .unauthorized-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .spinner {
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 0;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1e293b;
+        }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+    .btn-outline {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+        .btn-outline:hover {
+            background: #f9fafb;
+        }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-sidebar {
+            width: 240px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-dashboard {
+            flex-direction: column;
+        }
+
+        .admin-sidebar {
+            width: 100%;
+            height: auto;
+        }
+
+        .stats-overview {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

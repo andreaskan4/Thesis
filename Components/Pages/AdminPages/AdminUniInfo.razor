@@ -1,0 +1,1993 @@
+﻿@page "/adminuni"
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject Data.AppDbContext Context
+@using Microsoft.AspNetCore.Components.Forms
+@using Thesis.Models
+@using System.Text.Json
+
+<PageTitle>Thesis - University Management</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading University Management...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to access university management.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">Return to Home</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-uni">
+        <div class="header-bar">
+            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <h2>University Management</h2>
+            <div class="header-actions">
+                <button class="btn btn-primary" @onclick="ShowAddFacilityModal">
+                    ➕ Add New Facility
+                </button>
+            </div>
+        </div>
+
+        <div class="management-tabs">
+            <div class="tab-headers">
+                <button class="tab-header @(activeTab == "facilities" ? "active" : "")" @onclick='() => SwitchTab("facilities")'>
+                    🏛️ Facilities
+                </button>
+                <button class="tab-header @(activeTab == "contact" ? "active" : "")" @onclick='() => SwitchTab("contact")'>
+                    📞 Contact Information
+                </button>
+            </div>
+
+            <div class="tab-content">
+                @if (activeTab == "facilities")
+                {
+                    <div class="facilities-section">
+                        @if (isLoading)
+                        {
+                            <div class="loading">Loading facilities...</div>
+                        }
+                        else
+                        {
+                            <div class="facilities-grid">
+                                @foreach (var facility in facilities)
+                                {
+                                    <div class="facility-card">
+                                        <div class="facility-images">
+                                            @{
+                                                var displayPhoto = GetDisplayPhoto(facility);
+                                            }
+                                            @if (displayPhoto != null)
+                                            {
+                                                <div class="image-carousel">
+                                                    <img src="@displayPhoto.Url" alt="@facility.Name" class="facility-image" />
+                                                    @if (facility.Photos.Count > 1)
+                                                    {
+                                                        <div class="image-count">+@(facility.Photos.Count - 1) more</div>
+                                                    }
+                                                    @if (displayPhoto.IsFeatured)
+                                                    {
+                                                        <div class="featured-indicator" title="Featured photo">⭐</div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="no-image">
+                                                    <div style="font-size: 3rem; margin-bottom: 10px;">🏛️</div>
+                                                    <span>No Images</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="facility-info">
+                                            <h3>@facility.Name</h3>
+                                            <p class="facility-type">@facility.Type</p>
+                                            <p class="facility-building">🏢 @facility.BuildingName</p>
+                                            <p class="facility-address">📍 @facility.Address</p>
+                                            <div class="facility-description">
+                                                @facility.Description
+                                            </div>
+                                        </div>
+                                        <div class="facility-actions">
+                                            <button class="btn btn-sm btn-outline" @onclick="() => ShowUploadModal(facility)">
+                                                📤 Upload Photos
+                                            </button>
+                                            @if (facility.Photos.Any())
+                                            {
+                                                <button class="btn btn-sm btn-outline" @onclick="() => ShowManageModal(facility)">
+                                                    🖼️ Manage Photos
+                                                </button>
+                                            }
+                                            <button class="btn btn-sm btn-outline" @onclick="() => EditFacility(facility)">
+                                                ✏️ Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteFacility(facility)">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (!facilities.Any())
+                                {
+                                    <div class="empty-state">
+                                        <div class="empty-icon">🏛️</div>
+                                        <h3>No Facilities Added</h3>
+                                        <p>Start by adding your first university facility.</p>
+                                        <button class="btn btn-primary" @onclick="ShowAddFacilityModal">
+                                            Add First Facility
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else if (activeTab == "contact")
+                {
+                    <div class="contact-section">
+                        <div class="contact-card">
+                            <div class="section-header">
+                                <h3>📞 University Contact Information</h3>
+                                <button class="btn btn-outline" @onclick="EditContactInfo">
+                                    @(contactInfo == null ? "Add Contact Info" : "Edit Contact Info")
+                                </button>
+                            </div>
+
+                            @if (contactInfo != null)
+                            {
+                                <div class="contact-details">
+                                    <div class="contact-row">
+                                        <span class="contact-label">🏢 Main Address:</span>
+                                        <span>@(contactInfo.MainAddress ?? "Not specified")</span>
+                                    </div>
+                                    <div class="contact-row">
+                                        <span class="contact-label">📞 Phone:</span>
+                                        <span>@(contactInfo.PhoneNumber ?? "Not specified")</span>
+                                    </div>
+                                    <div class="contact-row">
+                                        <span class="contact-label">📧 Email:</span>
+                                        <span>@(contactInfo.Email ?? "Not specified")</span>
+                                    </div>
+                                    <div class="contact-row">
+                                        <span class="contact-label">👤 Secretary Name:</span>
+                                        <span>@(contactInfo.SecretaryName ?? "Not specified")</span>
+                                    </div>
+                                    <div class="social-media">
+                                        <h4>Social Media</h4>
+                                        <div class="social-links">
+                                            @if (!string.IsNullOrEmpty(contactInfo.Facebook))
+                                            {
+                                                <div class="social-link">
+                                                    <span class="social-icon">📘</span>
+                                                    <span>@contactInfo.Facebook</span>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(contactInfo.Twitter))
+                                            {
+                                                <div class="social-link">
+                                                    <span class="social-icon">🐦</span>
+                                                    <span>@contactInfo.Twitter</span>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(contactInfo.Instagram))
+                                            {
+                                                <div class="social-link">
+                                                    <span class="social-icon">📷</span>
+                                                    <span>@contactInfo.Instagram</span>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(contactInfo.LinkedIn))
+                                            {
+                                                <div class="social-link">
+                                                    <span class="social-icon">💼</span>
+                                                    <span>@contactInfo.LinkedIn</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-contact">
+                                    <p>No contact information added yet.</p>
+                                    <button class="btn btn-primary" @onclick="EditContactInfo">
+                                        Add Contact Information
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Add/Edit Facility Modal -->
+@if (showFacilityModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>@(editingFacility ? "Edit Facility" : "Add New Facility")</h3>
+                <button class="close-btn" @onclick="CloseFacilityModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form class="facility-form">
+                    <div class="form-group">
+                        <label>Facility Name *</label>
+                        <input type="text" @bind="newFacility.Name" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Facility Type *</label>
+                        <select @bind="newFacility.Type" class="form-control">
+                            <option value="">Select Type</option>
+                            <option value="Library">Library</option>
+                            <option value="Laboratory">Laboratory</option>
+                            <option value="Classroom">Classroom</option>
+                            <option value="Auditorium">Auditorium</option>
+                            <option value="Sports">Sports Facility</option>
+                            <option value="Cafeteria">Cafeteria</option>
+                            <option value="Administrative">Administrative</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Building Name *</label>
+                        <input type="text" @bind="newFacility.BuildingName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Address *</label>
+                        <textarea @bind="newFacility.Address" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea @bind="newFacility.Description" class="form-control" rows="4"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseFacilityModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveFacility" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>@(editingFacility ? "Update Facility" : "Add Facility")</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Upload Photos Modal -->
+@if (showUploadModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upload Photos for @currentFacility?.Name</h3>
+                <button class="close-btn" @onclick="CloseUploadModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-section">
+                    <h4>📤 Upload New Photos</h4>
+                    <div class="upload-area">
+                        <InputFile multiple accept="image/*" OnChange="HandleFileUpload" />
+                        <div class="upload-hint">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">📸</div>
+                            <p>Click to select photos or drag and drop</p>
+                            <p class="upload-subtext">Supports JPG, PNG, GIF • Max 5MB per photo</p>
+                        </div>
+                    </div>
+
+                    @if (uploadedPhotos.Any())
+                    {
+                        <div class="photo-preview">
+                            <h5>New Photos to Upload (@uploadedPhotos.Count)</h5>
+                            <div class="preview-grid">
+                                @foreach (var photo in uploadedPhotos)
+                                {
+                                    <div class="preview-item">
+                                        <img src="@photo.PreviewUrl" alt="Preview" />
+                                        <button class="remove-btn" @onclick="() => RemovePhoto(photo)" title="Remove photo">×</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (currentFacility?.Photos != null && currentFacility.Photos.Any())
+                {
+                    <div class="existing-photos-section">
+                        <h4>🖼️ Current Photos (@currentFacility.Photos.Count)</h4>
+                        <div class="current-photos-grid">
+                            @foreach (var photo in currentFacility.Photos.OrderBy(p => p.SortOrder).Take(3))
+                            {
+                                <div class="current-photo-item">
+                                    <img src="@photo.Url" alt="Current photo" />
+                                    @if (photo.IsFeatured)
+                                    {
+                                        <div class="featured-badge">Featured</div>
+                                    }
+                                </div>
+                            }
+                            @if (currentFacility.Photos.Count > 3)
+                            {
+                                <div class="current-photo-item more-photos">
+                                    <div class="more-count">+@(currentFacility.Photos.Count - 3) more</div>
+                                </div>
+                            }
+                        </div>
+                        <div class="manage-photos-link">
+                            <button class="btn btn-sm btn-outline" @onclick="SwitchToManageModal">
+                                🖼️ Manage All Photos
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseUploadModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SavePhotos" disabled="@isUploading">
+                    @if (isUploading)
+                    {
+                        <span>Uploading...</span>
+                    }
+                    else
+                    {
+                        <span>Upload Photos</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Manage Photos Modal -->
+@if (showManageModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Manage Photos for @currentFacility?.Name</h3>
+                <button class="close-btn" @onclick="CloseManageModal">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Existing Photos Management Section -->
+                @if (currentFacility?.Photos != null && currentFacility.Photos.Any())
+                {
+                    <div class="existing-photos-section">
+                        <h4>🖼️ Existing Photos (@currentFacility.Photos.Count)</h4>
+                        <div class="photos-management">
+                            <div class="photos-grid">
+                                @foreach (var photo in currentFacility.Photos.OrderBy(p => p.SortOrder))
+                                {
+                                    <div class="photo-management-item @(photo.IsFeatured ? "featured" : "")">
+                                        <img src="@photo.Url" alt="Facility photo" />
+                                        <div class="photo-actions">
+                                            @if (!photo.IsFeatured)
+                                            {
+                                                <button class="btn-action featured-btn"
+                                                        @onclick="() => SetFeaturedPhoto(photo)"
+                                                        title="Set as featured">
+                                                    ⭐
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn-action featured-btn active" title="Featured photo">
+                                                    ★
+                                                </button>
+                                            }
+
+                                            <button class="btn-action move-btn"
+                                                    @onclick="() => MovePhotoUp(photo)"
+                                                    title="Move up">
+                                                ⬆️
+                                            </button>
+                                            <button class="btn-action move-btn"
+                                                    @onclick="() => MovePhotoDown(photo)"
+                                                    title="Move down">
+                                                ⬇️
+                                            </button>
+                                            <button class="btn-action delete-btn"
+                                                    @onclick="() => DeletePhoto(photo.Url)"
+                                                    title="Delete photo">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                        @if (photo.IsFeatured)
+                                        {
+                                            <div class="featured-badge">Featured</div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="management-actions">
+                                <button class="btn btn-outline" @onclick="ReorderPhotos">
+                                    🔄 Update Order
+                                </button>
+                                <button class="btn btn-outline" @onclick="ClearFeatured">
+                                    🚫 Clear Featured
+                                </button>
+                                <button class="btn btn-primary" @onclick="SwitchToUploadModal">
+                                    📤 Add More Photos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-existing-photos">
+                        <div class="empty-state">
+                            <div style="font-size: 4rem; margin-bottom: 15px;">🏛️</div>
+                            <h5>No Photos Yet</h5>
+                            <p>Start by uploading some photos!</p>
+                            <button class="btn btn-primary" @onclick="SwitchToUploadModal">
+                                Upload Photos
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseManageModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="CloseManageModal">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Contact Information Modal -->
+@if (showContactModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>@(contactInfo == null ? "Add Contact Information" : "Edit Contact Information")</h3>
+                <button class="close-btn" @onclick="CloseContactModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label>Main Address *</label>
+                        <textarea @bind="newContactInfo.MainAddress" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="text" @bind="newContactInfo.PhoneNumber" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" @bind="newContactInfo.Email" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Secretary Name *</label>
+                        <input type="text" @bind="newContactInfo.SecretaryName" class="form-control" />
+                    </div>
+
+                    <div class="social-section">
+                        <h4>Social Media Links</h4>
+                        <div class="form-group">
+                            <label>Facebook</label>
+                            <input type="url" @bind="newContactInfo.Facebook" class="form-control" placeholder="https://facebook.com/..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Twitter</label>
+                            <input type="url" @bind="newContactInfo.Twitter" class="form-control" placeholder="https://twitter.com/..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Instagram</label>
+                            <input type="url" @bind="newContactInfo.Instagram" class="form-control" placeholder="https://instagram.com/..." />
+                        </div>
+                        <div class="form-group">
+                            <label>LinkedIn</label>
+                            <input type="url" @bind="newContactInfo.LinkedIn" class="form-control" placeholder="https://linkedin.com/..." />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseContactModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveContactInfo" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>Save Contact Info</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthChecked = false;
+    private bool isAuthorized = false;
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isUploading = false;
+
+    private string activeTab = "facilities";
+
+    // Facilities
+    private List<Facility> facilities = new();
+    private bool showFacilityModal = false;
+    private bool editingFacility = false;
+    private Facility newFacility = new();
+    private Facility? currentFacility = null;
+
+    // Photos
+    private bool showUploadModal = false;
+    private bool showManageModal = false;
+    private List<UploadedPhoto> uploadedPhotos = new();
+
+    // Contact Information
+    private ContactInfo? contactInfo = null;
+    private bool showContactModal = false;
+    private ContactInfo newContactInfo = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+        if (isAuthorized)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task CheckAuthorization()
+    {
+        try
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                if (AuthStateService.CurrentUser != null)
+                    break;
+                await Task.Delay(100);
+            }
+
+            var user = AuthStateService.CurrentUser;
+            isAuthorized = user != null && user.Role == "Admin";
+            isAuthChecked = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Authorization error: {ex.Message}");
+            isAuthChecked = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Load facilities
+            facilities = await Context.Facilities.ToListAsync();
+            Console.WriteLine($"Loaded {facilities.Count} facilities");
+
+            // Debug: Check photos for each facility
+            foreach (var facility in facilities)
+            {
+                Console.WriteLine($"Facility: {facility.Name}, Photos count: {facility.Photos.Count}");
+                if (facility.Photos.Any())
+                {
+                    Console.WriteLine($"First photo: {facility.Photos.First().Url.Substring(0, Math.Min(50, facility.Photos.First().Url.Length))}...");
+                }
+            }
+
+            // Load contact information
+            contactInfo = await Context.ContactInfo.FirstOrDefaultAsync();
+            Console.WriteLine($"Contact info loaded: {contactInfo != null}");
+
+            isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading data: {ex.Message}");
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SwitchTab(string tab)
+    {
+        if (tab == "facilities" || tab == "contact")
+        {
+            activeTab = tab;
+            Console.WriteLine($"Switched to tab: {tab}");
+        }
+        else
+        {
+            activeTab = "facilities";
+        }
+        StateHasChanged();
+    }
+
+    // Helper method to get display photo
+    private FacilityPhoto? GetDisplayPhoto(Facility facility)
+    {
+        return facility.Photos.FirstOrDefault(p => p.IsFeatured) ?? facility.Photos.FirstOrDefault();
+    }
+
+    // Facility Management methods
+    private void ShowAddFacilityModal()
+    {
+        newFacility = new Facility();
+        editingFacility = false;
+        showFacilityModal = true;
+        StateHasChanged();
+    }
+
+    private void EditFacility(Facility facility)
+    {
+        newFacility = new Facility
+        {
+            Id = facility.Id,
+            Name = facility.Name,
+            Type = facility.Type,
+            BuildingName = facility.BuildingName,
+            Address = facility.Address,
+            Description = facility.Description,
+            Photos = facility.Photos
+        };
+        editingFacility = true;
+        showFacilityModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseFacilityModal()
+    {
+        showFacilityModal = false;
+        newFacility = new Facility();
+        StateHasChanged();
+    }
+
+    private async Task SaveFacility()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            if (string.IsNullOrEmpty(newFacility.Name) || string.IsNullOrEmpty(newFacility.Type) ||
+                string.IsNullOrEmpty(newFacility.BuildingName) || string.IsNullOrEmpty(newFacility.Address))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+                return;
+            }
+
+            if (editingFacility)
+            {
+                var existing = await Context.Facilities.FindAsync(newFacility.Id);
+                if (existing != null)
+                {
+                    existing.Name = newFacility.Name;
+                    existing.Type = newFacility.Type;
+                    existing.BuildingName = newFacility.BuildingName;
+                    existing.Address = newFacility.Address;
+                    existing.Description = newFacility.Description;
+                    existing.UpdatedAt = DateTime.Now;
+                    existing.Photos = newFacility.Photos;
+                }
+            }
+            else
+            {
+                newFacility.CreatedAt = DateTime.Now;
+                newFacility.UpdatedAt = DateTime.Now;
+                Context.Facilities.Add(newFacility);
+            }
+
+            await Context.SaveChangesAsync();
+            await LoadData();
+
+            showFacilityModal = false;
+            await JSRuntime.InvokeVoidAsync("alert", $"Facility {(editingFacility ? "updated" : "added")} successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving facility: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteFacility(Facility facility)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {facility.Name}?");
+        if (confirm)
+        {
+            try
+            {
+                Context.Facilities.Remove(facility);
+                await Context.SaveChangesAsync();
+                await LoadData();
+                await JSRuntime.InvokeVoidAsync("alert", "Facility deleted successfully!");
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting facility: {ex.Message}");
+            }
+        }
+    }
+
+    // Photo Management methods - Separate modals
+    private void ShowUploadModal(Facility facility)
+    {
+        currentFacility = facility;
+        uploadedPhotos.Clear();
+        showUploadModal = true;
+        showManageModal = false;
+        StateHasChanged();
+    }
+
+    private void ShowManageModal(Facility facility)
+    {
+        currentFacility = facility;
+        showManageModal = true;
+        showUploadModal = false;
+        StateHasChanged();
+    }
+
+    private void CloseUploadModal()
+    {
+        showUploadModal = false;
+        currentFacility = null;
+        uploadedPhotos.Clear();
+        StateHasChanged();
+    }
+
+    private void CloseManageModal()
+    {
+        showManageModal = false;
+        currentFacility = null;
+        StateHasChanged();
+    }
+
+    private void SwitchToManageModal()
+    {
+        showUploadModal = false;
+        showManageModal = true;
+        StateHasChanged();
+    }
+
+    private void SwitchToUploadModal()
+    {
+        showManageModal = false;
+        showUploadModal = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            foreach (var file in e.GetMultipleFiles())
+            {
+                if (file.Size > 5 * 1024 * 1024) // 5MB limit
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"File {file.Name} is too large. Maximum size is 5MB.");
+                    continue;
+                }
+
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream().ReadAsync(buffer);
+                var base64 = Convert.ToBase64String(buffer);
+                var dataUrl = $"data:{file.ContentType};base64,{base64}";
+
+                uploadedPhotos.Add(new UploadedPhoto
+                {
+                    FileName = file.Name,
+                    ContentType = file.ContentType,
+                    Data = buffer,
+                    PreviewUrl = dataUrl
+                });
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private void RemovePhoto(UploadedPhoto photo)
+    {
+        uploadedPhotos.Remove(photo);
+        StateHasChanged();
+    }
+
+    private async Task SavePhotos()
+    {
+        try
+        {
+            isUploading = true;
+            StateHasChanged();
+
+            Console.WriteLine($"Starting photo upload for facility: {currentFacility?.Name}");
+            Console.WriteLine($"Photos to upload: {uploadedPhotos.Count}");
+
+            if (currentFacility == null) return;
+
+            var facility = await Context.Facilities.FindAsync(currentFacility.Id);
+            if (facility == null) return;
+
+            // Add new uploaded photos
+            var currentPhotos = facility.Photos;
+            int startOrder = currentPhotos.Any() ? currentPhotos.Max(p => p.SortOrder) + 1 : 0;
+
+            foreach (var uploadedPhoto in uploadedPhotos)
+            {
+                var base64 = Convert.ToBase64String(uploadedPhoto.Data);
+                var dataUrl = $"data:{uploadedPhoto.ContentType};base64,{base64}";
+
+                var facilityPhoto = new FacilityPhoto
+                {
+                    Url = dataUrl,
+                    FileName = uploadedPhoto.FileName,
+                    SortOrder = startOrder++,
+                    IsFeatured = false,
+                    UploadedAt = DateTime.Now
+                };
+
+                currentPhotos.Add(facilityPhoto);
+            }
+
+            facility.Photos = currentPhotos;
+            facility.UpdatedAt = DateTime.Now;
+
+            await Context.SaveChangesAsync();
+            await LoadData();
+
+            showUploadModal = false;
+            uploadedPhotos.Clear();
+            await JSRuntime.InvokeVoidAsync("alert", "Photos uploaded successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error uploading photos: {ex.Message}");
+            Console.WriteLine($"Photo upload error: {ex}");
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletePhoto(string photoUrl)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this photo?");
+        if (confirm && currentFacility != null)
+        {
+            try
+            {
+                var facility = await Context.Facilities.FindAsync(currentFacility.Id);
+                if (facility != null)
+                {
+                    var currentPhotos = facility.Photos;
+                    var photoToRemove = currentPhotos.FirstOrDefault(p => p.Url == photoUrl);
+                    if (photoToRemove != null)
+                    {
+                        currentPhotos.Remove(photoToRemove);
+                        facility.Photos = currentPhotos;
+                        facility.UpdatedAt = DateTime.Now;
+
+                        await Context.SaveChangesAsync();
+                        await LoadData();
+                        await JSRuntime.InvokeVoidAsync("alert", "Photo deleted successfully!");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting photo: {ex.Message}");
+            }
+        }
+    }
+
+    // Photo editing methods
+    private void SetFeaturedPhoto(FacilityPhoto photo)
+    {
+        if (currentFacility == null) return;
+
+        // Clear existing featured photo
+        foreach (var p in currentFacility.Photos)
+        {
+            p.IsFeatured = false;
+        }
+
+        // Set new featured photo
+        photo.IsFeatured = true;
+        StateHasChanged();
+    }
+
+    private void MovePhotoUp(FacilityPhoto photo)
+    {
+        if (currentFacility == null) return;
+
+        var index = currentFacility.Photos.IndexOf(photo);
+        if (index > 0)
+        {
+            currentFacility.Photos.RemoveAt(index);
+            currentFacility.Photos.Insert(index - 1, photo);
+            UpdatePhotoSortOrder();
+            StateHasChanged();
+        }
+    }
+
+    private void MovePhotoDown(FacilityPhoto photo)
+    {
+        if (currentFacility == null) return;
+
+        var index = currentFacility.Photos.IndexOf(photo);
+        if (index < currentFacility.Photos.Count - 1)
+        {
+            currentFacility.Photos.RemoveAt(index);
+            currentFacility.Photos.Insert(index + 1, photo);
+            UpdatePhotoSortOrder();
+            StateHasChanged();
+        }
+    }
+
+    private void UpdatePhotoSortOrder()
+    {
+        if (currentFacility == null) return;
+
+        for (int i = 0; i < currentFacility.Photos.Count; i++)
+        {
+            currentFacility.Photos[i].SortOrder = i;
+        }
+    }
+
+    private async Task ReorderPhotos()
+    {
+        if (currentFacility == null) return;
+
+        try
+        {
+            UpdatePhotoSortOrder();
+            await SaveFacilityPhotos();
+            await JSRuntime.InvokeVoidAsync("alert", "Photo order updated successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating photo order: {ex.Message}");
+        }
+    }
+
+    private async Task ClearFeatured()
+    {
+        if (currentFacility == null) return;
+
+        foreach (var photo in currentFacility.Photos)
+        {
+            photo.IsFeatured = false;
+        }
+
+        await SaveFacilityPhotos();
+        await JSRuntime.InvokeVoidAsync("alert", "Featured photo cleared!");
+    }
+
+    private async Task SaveFacilityPhotos()
+    {
+        if (currentFacility == null) return;
+
+        try
+        {
+            var facility = await Context.Facilities.FindAsync(currentFacility.Id);
+            if (facility != null)
+            {
+                facility.Photos = currentFacility.Photos;
+                facility.UpdatedAt = DateTime.Now;
+                await Context.SaveChangesAsync();
+                await LoadData();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving photo changes: {ex.Message}");
+        }
+    }
+
+    // Contact Information Management
+    private void EditContactInfo()
+    {
+        newContactInfo = contactInfo != null ? new ContactInfo
+        {
+            Id = contactInfo.Id,
+            MainAddress = contactInfo.MainAddress,
+            PhoneNumber = contactInfo.PhoneNumber,
+            Email = contactInfo.Email,
+            SecretaryName = contactInfo.SecretaryName,
+            Facebook = contactInfo.Facebook,
+            Twitter = contactInfo.Twitter,
+            Instagram = contactInfo.Instagram,
+            LinkedIn = contactInfo.LinkedIn
+        } : new ContactInfo();
+
+        showContactModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseContactModal()
+    {
+        showContactModal = false;
+        newContactInfo = new ContactInfo();
+        StateHasChanged();
+    }
+
+    private async Task SaveContactInfo()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            if (string.IsNullOrEmpty(newContactInfo.MainAddress) || string.IsNullOrEmpty(newContactInfo.PhoneNumber) ||
+                string.IsNullOrEmpty(newContactInfo.Email) || string.IsNullOrEmpty(newContactInfo.SecretaryName))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+                return;
+            }
+
+            if (contactInfo == null)
+            {
+                newContactInfo.CreatedAt = DateTime.Now;
+                newContactInfo.UpdatedAt = DateTime.Now;
+                Context.ContactInfo.Add(newContactInfo);
+            }
+            else
+            {
+                var existing = await Context.ContactInfo.FindAsync(newContactInfo.Id);
+                if (existing != null)
+                {
+                    existing.MainAddress = newContactInfo.MainAddress;
+                    existing.PhoneNumber = newContactInfo.PhoneNumber;
+                    existing.Email = newContactInfo.Email;
+                    existing.SecretaryName = newContactInfo.SecretaryName;
+                    existing.Facebook = newContactInfo.Facebook;
+                    existing.Twitter = newContactInfo.Twitter;
+                    existing.Instagram = newContactInfo.Instagram;
+                    existing.LinkedIn = newContactInfo.LinkedIn;
+                    existing.UpdatedAt = DateTime.Now;
+                }
+            }
+
+            await Context.SaveChangesAsync();
+            await LoadData();
+
+            showContactModal = false;
+            await JSRuntime.InvokeVoidAsync("alert", "Contact information saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving contact information: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/adminhome");
+    private void RedirectToHome() => Navigation.NavigateTo("/");
+
+    public class UploadedPhoto
+    {
+        public string FileName { get; set; } = "";
+        public string ContentType { get; set; } = "";
+        public byte[] Data { get; set; } = Array.Empty<byte>();
+        public string PreviewUrl { get; set; } = "";
+    }
+}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Loading States */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(255, 255, 255, 0.2);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    .loading-container p {
+        margin-top: 25px;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .unauthorized-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+
+    .unauthorized-card {
+        background: white;
+        padding: 60px 50px;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+        max-width: 450px;
+        animation: slideUp 0.4s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .unauthorized-icon {
+        font-size: 5rem;
+        margin-bottom: 25px;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 100%
+
+    {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    }
+
+    .unauthorized-card h3 {
+        font-size: 2rem;
+        color: #2d3748;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .unauthorized-card p {
+        color: #718096;
+        margin-bottom: 35px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    /* Main Container */
+    .admin-uni {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 30px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    /* Header Bar */
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 25px 35px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+        .header-bar h2 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+    .header-actions {
+        display: flex;
+        gap: 15px;
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+    /* Tabs */
+    .management-tabs {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .tab-headers {
+        display: flex;
+        background: linear-gradient(to right, #f8f9fa 0%, #e9ecef 100%);
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .tab-header {
+        flex: 1;
+        padding: 16px 28px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6c757d;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .tab-header:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .tab-header.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+    .tab-content {
+        padding: 35px;
+    }
+
+    /* Loading State */
+    .loading {
+        text-align: center;
+        padding: 60px;
+        color: #667eea;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* Facilities Grid */
+    .facilities-section {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+
+    .facilities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 30px;
+    }
+
+    .facility-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: cardSlideUp 0.5s ease-out backwards;
+    }
+
+    @@keyframes cardSlideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .facility-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .facility-images {
+        height: 240px;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .image-carousel {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    .facility-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .facility-card:hover .facility-image {
+        transform: scale(1.1);
+    }
+
+    .image-count {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .no-image {
+        color: #adb5bd;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .facility-info {
+        padding: 25px;
+    }
+
+        .facility-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+    .facility-type {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+
+    .facility-building, .facility-address {
+        margin: 8px 0;
+        font-size: 0.95rem;
+        color: #4a5568;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .facility-description {
+        margin-top: 15px;
+        font-size: 0.95rem;
+        color: #718096;
+        line-height: 1.6;
+    }
+
+    .facility-actions {
+        padding: 20px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 10px;
+        background: #f8f9fa;
+    }
+
+    /* Contact Section */
+    .contact-section {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .contact-card {
+        background: white;
+        border-radius: 20px;
+        padding: 35px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+        .section-header h3 {
+            font-size: 1.6rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+    .contact-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .contact-row {
+        display: flex;
+        gap: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .contact-row:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+    .contact-label {
+        font-weight: 700;
+        min-width: 180px;
+        color: #2d3748;
+        font-size: 0.95rem;
+    }
+
+    .contact-row > span:last-child {
+        color: #4a5568;
+        flex: 1;
+    }
+
+    .social-media {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+        .social-media h4 {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+    .social-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .social-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .social-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .social-icon {
+        font-size: 1.5rem;
+    }
+
+    .empty-contact {
+        text-align: center;
+        padding: 60px;
+        color: #adb5bd;
+        font-size: 1.1rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 80px 40px;
+        color: #adb5bd;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        color: #6c757d;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 24px;
+        max-width: 550px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+        animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @@keyframes modalSlideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    }
+
+    .modal-content.large {
+        max-width: 700px;
+    }
+
+    .modal-header {
+        padding: 30px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(to right, #f8f9fa 0%, white 100%);
+    }
+
+        .modal-header h3 {
+            font-size: 1.6rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .modal-footer {
+        padding: 25px 30px;
+        border-top: 2px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: #f8f9fa;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #adb5bd;
+        transition: all 0.3s ease;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+        .close-btn:hover {
+            background: #e9ecef;
+            color: #495057;
+            transform: rotate(90deg);
+        }
+
+    /* Forms */
+    .form-group {
+        margin-bottom: 22px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        color: #2d3748;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .social-section {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+        .social-section h4 {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+    /* Upload Area */
+    .upload-area {
+        border: 3px dashed #667eea;
+        border-radius: 16px;
+        padding: 50px 30px;
+        text-align: center;
+        margin-bottom: 25px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+    .upload-hint {
+        color: #667eea;
+        margin-top: 15px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .photo-preview, .existing-photos {
+        margin-top: 25px;
+    }
+
+        .photo-preview h4, .existing-photos h4 {
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+    .preview-grid, .existing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .preview-item, .existing-item {
+        position: relative;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .preview-item:hover, .existing-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .preview-item img, .existing-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+    .remove-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: rgba(220, 53, 69, 0.95);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+        .remove-btn:hover {
+            background: rgb(220, 53, 69);
+            transform: scale(1.1);
+        }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+    .btn-outline {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(252, 129, 129, 0.3);
+    }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(252, 129, 129, 0.4);
+        }
+
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 1024px) {
+        .facilities-grid
+
+    {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .admin-uni
+
+    {
+        padding: 20px;
+    }
+
+    .header-bar {
+        flex-direction: column;
+        gap: 20px;
+        padding: 25px;
+    }
+
+        .header-bar h2 {
+            font-size: 1.6rem;
+        }
+
+    .header-actions {
+        width: 100%;
+    }
+
+        .header-actions .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+
+    .tab-headers {
+        flex-direction: column;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    .facilities-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .contact-label {
+        min-width: auto;
+    }
+
+    .social-links {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+
+    .modal-header, .modal-body, .modal-footer {
+        padding: 20px;
+    }
+
+    }
+</style>

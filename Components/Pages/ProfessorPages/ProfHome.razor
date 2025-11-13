@@ -1,0 +1,593 @@
+﻿@page "/profhome"
+@using Thesis.Components.Layout
+@layout MainLayout
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+
+<PageTitle>Gnosis - Professor Dashboard</PageTitle>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+}
+else if (AuthStateService.IsLoggedIn)
+{
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <h1>Professor Dashboard</h1>
+            <p class="welcome-text">Welcome back, @AuthStateService.CurrentUser?.Name!</p>
+        </div>
+        <div class="header-right">
+            <div class="date-display">@DateTime.Now.ToString("dddd, MMMM dd, yyyy")</div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    @if (showLogoutModal)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirm Logout</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to logout?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" @onclick="CloseLogoutModal">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmLogout">Logout</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <div class="stat-value">10</div>
+                    <div class="stat-label">Courses</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-content">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Ongoing</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">120</div>
+                    <div class="stat-label">Students</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Cards -->
+        <div class="content-grid">
+            <div class="content-card recent-activity">
+                <div class="card-header">
+                    <h3>Recent Activity</h3>
+                    <a href="#" class="view-all">View All</a>
+                </div>
+                <div class="card-content">
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon">➕</div>
+                            <div class="activity-details">
+                                <div class="activity-title">New assignment posted</div>
+                                <div class="activity-time">3 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">✅</div>
+                            <div class="activity-details">
+                                <div class="activity-title">Grades published</div>
+                                <div class="activity-time">Yesterday</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card quick-actions">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-content">
+                    <div class="actions-grid">
+                        <button class="action-btn" @onclick="CreateAssignment">
+                            <span class="action-icon">➕</span>
+                            <span class="action-text">New Assignment</span>
+                        </button>
+                        <button class="action-btn" @onclick="ViewCourses">
+                            <span class="action-icon">📚</span>
+                            <span class="action-text">View Courses</span>
+                        </button>
+                        <button class="action-btn" @onclick="ManageStudents">
+                            <span class="action-icon">👥</span>
+                            <span class="action-text">Manage Students</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Overview / Placeholder -->
+        <div class="content-card full-width">
+            <div class="card-header">
+                <h3>Course Overview</h3>
+            </div>
+            <div class="card-content">
+                <div class="placeholder-content">
+                    <p>Your course analytics and progress will be displayed here.</p>
+                    <div class="placeholder-chart">
+                        <div class="chart-placeholder">
+                            <p>📊 Chart Area</p>
+                            <p>Visualizations will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="home-container">
+        <div class="welcome-section">
+            <h1>Welcome to Thesis Application</h1>
+            <p>This is the main page.</p>
+            <div class="navigation-links mt-4">
+                <a href="/login" class="btn btn-outline-primary me-2">Login</a>
+                <a href="/register" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool showLogoutModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(100);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void ShowLogoutModal() => showLogoutModal = true;
+    private void CloseLogoutModal() => showLogoutModal = false;
+
+    private async Task ConfirmLogout()
+    {
+        await AuthStateService.LogoutAsync();
+        Navigation.NavigateTo("/", true);
+    }
+
+    private void CreateAssignment() => Console.WriteLine("Create Assignment clicked");
+    private void ViewCourses() => Console.WriteLine("View Courses clicked");
+    private void ManageStudents() => Console.WriteLine("Manage Students clicked");
+}
+<style>
+    /* --- Modal Styles --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .modal-header, .modal-body, .modal-footer {
+        padding: 1.5rem;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+    /* --- Dashboard Container --- */
+    .dashboard-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background-color: #f8fafc;
+    }
+
+    /* --- Main Content --- */
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .top-header {
+        background: white;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header-left h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .welcome-text {
+        margin: 0.25rem 0 0 0;
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .date-display {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .content-area {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+
+    /* --- Stats Grid --- */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-left: 4px solid #3b82f6;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    /* --- Content Grid --- */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+    .view-all {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+        .view-all:hover {
+            text-decoration: underline;
+        }
+
+    .card-content {
+        padding: 1.5rem;
+    }
+
+    /* --- Activity List --- */
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+    .activity-icon {
+        font-size: 1.25rem;
+        width: 32px;
+        text-align: center;
+    }
+
+    .activity-title {
+        font-weight: 500;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    .activity-time {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.125rem;
+    }
+
+    /* --- Quick Actions --- */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .action-btn {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .action-btn:hover {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+
+    .action-icon {
+        font-size: 1.5rem;
+    }
+
+    .action-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* --- Placeholder Chart --- */
+    .placeholder-chart {
+        background: #f8fafc;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .chart-placeholder p {
+        margin: 0.5rem 0;
+    }
+
+    /* --- Loading Spinner --- */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #f8f9fa;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #1976d2;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* --- Logged Out / Home Page --- */
+    .home-container {
+        min-height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-image: url('/images/background.jpg');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+        .home-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+
+    .welcome-section {
+        text-align: center;
+        color: white;
+        position: relative;
+        z-index: 2;
+    }
+
+        .welcome-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px2px4px rgba(0,0,0,0.3);
+        }
+
+        .welcome-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+    .navigation-links .btn {
+        margin: 0 0.5rem;
+        padding: 0.75rem 2rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg,#1565c0 0%,#0d47a1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(21,101,192,0.4);
+        }
+
+    .btn-outline-primary {
+        background: transparent;
+        border: 2px solid #1976d2;
+        color: #1976d2;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+        .btn-outline-primary:hover {
+            background: #1976d2;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(21,101,192,0.4);
+        }
+</style>

@@ -1,0 +1,1417 @@
+﻿@page "/adminsettings"
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject Data.AppDbContext Context
+@using Microsoft.EntityFrameworkCore
+@using Thesis.Components.Models
+@using Thesis.Models
+
+
+<PageTitle>Thesis - Admin Settings</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading Settings...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to access admin settings.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">Return to Home</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-settings">
+        <div class="header-bar">
+            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <h2>System Settings</h2>
+            <div class="info-badge">
+                @if (hasUnsavedChanges)
+                {
+                    <span style="color: #f59e0b;">● Unsaved Changes</span>
+                }
+                else
+                {
+                    <span>All Changes Saved</span>
+                }
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="loading">Loading settings...</div>
+        }
+        else
+        {
+            <div class="settings-container">
+                <!-- System Settings -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">⚙️</span>
+                            <h3>System Configuration</h3>
+                        </div>
+                        <p class="section-description">Manage system-wide settings and preferences</p>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Academic Year</h4>
+                                    <p>Current academic year configuration</p>
+                                </div>
+                                <div class="setting-badge">Current</div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.AcademicYear" class="setting-select">
+                                    <option value="2023-2024">2023-2024</option>
+                                    <option value="2024-2025">2024-2025</option>
+                                    <option value="2025-2026">2025-2026</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Grading Scale</h4>
+                                    <p>Default grading scale for all courses</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.GradingScale" class="setting-select">
+                                    <option value="0-10">0-10 Scale</option>
+                                    <option value="0-100">0-100 Scale</option>
+                                    <option value="A-F">A-F Letter Grades</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Auto Backup</h4>
+                                    <p>Automatically backup system data</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.AutoBackup" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Backup Frequency</h4>
+                                    <p>How often to create automatic backups</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.BackupFrequency" class="setting-select" disabled="@(!AdminSystemSettings.AutoBackup)">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Settings -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">👥</span>
+                            <h3>User Management</h3>
+                        </div>
+                        <p class="section-description">Configure user registration and permissions</p>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Student Registration</h4>
+                                    <p>Allow new student registrations</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.AllowStudentRegistration" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Default User Role</h4>
+                                    <p>Default role for new registrations</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.DefaultUserRole" class="setting-select">
+                                    <option value="Student">Student</option>
+                                    <option value="Teacher">Teacher</option>
+                                    <option value="Pending">Pending Approval</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Password Policy</h4>
+                                    <p>Minimum password requirements</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.PasswordPolicy" class="setting-select">
+                                    <option value="weak">Weak (4+ characters)</option>
+                                    <option value="medium">Medium (6+ characters)</option>
+                                    <option value="strong">Strong (8+ characters, mixed)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Session Timeout</h4>
+                                    <p>Automatic logout after inactivity</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <select @bind="AdminSystemSettings.SessionTimeout" class="setting-select">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="120">2 hours</option>
+                                    <option value="240">4 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">🔔</span>
+                            <h3>Notifications</h3>
+                        </div>
+                        <p class="section-description">Configure system notifications and alerts</p>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Email Notifications</h4>
+                                    <p>Send email alerts for important events</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.EmailNotifications" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>Grade Alerts</h4>
+                                    <p>Notify when grades are entered or changed</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.GradeAlerts" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>New User Alerts</h4>
+                                    <p>Notify when new users register</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.NewUserAlerts" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-card">
+                            <div class="setting-header">
+                                <div class="setting-info">
+                                    <h4>System Maintenance</h4>
+                                    <p>Notify before system maintenance</p>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="AdminSystemSettings.MaintenanceAlerts" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Management -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">💾</span>
+                            <h3>Database Management</h3>
+                        </div>
+                        <p class="section-description">Manage database operations and maintenance</p>
+                    </div>
+
+                    <div class="action-grid">
+                        <div class="action-card" @onclick="CreateBackup">
+                            <div class="action-icon">📥</div>
+                            <div class="action-content">
+                                <h4>Create Backup</h4>
+                                <p>Create a manual database backup</p>
+                                @if (lastBackup != null)
+                                {
+                                    <small>Last backup: @lastBackup</small>
+                                }
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+
+                        <div class="action-card" @onclick="ShowCleanupModal">
+                            <div class="action-icon">🧹</div>
+                            <div class="action-content">
+                                <h4>Cleanup Data</h4>
+                                <p>Remove old and unused data</p>
+                                <small>@GetDatabaseStats()</small>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+
+                        <div class="action-card" @onclick="ExportData">
+                            <div class="action-icon">📤</div>
+                            <div class="action-content">
+                                <h4>Export Data</h4>
+                                <p>Export all data to CSV files</p>
+                            </div>
+                            <div class="action-arrow">→</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Actions -->
+                <div class="actions-section">
+                    <div class="actions-row">
+                        <button class="btn btn-primary" @onclick="SaveSettings" disabled="@(!hasUnsavedChanges || isSaving)">
+                            @if (isSaving)
+                            {
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <span>💾 Save All Settings</span>
+                            }
+                        </button>
+                        <button class="btn btn-secondary" @onclick="ShowResetModal">
+                            🔄 Reset to Defaults
+                        </button>
+                        <button class="btn btn-outline" @onclick="CancelChanges">
+                            ❌ Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Cleanup Confirmation Modal -->
+@if (showCleanupModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🧹 Data Cleanup</h3>
+            </div>
+            <div class="modal-body">
+                <p>This will remove old and unused data from the system. This action cannot be undone.</p>
+                <div class="cleanup-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="cleanOldGrades" />
+                        <span>Remove grades older than 2 years</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="cleanInactiveUsers" />
+                        <span>Remove inactive user accounts (no activity for 1 year)</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="cleanTempFiles" />
+                        <span>Clean temporary files</span>
+                    </label>
+                </div>
+                @if (cleanupStats != null)
+                {
+                    <div class="cleanup-stats">
+                        <h4>Items to be removed:</h4>
+                        <ul>
+                            @if (cleanupStats.GradesToDelete > 0)
+                            {
+                                <li>@cleanupStats.GradesToDelete old grades</li>
+                            }
+                            @if (cleanupStats.UsersToDelete > 0)
+                            {
+                                <li>@cleanupStats.UsersToDelete inactive users</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseCleanupModal">Cancel</button>
+                <button class="btn btn-warning" @onclick="PerformCleanup" disabled="@isCleaning">
+                    @if (isCleaning)
+                    {
+                        <span>Cleaning...</span>
+                    }
+                    else
+                    {
+                        <span>Cleanup Data</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Reset Confirmation Modal -->
+@if (showResetModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔄 Reset System Settings</h3>
+            </div>
+            <div class="modal-body">
+                <p class="warning-text">⚠️ This will reset all system settings to their default values. This action cannot be undone.</p>
+                <p>Are you sure you want to continue?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" @onclick="CloseResetModal">Cancel</button>
+                <button class="btn btn-danger" @onclick="PerformReset">Reset Settings</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthChecked = false;
+    private bool isAuthorized = false;
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isCleaning = false;
+    private bool hasUnsavedChanges = false;
+
+    // System Settings - Using AdminSystemSettings class
+    private AdminSystemSettings adminSystemSettings = new();
+    private AdminSystemSettings originalSettings = new();
+
+    // Database Stats
+    private int totalUsers = 0;
+    private int totalCourses = 0;
+    private int totalGrades = 0;
+    private string? lastBackup = null;
+
+    // Modal States
+    private bool showCleanupModal = false;
+    private bool showResetModal = false;
+    private bool cleanOldGrades = true;
+    private bool cleanInactiveUsers = false;
+    private bool cleanTempFiles = true;
+    private CleanupStats? cleanupStats = null;
+
+    // Property to expose AdminSystemSettings to the UI
+    private AdminSystemSettings AdminSystemSettings => adminSystemSettings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+        if (isAuthorized)
+        {
+            await LoadSettings();
+            await LoadDatabaseStats();
+        }
+    }
+
+    private async Task CheckAuthorization()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            if (AuthStateService.CurrentUser != null)
+                break;
+            await Task.Delay(100);
+        }
+
+        var user = AuthStateService.CurrentUser;
+        isAuthorized = user != null && user.Role == "Admin";
+        isAuthChecked = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadSettings()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Try to load settings from database
+            var settings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
+            if (settings != null)
+            {
+                // Map the database settings to AdminSystemSettings
+                adminSystemSettings = new AdminSystemSettings
+                {
+                    Id = settings.Id,
+                    AcademicYear = settings.AcademicYear,
+                    GradingScale = settings.GradingScale,
+                    AutoBackup = settings.AutoBackup,
+                    BackupFrequency = settings.BackupFrequency,
+                    AllowStudentRegistration = settings.AllowStudentRegistration,
+                    DefaultUserRole = settings.DefaultUserRole,
+                    PasswordPolicy = settings.PasswordPolicy,
+                    SessionTimeout = settings.SessionTimeout,
+                    EmailNotifications = settings.EmailNotifications,
+                    GradeAlerts = settings.GradeAlerts,
+                    NewUserAlerts = settings.NewUserAlerts,
+                    MaintenanceAlerts = settings.MaintenanceAlerts,
+                    LastBackup = settings.LastBackup,
+                    CreatedAt = settings.CreatedAt,
+                    UpdatedAt = settings.UpdatedAt
+                };
+            }
+            else
+            {
+                // Create default settings if none exist
+                adminSystemSettings = new AdminSystemSettings();
+                // You might need to map AdminSystemSettings to your entity model here
+                var newSettings = new AdminSystemSettings
+                {
+                    AcademicYear = adminSystemSettings.AcademicYear,
+                    GradingScale = adminSystemSettings.GradingScale,
+                    AutoBackup = adminSystemSettings.AutoBackup,
+                    BackupFrequency = adminSystemSettings.BackupFrequency,
+                    AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
+                    DefaultUserRole = adminSystemSettings.DefaultUserRole,
+                    PasswordPolicy = adminSystemSettings.PasswordPolicy,
+                    SessionTimeout = adminSystemSettings.SessionTimeout,
+                    EmailNotifications = adminSystemSettings.EmailNotifications,
+                    GradeAlerts = adminSystemSettings.GradeAlerts,
+                    NewUserAlerts = adminSystemSettings.NewUserAlerts,
+                    MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                Context.AdminSystemSettings.Add(newSettings);
+                await Context.SaveChangesAsync();
+            }
+
+            // Store original settings for change detection
+            originalSettings = new AdminSystemSettings
+            {
+                AcademicYear = adminSystemSettings.AcademicYear,
+                GradingScale = adminSystemSettings.GradingScale,
+                AutoBackup = adminSystemSettings.AutoBackup,
+                BackupFrequency = adminSystemSettings.BackupFrequency,
+                AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
+                DefaultUserRole = adminSystemSettings.DefaultUserRole,
+                PasswordPolicy = adminSystemSettings.PasswordPolicy,
+                SessionTimeout = adminSystemSettings.SessionTimeout,
+                EmailNotifications = adminSystemSettings.EmailNotifications,
+                GradeAlerts = adminSystemSettings.GradeAlerts,
+                NewUserAlerts = adminSystemSettings.NewUserAlerts,
+                MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts
+            };
+
+            hasUnsavedChanges = false;
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading settings: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDatabaseStats()
+    {
+        try
+        {
+            totalUsers = await Context.Users.CountAsync();
+            totalCourses = await Context.Courses.CountAsync();
+            totalGrades = await Context.Grades.CountAsync();
+
+            // Load last backup info
+            var backupSetting = await Context.AdminSystemSettings
+                .Select(s => s.LastBackup)
+                .FirstOrDefaultAsync();
+
+            lastBackup = backupSetting?.ToString("yyyy-MM-dd HH:mm") ?? "Never";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading database stats: {ex.Message}");
+        }
+    }
+
+    private string GetDatabaseStats()
+    {
+        return $"{totalUsers} users, {totalCourses} courses, {totalGrades} grades";
+    }
+
+    // This method is no longer needed since we're using property setters
+    // The @bind directive will automatically update the properties
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            // Update the settings in database
+            var existingSettings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
+            if (existingSettings != null)
+            {
+                // Update existing settings with AdminSystemSettings values
+                existingSettings.AcademicYear = adminSystemSettings.AcademicYear;
+                existingSettings.GradingScale = adminSystemSettings.GradingScale;
+                existingSettings.AutoBackup = adminSystemSettings.AutoBackup;
+                existingSettings.BackupFrequency = adminSystemSettings.BackupFrequency;
+                existingSettings.AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration;
+                existingSettings.DefaultUserRole = adminSystemSettings.DefaultUserRole;
+                existingSettings.PasswordPolicy = adminSystemSettings.PasswordPolicy;
+                existingSettings.SessionTimeout = adminSystemSettings.SessionTimeout;
+                existingSettings.EmailNotifications = adminSystemSettings.EmailNotifications;
+                existingSettings.GradeAlerts = adminSystemSettings.GradeAlerts;
+                existingSettings.NewUserAlerts = adminSystemSettings.NewUserAlerts;
+                existingSettings.MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts;
+                existingSettings.UpdatedAt = DateTime.Now;
+            }
+
+            await Context.SaveChangesAsync();
+
+            // Update original settings
+            originalSettings = new AdminSystemSettings
+            {
+                AcademicYear = adminSystemSettings.AcademicYear,
+                GradingScale = adminSystemSettings.GradingScale,
+                AutoBackup = adminSystemSettings.AutoBackup,
+                BackupFrequency = adminSystemSettings.BackupFrequency,
+                AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
+                DefaultUserRole = adminSystemSettings.DefaultUserRole,
+                PasswordPolicy = adminSystemSettings.PasswordPolicy,
+                SessionTimeout = adminSystemSettings.SessionTimeout,
+                EmailNotifications = adminSystemSettings.EmailNotifications,
+                GradeAlerts = adminSystemSettings.GradeAlerts,
+                NewUserAlerts = adminSystemSettings.NewUserAlerts,
+                MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts
+            };
+
+            hasUnsavedChanges = false;
+
+            await JSRuntime.InvokeVoidAsync("alert", "Settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving settings: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowResetModal()
+    {
+        showResetModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseResetModal()
+    {
+        showResetModal = false;
+        StateHasChanged();
+    }
+
+    private void PerformReset()
+    {
+        // Reset to default values using AdminSystemSettings
+        adminSystemSettings = new AdminSystemSettings();
+        hasUnsavedChanges = !adminSystemSettings.Equals(originalSettings);
+        showResetModal = false;
+        StateHasChanged();
+    }
+
+    private void CancelChanges()
+    {
+        // Restore original settings
+        adminSystemSettings = new AdminSystemSettings
+        {
+            AcademicYear = originalSettings.AcademicYear,
+            GradingScale = originalSettings.GradingScale,
+            AutoBackup = originalSettings.AutoBackup,
+            BackupFrequency = originalSettings.BackupFrequency,
+            AllowStudentRegistration = originalSettings.AllowStudentRegistration,
+            DefaultUserRole = originalSettings.DefaultUserRole,
+            PasswordPolicy = originalSettings.PasswordPolicy,
+            SessionTimeout = originalSettings.SessionTimeout,
+            EmailNotifications = originalSettings.EmailNotifications,
+            GradeAlerts = originalSettings.GradeAlerts,
+            NewUserAlerts = originalSettings.NewUserAlerts,
+            MaintenanceAlerts = originalSettings.MaintenanceAlerts
+        };
+
+        hasUnsavedChanges = false;
+        StateHasChanged();
+    }
+
+    private async Task CreateBackup()
+    {
+        try
+        {
+            // Update last backup time
+            var settings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
+            if (settings != null)
+            {
+                settings.LastBackup = DateTime.Now;
+                await Context.SaveChangesAsync();
+                lastBackup = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            }
+
+            // In a real application, you would:
+            // 1. Create a database backup file
+            // 2. Save it to a secure location
+            // 3. Log the backup operation
+
+            await JSRuntime.InvokeVoidAsync("alert", $"Backup created successfully at {DateTime.Now:HH:mm}");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error creating backup: {ex.Message}");
+        }
+    }
+
+    private async void ShowCleanupModal()
+    {
+        showCleanupModal = true;
+
+        // Calculate cleanup stats
+        cleanupStats = new CleanupStats();
+
+        if (cleanOldGrades)
+        {
+            var twoYearsAgo = DateTime.Now.AddYears(-2);
+            cleanupStats.GradesToDelete = await Context.Grades
+            .Where(g => g.CreatedAt < twoYearsAgo)
+
+                .CountAsync();
+        }
+
+        if (cleanInactiveUsers)
+        {
+            var oneYearAgo = DateTime.Now.AddYears(-1);
+            cleanupStats.UsersToDelete = await Context.Users
+                .Where(u => u.Role != "Admin" && u.CreatedAt < oneYearAgo)
+                .CountAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    private void CloseCleanupModal()
+    {
+        showCleanupModal = false;
+        cleanupStats = null;
+        StateHasChanged();
+    }
+
+    private async Task PerformCleanup()
+    {
+        try
+        {
+            isCleaning = true;
+            StateHasChanged();
+
+            int totalDeleted = 0;
+
+            if (cleanOldGrades)
+            {
+                var twoYearsAgo = DateTime.Now.AddYears(-2);
+                var oldGrades = await Context.Grades
+                .Where(g => g.CreatedAt < twoYearsAgo)
+
+                    .ToListAsync();
+
+                Context.Grades.RemoveRange(oldGrades);
+                totalDeleted += oldGrades.Count;
+            }
+
+            if (cleanInactiveUsers)
+            {
+                var oneYearAgo = DateTime.Now.AddYears(-1);
+                var inactiveUsers = await Context.Users
+                    .Where(u => u.Role != "Admin" && u.CreatedAt < oneYearAgo)
+                    .ToListAsync();
+
+                Context.Users.RemoveRange(inactiveUsers);
+                totalDeleted += inactiveUsers.Count;
+            }
+
+            await Context.SaveChangesAsync();
+
+            // Reload stats
+            await LoadDatabaseStats();
+
+            await JSRuntime.InvokeVoidAsync("alert", $"Cleanup completed! {totalDeleted} items removed.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error during cleanup: {ex.Message}");
+        }
+        finally
+        {
+            isCleaning = false;
+            showCleanupModal = false;
+            cleanupStats = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportData()
+    {
+        try
+        {
+            // Export users to CSV
+            var users = await Context.Users.ToListAsync();
+            var userCsv = "Id,Name,LastName,Email,Role,CreatedAt\n" +
+                         string.Join("\n", users.Select(u =>
+                             $"{u.Id},{u.Name},{u.LastName},{u.Email},{u.Role},{u.CreatedAt:yyyy-MM-dd}"));
+
+            // Export courses to CSV
+            var courses = await Context.Courses.ToListAsync();
+            var courseCsv = "Id,Name,Description,ProfessorId\n" +
+                           string.Join("\n", courses.Select(c =>
+                               $"{c.Id},{c.Name},{c.Description?.Replace(",", ";")},{c.ProfessorId}"));
+
+            // Export grades to CSV
+            var grades = await Context.Grades.ToListAsync();
+            var gradeCsv = "Id,StudentId,CourseId,GradeValue\n" +
+                          string.Join("\n", grades.Select(g =>
+                              $"{g.Id},{g.StudentId},{g.CourseId},{g.GradeValue}"));
+
+            // Create download links (simplified - in real app, you'd create actual file downloads)
+            await JSRuntime.InvokeVoidAsync("alert",
+                $"Data exported successfully!\n\n" +
+                $"Users: {users.Count} records\n" +
+                $"Courses: {courses.Count} records\n" +
+                $"Grades: {grades.Count} records\n\n" +
+                $"In a real application, these would be downloaded as CSV files.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error exporting data: {ex.Message}");
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/adminhome");
+    private void RedirectToHome() => Navigation.NavigateTo("/");
+
+    // Cleanup Stats Model (keep this if you don't have it in AdminSystemSettings.cs)
+    public class CleanupStats
+    {
+        public int GradesToDelete { get; set; }
+        public int UsersToDelete { get; set; }
+        public int TotalToDelete => GradesToDelete + UsersToDelete;
+    }
+}
+<style>
+    .cleanup-stats {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    .cleanup-stats h4 {
+        margin: 0 0 10px 0;
+        color: #2d3748;
+        font-size: 1rem;
+    }
+
+    .cleanup-stats ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #4a5568;
+    }
+
+    .cleanup-stats li {
+        margin-bottom: 5px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        color: #64748b;
+    }
+    .admin-settings {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 30px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    .header-bar {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        background: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+        .header-bar h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+    .info-badge {
+        margin-left: auto;
+        background: #667eea;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .settings-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .section-header {
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .section-icon {
+        font-size: 1.5rem;
+    }
+
+    .section-title h3 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+
+    .section-description {
+        color: #64748b;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+    }
+
+    .setting-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .setting-card:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    .setting-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .setting-info h4 {
+        margin: 0 0 5px 0;
+        color: #2d3748;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .setting-info p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .setting-badge {
+        background: #10b981;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .setting-control {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .setting-select {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        min-width: 150px;
+        transition: border-color 0.3s ease;
+    }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .setting-select:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e0;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+    input:checked + .toggle-slider {
+        background-color: #10b981;
+    }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+    /* Action Grid */
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .action-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .action-card:hover {
+            background: #f1f5f9;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+    .action-icon {
+        font-size: 2rem;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+    }
+
+    .action-content {
+        flex: 1;
+    }
+
+        .action-content h4 {
+            margin: 0 0 5px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .action-content p {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+    .action-arrow {
+        color: #64748b;
+        font-size: 1.2rem;
+        font-weight: 300;
+    }
+
+    /* Actions Section */
+    .actions-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .actions-row {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+    .btn-outline {
+        background: white;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+        .btn-outline:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        padding: 0;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        padding: 25px 25px 0 25px;
+    }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #2d3748;
+        }
+
+    .modal-body {
+        padding: 20px 25px;
+    }
+
+        .modal-body p {
+            margin: 0 0 15px 0;
+            color: #4a5568;
+        }
+
+    .warning-text {
+        color: #dc2626 !important;
+        font-weight: 500;
+    }
+
+    .cleanup-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 15px;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background 0.2s ease;
+    }
+
+        .checkbox-label:hover {
+            background: #f7fafc;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin: 0;
+        }
+
+    .modal-footer {
+        padding: 20px 25px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    /* Loading and Unauthorized States */
+    .loading-container, .unauthorized-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+    }
+
+    .unauthorized-card {
+        background: rgba(255,255,255,0.1);
+        padding: 2rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .unauthorized-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .spinner {
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .admin-settings {
+            padding: 15px;
+        }
+
+        .header-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .info-badge {
+            margin-left: 0;
+        }
+
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-row {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .setting-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .setting-control {
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        .setting-select {
+            width: 100%;
+        }
+    }
+</style>

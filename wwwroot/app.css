@@ -49,3 +49,235 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+/* Global Side Panel Styles */
+.side-panel {
+    width: 280px;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    height: 100vh;
+}
+
+    /* Admin Specific Styles */
+    .side-panel.admin {
+        background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    }
+
+    /* Professor Specific Styles */
+    .side-panel.professor {
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    }
+
+    /* Student Specific Styles */
+    .side-panel.student {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    }
+
+/* Common Panel Styles */
+.panel-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.app-logo h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.panel-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem 0;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+    .nav-link:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left-color: rgba(255,255,255,0.5);
+    }
+
+    .nav-link.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+        border-left-color: white;
+        font-weight: 600;
+    }
+
+.nav-icon {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+    width: 24px;
+    text-align: center;
+}
+
+.nav-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.nav-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 0.5rem 1.5rem;
+}
+
+.logout-link {
+    color: #fca5a5 !important;
+}
+
+    .logout-link:hover {
+        color: #fecaca !important;
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+.user-info {
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.user-details {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.125rem;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1e293b;
+    }
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+    .modal-body p {
+        margin: 0;
+        color: #64748b;
+    }
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* Button Styles */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-outline {
+    background: white;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+    .btn-outline:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+/* TEMPORARY DEBUG STYLES - REMOVE LATER */
+.side-panel {
+    background: red !important;
+    border: 5px solid yellow !important;
+    width: 280px !important;
+    height: 100vh !important;
+}
+
+    .side-panel.professor {
+        background: blue !important;
+        border: 5px solid green !important;
+    }

@@ -1,0 +1,82 @@
+﻿@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+
+<div class="admin-sidebar">
+    <div class="sidebar-header">
+        <div class="app-logo">
+            <h3>🎓 Thesis Admin</h3>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a class="nav-item active" href="/adminhome">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Dashboard</span>
+        </a>
+        <a class="nav-item" href="/adminusers">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">User Management</span>
+        </a>
+        <a class="nav-item" href="/admingrades">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">Grade Management</span>
+        </a>
+        <a class="nav-item" href="/admincourses">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">Course Management</span>
+        </a>
+        <a class="nav-item" href="/adminreports">
+            <span class="nav-icon">📈</span>
+            <span class="nav-text">Reports & Analytics</span>
+        </a>
+        <a class="nav-item" href="/adminmessages">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">Requests & DMs</span>
+        </a>
+        <a class="nav-item" href="/adminuni">
+            <span class="nav-icon">🏫</span>
+            <span class="nav-text">University Info</span>
+        </a>
+        <div class="nav-divider"></div>
+        <a class="nav-item" href="/adminsettings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">System Settings</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar">@GetUserInitials()</div>
+            <div class="user-details">
+                <div class="user-name">@AuthStateService.CurrentUser?.Name</div>
+                <div class="user-role">Administrator</div>
+            </div>
+        </div>
+        <button class="logout-btn" @onclick="TriggerLogout">
+            <span class="logout-icon">🚪</span>
+            Logout
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnLogout { get; set; }
+
+    private string GetUserInitials()
+    {
+        var name = AuthStateService.CurrentUser?.Name ?? "";
+        if (string.IsNullOrEmpty(name)) return "A";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+    }
+
+    private async Task TriggerLogout()
+    {
+        if (OnLogout.HasDelegate)
+            await OnLogout.InvokeAsync(null);
+    }
+}

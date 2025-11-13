@@ -12,6 +12,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthStateService>();
+builder.Services.AddScoped<GradesService>();
+
 
 var app = builder.Build();
 

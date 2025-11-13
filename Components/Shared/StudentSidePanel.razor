@@ -1,0 +1,134 @@
+﻿@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+
+
+<div style="width: 280px; height: 100vh; background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%); color: white; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.1);">
+    <div style="padding: 1.5rem 1.5rem 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: white;">Thesis App</h3>
+    </div>
+
+    <!-- Menu -->
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0;">
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            <li>
+                <NavLink href="/" class="nav-link" activeClass="active">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/profile" class="nav-link" activeClass="active">
+                    <span class="icon">👤</span>
+                    <span>Profile</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/settings" class="nav-link" activeClass="active">
+                    <span class="icon">⚙️</span>
+                    <span>Settings</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/calendar" class="nav-link" activeClass="active">
+                    <span class="icon">📅</span>
+                    <span>Calendar</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/grades" class="nav-link" activeClass="active">
+                    <span class="icon">📈</span>
+                    <span>Grades</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/secretary" class="nav-link" activeClass="active">
+                    <span class="icon">💼</span>
+                    <span>Secretary</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/housing" class="nav-link" activeClass="active">
+                    <span class="icon">🏠</span>
+                    <span>Housing</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/food" class="nav-link" activeClass="active">
+                    <span class="icon">🍽️</span>
+                    <span>Food</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/courses" class="nav-link" activeClass="active">
+                    <span class="icon">📚</span>
+                    <span>Courses</span>
+                </NavLink>
+            </li>
+
+            <li style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.5rem 1.5rem;"></li>
+
+            <li>
+                <a href="#" @onclick="ShowLogoutConfirmation" class="nav-link logout">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- User Info -->
+        <div style="padding: 1.5rem; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                @GetUserInitials()
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.125rem;">@AuthStateService.CurrentUser?.Name</div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">@AuthStateService.CurrentUser?.Role</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Modal -->
+@if (showLogoutModal)
+{
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+        <div style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 90%; max-width: 400px; overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">Confirm Logout</h3>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p style="margin: 0; color: #64748b;">Are you sure you want to log out?</p>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="btn-cancel" @onclick="CloseLogoutModal">Cancel</button>
+                <button type="button" class="btn-logout" @onclick="ConfirmLogout">Logout</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showLogoutModal = false;
+
+    private void ShowLogoutConfirmation() => showLogoutModal = true;
+    private void CloseLogoutModal() => showLogoutModal = false;
+
+    private async Task ConfirmLogout()
+    {
+        showLogoutModal = false;
+        StateHasChanged();
+        await AuthStateService.LogoutAsync();
+        Navigation.NavigateTo("/", true);
+    }
+
+    private string GetUserInitials()
+    {
+        var name = AuthStateService.CurrentUser?.Name ?? "";
+        if (string.IsNullOrWhiteSpace(name)) return "U";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : name[..Math.Min(2, name.Length)].ToUpper();
+    }
+}

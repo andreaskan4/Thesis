@@ -4,19 +4,26 @@ namespace Thesis.Models;
 
 public class User
 {
+    [Key]
     public int Id { get; set; }
 
     [Required]
-    [StringLength(50)]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
 
     [Required]
-    [StringLength(255)]
-    public string Password { get; set; } = string.Empty;
+    public string LastName { get; set; } = "";
 
     [Required]
-    [StringLength(20)]
-    public string Role { get; set; } = "Teacher";
+    public string Email { get; set; } = "";
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Required]
+    public string AcademicId { get; set; } = "";
+
+    [Required]
+    public string Password { get; set; } = "";
+
+    [Required]
+    public string Role { get; set; } = "";
+
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

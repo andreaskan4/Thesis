@@ -1,0 +1,124 @@
+﻿@inject AuthStateService AuthStateService
+@using Microsoft.AspNetCore.Components.Routing
+
+<div style="width: 280px; height: 100vh; background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%); color: white; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.1);">
+    <!-- Panel Header -->
+    <div style="padding: 1.5rem 1.5rem 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div>
+            <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: white;">Professor Portal</h3>
+        </div>
+    </div>
+
+    <!-- Panel Content -->
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0;">
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            <li>
+                <NavLink href="/professor/dashboard" style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">📊</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Dashboard</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/professor/profile" style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">👤</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Profile</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/professor/settings" style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">⚙️</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Settings</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/professor/assignments" style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">📝</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Assignments</span>
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/professor/announcements" style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">📢</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Announcements</span>
+                </NavLink>
+            </li>
+            <li style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.5rem 1.5rem;"></li>
+            <li>
+                <a href="javascript:void(0)" @onclick="ShowLogoutConfirmation" @onclick:preventDefault style="display: flex; align-items: center; padding: 0.75rem 1.5rem; color: #fca5a5; text-decoration: none; transition: all 0.3s ease; border-left: 3px solid transparent;">
+                    <span style="font-size: 1.25rem; margin-right: 0.75rem; width: 24px; text-align: center;">🚪</span>
+                    <span style="font-size: 0.95rem; font-weight: 500;">Logout</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Professor Info -->
+        <div style="padding: 1.5rem; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                @GetUserInitials()
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.125rem;">@AuthStateService.CurrentUser?.Name</div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">@AuthStateService.CurrentUser?.Role</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Modal -->
+@if (showLogoutModal)
+{
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+        <div style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 90%; max-width: 400px; overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">Confirm Logout</h3>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p style="margin: 0; color: #64748b;">Are you sure you want to log out?</p>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: white; color: #374151;" @onclick="CloseLogoutModal">Cancel</button>
+                <button type="button" style="padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: #ef4444; color: white;" @onclick="ConfirmLogout">Logout</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool showLogoutModal = false;
+
+    private string GetUserInitials()
+    {
+        var name = AuthStateService.CurrentUser?.Name ?? "";
+        if (string.IsNullOrEmpty(name)) return "P";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+    }
+
+    private void ShowLogoutConfirmation()
+    {
+        showLogoutModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseLogoutModal()
+    {
+        showLogoutModal = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmLogout()
+    {
+        showLogoutModal = false;
+        StateHasChanged();
+
+        await AuthStateService.LogoutAsync();
+        NavigationManager.NavigateTo("/", true);
+    }
+}
