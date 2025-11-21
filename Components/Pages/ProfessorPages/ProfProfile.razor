@@ -1,0 +1,1943 @@
+﻿@page "/profprofile"
+@inject AuthStateService AuthStateService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject Data.AppDbContext Context
+@using Thesis.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Thesis - Professor Profile</PageTitle>
+
+@if (!isAuthChecked)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading Profile...</p>
+    </div>
+}
+else if (!isAuthorized)
+{
+    <div class="unauthorized-container">
+        <div class="unauthorized-card">
+            <div class="unauthorized-icon">🚫</div>
+            <h3>Access Denied</h3>
+            <p>You don't have permission to access this page.</p>
+            <button class="btn btn-primary" @onclick="RedirectToHome">Return to Home</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="prof-profile">
+        <div class="header-bar">
+            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <h2>👤 Professor Profile</h2>
+        </div>
+
+        <div class="profile-container">
+            <!-- Left Column - Profile Info & Courses -->
+            <div class="profile-left">
+                <!-- Profile Picture Section -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h3>Profile Picture</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="avatar-section">
+                            <div class="avatar-container">
+                                <img src="@GetProfileImageUrl()"
+                                     alt="Profile" class="profile-avatar" />
+                                <div class="avatar-overlay" @onclick="TriggerFileInput">
+                                    <span class="camera-icon">📷</span>
+                                    <span>Change Photo</span>
+                                </div>
+                            </div>
+                            <InputFile id="avatarInput"
+                                       accept="image/*"
+                                       style="display: none;"
+                                       OnChange="HandleAvatarUpload" />
+
+                            <div class="avatar-actions">
+                                <button class="btn btn-outline btn-sm" @onclick="TriggerFileInput">
+                                    📤 Upload New
+                                </button>
+                                <button class="btn btn-outline btn-sm" @onclick="UseDefaultAvatar" style="margin-left: 8px;">
+                                    🗑️ Remove Photo
+                                </button>
+                            </div>
+
+                            @if (isUploading)
+                            {
+                                <div class="upload-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: @uploadProgress%"></div>
+                                    </div>
+                                    <span>Uploading... @uploadProgress%</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assigned Courses Section -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h3>📚 Assigned Courses</h3>
+                    </div>
+                    <div class="card-content">
+                        @if (assignedCourses.Any())
+                        {
+                            <div class="courses-list">
+                                @foreach (var course in assignedCourses)
+                                {
+                                    <div class="course-item">
+                                        <div class="course-info">
+                                            <h4 class="course-title">@course.Name</h4>
+                                            <p class="course-description">@course.Description</p>
+                                            <div class="course-meta">
+                                                <span class="course-difficulty">Difficulty: @course.DifficultyRating.ToString("F1")/5.0</span>
+                                                <span class="course-method">Grading: @course.Method</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="no-courses">
+                                <p>No courses assigned yet.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Editable Profile Info & Ratings -->
+            <div class="profile-right">
+                <!-- Personal Information -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h3>Personal Information</h3>
+                        <button class="btn btn-outline" @onclick="ToggleEditMode">
+                            @if (isEditing)
+                            {
+                                <span>💾 Save Changes</span>
+                            }
+                            else
+                            {
+                                <span>✏️ Edit Profile</span>
+                            }
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <form class="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    @if (isEditing)
+                                    {
+                                        <input type="text" @bind="profile.Name" class="form-control" />
+                                    }
+                                    else
+                                    {
+                                        <div class="read-only-field">@profile.Name</div>
+                                    }
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    @if (isEditing)
+                                    {
+                                        <input type="text" @bind="profile.LastName" class="form-control" />
+                                    }
+                                    else
+                                    {
+                                        <div class="read-only-field">@profile.LastName</div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                @if (isEditing)
+                                {
+                                    <input type="email" @bind="profile.Email" class="form-control" />
+                                }
+                                else
+                                {
+                                    <div class="read-only-field">@profile.Email</div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Academic ID</label>
+                                <div class="read-only-field">@profile.AcademicId</div>
+                                <small class="field-note">Academic ID cannot be changed</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Professional Bio</label>
+                                @if (isEditing)
+                                {
+                                    <textarea @bind="profile.Bio" class="form-control" rows="4"
+                                              placeholder="Tell students about your teaching philosophy, experience, and interests..."></textarea>
+                                    <small class="field-note">@(profile.Bio?.Length ?? 0) / 500 characters</small>
+                                }
+                                else
+                                {
+                                    <div class="read-only-field bio-text">
+                                        @if (string.IsNullOrEmpty(profile.Bio))
+                                        {
+                                            <span class="placeholder-text">No bio added yet. Click Edit Profile to add one.</span>
+                                        }
+                                        else
+                                        {
+                                            @profile.Bio
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Department/Field</label>
+                                @if (isEditing)
+                                {
+                                    <input type="text" @bind="profile.Department" class="form-control" placeholder="e.g., Computer Science, Mathematics" />
+                                }
+                                else
+                                {
+                                    <div class="read-only-field">
+                                        @if (string.IsNullOrEmpty(profile.Department))
+                                        {
+                                            <span class="placeholder-text">Not specified</span>
+                                        }
+                                        else
+                                        {
+                                            @profile.Department
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Office Location</label>
+                                @if (isEditing)
+                                {
+                                    <input type="text" @bind="profile.OfficeLocation" class="form-control" placeholder="e.g., Building A, Room 301" />
+                                }
+                                else
+                                {
+                                    <div class="read-only-field">
+                                        @if (string.IsNullOrEmpty(profile.OfficeLocation))
+                                        {
+                                            <span class="placeholder-text">Not specified</span>
+                                        }
+                                        else
+                                        {
+                                            @profile.OfficeLocation
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label>Office Hours</label>
+                                @if (isEditing)
+                                {
+                                    <textarea @bind="profile.OfficeHours" class="form-control" rows="2"
+                                              placeholder="e.g., Monday-Wednesday 2:00 PM - 4:00 PM"></textarea>
+                                }
+                                else
+                                {
+                                    <div class="read-only-field">
+                                        @if (string.IsNullOrEmpty(profile.OfficeHours))
+                                        {
+                                            <span class="placeholder-text">Not specified</span>
+                                        }
+                                        else
+                                        {
+                                            @profile.OfficeHours
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </form>
+
+                        @if (isEditing)
+                        {
+                            <div class="form-actions">
+                                <button class="btn btn-outline" @onclick="CancelEditing">
+                                    ❌ Cancel
+                                </button>
+                                <button class="btn btn-primary" @onclick="SaveProfile" disabled="@isSaving">
+                                    @if (isSaving)
+                                    {
+                                        <span>Saving...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>💾 Save Changes</span>
+                                    }
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Teacher Rating Section -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h3>👑 Teacher Rating</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="rating-section">
+                            <div class="rating-overview">
+                                <div class="rating-score">
+                                    <span class="score">@averageRating.ToString("F1")</span>
+                                    <span class="out-of">/ 5.0</span>
+                                </div>
+                                <div class="rating-stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span class="star @(i <= Math.Floor(averageRating) ? "filled" : i <= averageRating ? "half-filled" : "")">
+                                            @if (i <= Math.Floor(averageRating))
+                                            {
+                                                <text>★</text>
+                                            }
+                                            else if (i <= averageRating)
+                                            {
+                                                <span class="half-star">★</span>
+                                            }
+                                            else
+                                            {
+                                                <text>☆</text>
+                                            }
+                                        </span>
+                                    }
+                                </div>
+                                <div class="rating-count">Based on @totalRatings student ratings</div>
+                            </div>
+
+                            <!-- Rating Breakdown -->
+                            @if (ratingBreakdown.Any(r => r.Count > 0))
+                            {
+                                <div class="rating-breakdown">
+                                    <h4>Rating Breakdown</h4>
+                                    @foreach (var breakdown in ratingBreakdown.OrderByDescending(r => r.Rating))
+                                    {
+                                        <div class="breakdown-item">
+                                            <span class="breakdown-stars">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <span class="star @(i <= breakdown.Rating ? "filled" : "")">
+                                                        @if (i <= breakdown.Rating)
+                                                        {
+                                                            <text>★</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>☆</text>
+                                                        }
+                                                    </span>
+                                                }
+                                            </span>
+                                            <div class="breakdown-bar">
+                                                <div class="bar-fill" style="width: @(breakdown.Percentage)%;"></div>
+                                            </div>
+                                            <span class="breakdown-count">@breakdown.Count</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h3>📞 Contact Information</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <span class="contact-label">Phone:</span>
+                                @if (isEditing)
+                                {
+                                    <input type="tel" @bind="profile.PhoneNumber" class="form-control" />
+                                }
+                                else
+                                {
+                                    <span class="contact-value">
+                                        @if (string.IsNullOrEmpty(profile.PhoneNumber))
+                                        {
+                                            <span class="placeholder-text">Not provided</span>
+                                        }
+                                        else
+                                        {
+                                            @profile.PhoneNumber
+                                        }
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="contact-item">
+                                <span class="contact-label">Website:</span>
+                                @if (isEditing)
+                                {
+                                    <input type="url" @bind="profile.Website" class="form-control" placeholder="https://..." />
+                                }
+                                else
+                                {
+                                    <span class="contact-value">
+                                        @if (string.IsNullOrEmpty(profile.Website))
+                                        {
+                                            <span class="placeholder-text">Not provided</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="@profile.Website" target="_blank">@profile.Website</a>
+                                        }
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="contact-item">
+                                <span class="contact-label">LinkedIn:</span>
+                                @if (isEditing)
+                                {
+                                    <input type="url" @bind="profile.LinkedIn" class="form-control" placeholder="https://linkedin.com/in/..." />
+                                }
+                                else
+                                {
+                                    <span class="contact-value">
+                                        @if (string.IsNullOrEmpty(profile.LinkedIn))
+                                        {
+                                            <span class="placeholder-text">Not provided</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="@profile.LinkedIn" target="_blank">View Profile</a>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Comments Section -->
+                @if (allComments.Any())
+                {
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h3>💬 Student Comments (@allComments.Count)</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="comments-list">
+                                @foreach (var comment in allComments)
+                                {
+                                    <div class="comment-item detailed">
+                                        <div class="comment-header">
+                                            <div class="comment-meta">
+                                                <span class="student-name">@comment.StudentName</span>
+                                                <span class="comment-date">@comment.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</span>
+                                            </div>
+                                        </div>
+                                        <p class="comment-text">"@comment.CommentText"</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthChecked = false;
+    private bool isAuthorized = false;
+    private bool isLoading = true;
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private bool isUploading = false;
+    private int uploadProgress = 0;
+    private const long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+    // Profile data
+    private ProfessorProfile profile = new();
+    private ProfessorProfile originalProfile = new();
+
+    // Comment data
+    private List<StudentComment> recentComments = new();
+    private List<StudentComment> allComments = new();
+    private int totalComments = 0;
+    private int uniqueStudentsCount = 0;
+
+    // Rating data
+    private double averageRating = 0.0;
+    private int totalRatings = 0;
+    private List<RatingBreakdown> ratingBreakdown = new();
+
+    // Course data
+    private List<Thesis.Models.Course> assignedCourses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+        if (isAuthorized)
+        {
+            await LoadProfileData();
+            await LoadProfessorRatings();
+            await LoadCommentsData();
+            await LoadAssignedCourses();
+        }
+    }
+
+    private async Task CheckAuthorization()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            if (AuthStateService.CurrentUser != null)
+                break;
+            await Task.Delay(100);
+        }
+
+        var user = AuthStateService.CurrentUser;
+        isAuthorized = user != null && (user.Role == "Professor" || user.Role == "Teacher" || user.Role == "Admin");
+        isAuthChecked = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadProfileData()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load basic user info
+            profile = new ProfessorProfile
+            {
+                Id = currentUser.Id,
+                Name = currentUser.Name,
+                LastName = currentUser.LastName,
+                Email = currentUser.Email,
+                AcademicId = currentUser.AcademicId,
+                Role = currentUser.Role
+            };
+
+            // Try to load extended profile from database
+            var extendedProfile = await Context.ProfessorProfiles
+                .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
+
+            if (extendedProfile != null)
+            {
+                profile.ProfilePicture = extendedProfile.ProfilePicture;
+                profile.Bio = extendedProfile.Bio;
+                profile.Department = extendedProfile.Department;
+                profile.OfficeLocation = extendedProfile.OfficeLocation;
+                profile.OfficeHours = extendedProfile.OfficeHours;
+                profile.PhoneNumber = extendedProfile.PhoneNumber;
+                profile.Website = extendedProfile.Website;
+                profile.LinkedIn = extendedProfile.LinkedIn;
+            }
+
+            originalProfile = new ProfessorProfile
+            {
+                Id = profile.Id,
+                Name = profile.Name,
+                LastName = profile.LastName,
+                Email = profile.Email,
+                AcademicId = profile.AcademicId,
+                Role = profile.Role,
+                ProfilePicture = profile.ProfilePicture,
+                Bio = profile.Bio,
+                Department = profile.Department,
+                OfficeLocation = profile.OfficeLocation,
+                OfficeHours = profile.OfficeHours,
+                PhoneNumber = profile.PhoneNumber,
+                Website = profile.Website,
+                LinkedIn = profile.LinkedIn
+            };
+
+            isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading profile: {ex.Message}");
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadProfessorRatings()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load ratings for this professor
+            var ratings = await Context.ProfessorRatings
+                .Where(r => r.ProfessorId == currentUser.Id)
+                .ToListAsync();
+
+            totalRatings = ratings.Count;
+            averageRating = totalRatings > 0 ? ratings.Average(r => r.Rating) : 0.0;
+
+            // Calculate rating breakdown
+            ratingBreakdown = Enumerable.Range(1, 5)
+                .Select(r => new RatingBreakdown
+                {
+                    Rating = r,
+                    Count = ratings.Count(rt => rt.Rating == r),
+                    Percentage = totalRatings > 0 ? (ratings.Count(rt => rt.Rating == r) * 100.0 / totalRatings) : 0
+                })
+                .ToList();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading professor ratings: {ex.Message}");
+            // If ProfessorRatings table doesn't exist yet, initialize with zeros
+            totalRatings = 0;
+            averageRating = 0.0;
+            ratingBreakdown = new List<RatingBreakdown>();
+        }
+    }
+
+    private async Task LoadCommentsData()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load comments for this professor
+            var comments = await Context.Comments
+                .Where(c => c.ProfessorId == currentUser.Id && c.IsApproved)
+                .Include(c => c.Student)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            totalComments = comments.Count;
+            uniqueStudentsCount = comments.Select(c => c.StudentId).Distinct().Count();
+
+            // Convert to view model
+            recentComments = comments.Take(3).Select(c => new StudentComment
+            {
+                Id = c.Id,
+                StudentName = $"{c.Student?.Name} {c.Student?.LastName}",
+                CommentText = c.CommentText,
+                CreatedAt = c.CreatedAt
+            }).ToList();
+
+            allComments = comments.Select(c => new StudentComment
+            {
+                Id = c.Id,
+                StudentName = $"{c.Student?.Name} {c.Student?.LastName}",
+                CommentText = c.CommentText,
+                CreatedAt = c.CreatedAt
+            }).ToList();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading comments data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadAssignedCourses()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load courses assigned to this professor
+            assignedCourses = await Context.Courses
+                .Where(c => c.ProfessorId == currentUser.Id)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading assigned courses: {ex.Message}");
+        }
+    }
+
+    private void ToggleEditMode()
+    {
+        if (isEditing)
+        {
+            SaveProfile();
+        }
+        else
+        {
+            StartEditing();
+        }
+    }
+
+    private void StartEditing()
+    {
+        isEditing = true;
+        StateHasChanged();
+    }
+
+    private void CancelEditing()
+    {
+        isEditing = false;
+        profile = new ProfessorProfile
+        {
+            Id = originalProfile.Id,
+            Name = originalProfile.Name,
+            LastName = originalProfile.LastName,
+            Email = originalProfile.Email,
+            AcademicId = originalProfile.AcademicId,
+            Role = originalProfile.Role,
+            ProfilePicture = originalProfile.ProfilePicture,
+            Bio = originalProfile.Bio,
+            Department = originalProfile.Department,
+            OfficeLocation = originalProfile.OfficeLocation,
+            OfficeHours = originalProfile.OfficeHours,
+            PhoneNumber = originalProfile.PhoneNumber,
+            Website = originalProfile.Website,
+            LinkedIn = originalProfile.LinkedIn
+        };
+        StateHasChanged();
+    }
+
+    private async Task SaveProfile()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            // Validate required fields
+            if (string.IsNullOrEmpty(profile.Name) || string.IsNullOrEmpty(profile.Email))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Name and Email are required fields.");
+                return;
+            }
+
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Update basic user information
+            var user = await Context.Users.FindAsync(currentUser.Id);
+            if (user != null)
+            {
+                user.Name = profile.Name;
+                user.LastName = profile.LastName;
+                user.Email = profile.Email;
+            }
+
+            // Update or create extended profile
+            var extendedProfile = await Context.ProfessorProfiles
+                .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
+
+            if (extendedProfile == null)
+            {
+                extendedProfile = new Thesis.Models.ProfessorProfileEntity
+                {
+                    UserId = currentUser.Id,
+                    ProfilePicture = profile.ProfilePicture,
+                    Bio = profile.Bio,
+                    Department = profile.Department,
+                    OfficeLocation = profile.OfficeLocation,
+                    OfficeHours = profile.OfficeHours,
+                    PhoneNumber = profile.PhoneNumber,
+                    Website = profile.Website,
+                    LinkedIn = profile.LinkedIn,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                Context.ProfessorProfiles.Add(extendedProfile);
+            }
+            else
+            {
+                extendedProfile.ProfilePicture = profile.ProfilePicture;
+                extendedProfile.Bio = profile.Bio;
+                extendedProfile.Department = profile.Department;
+                extendedProfile.OfficeLocation = profile.OfficeLocation;
+                extendedProfile.OfficeHours = profile.OfficeHours;
+                extendedProfile.PhoneNumber = profile.PhoneNumber;
+                extendedProfile.Website = profile.Website;
+                extendedProfile.LinkedIn = profile.LinkedIn;
+                extendedProfile.UpdatedAt = DateTime.Now;
+            }
+
+            await Context.SaveChangesAsync();
+
+            // Update the original profile
+            originalProfile = new ProfessorProfile
+            {
+                Id = profile.Id,
+                Name = profile.Name,
+                LastName = profile.LastName,
+                Email = profile.Email,
+                AcademicId = profile.AcademicId,
+                Role = profile.Role,
+                ProfilePicture = profile.ProfilePicture,
+                Bio = profile.Bio,
+                Department = profile.Department,
+                OfficeLocation = profile.OfficeLocation,
+                OfficeHours = profile.OfficeHours,
+                PhoneNumber = profile.PhoneNumber,
+                Website = profile.Website,
+                LinkedIn = profile.LinkedIn
+            };
+
+            isEditing = false;
+            await JSRuntime.InvokeVoidAsync("alert", "Profile updated successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving profile: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetProfileImageUrl()
+    {
+        if (string.IsNullOrEmpty(profile.ProfilePicture))
+        {
+            return "/images/default-avatar.png";
+        }
+
+        // If it's already a data URL, return as is
+        if (profile.ProfilePicture.StartsWith("data:"))
+        {
+            return profile.ProfilePicture;
+        }
+
+        // If it's a relative path, ensure it starts with /
+        if (!profile.ProfilePicture.StartsWith("/") && !profile.ProfilePicture.StartsWith("http"))
+        {
+            return "/" + profile.ProfilePicture;
+        }
+
+        return profile.ProfilePicture;
+    }
+
+    private async void TriggerFileInput()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.getElementById('avatarInput').click()");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error opening file dialog: {ex.Message}");
+        }
+    }
+
+    private async Task HandleAvatarUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please select a file.");
+                return;
+            }
+
+            // Check file type
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please select an image file (JPEG, PNG, etc.).");
+                return;
+            }
+
+            // Check file size
+            if (file.Size > MAX_FILE_SIZE)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Image size must be less than 2MB.");
+                return;
+            }
+
+            isUploading = true;
+            uploadProgress = 0;
+            StateHasChanged();
+
+            // Simulate progress
+            await SimulateUploadProgress();
+
+            // Read the file and convert to base64
+            using var stream = file.OpenReadStream(MAX_FILE_SIZE);
+            using var memoryStream = new MemoryStream();
+
+            await stream.CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+
+            // Convert to base64 data URL
+            var base64String = Convert.ToBase64String(imageBytes);
+            var dataUrl = $"data:{file.ContentType};base64,{base64String}";
+
+            // Update profile picture
+            profile.ProfilePicture = dataUrl;
+
+            // Auto-save the profile
+            if (isEditing)
+            {
+                await SaveProfile();
+            }
+            else
+            {
+                // If not in edit mode, save just the profile picture
+                await SaveProfilePictureOnly();
+            }
+
+            await JSRuntime.InvokeVoidAsync("alert", "Profile picture updated successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error uploading image: {ex.Message}");
+        }
+        finally
+        {
+            isUploading = false;
+            uploadProgress = 0;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveProfilePictureOnly()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Update profile picture in database
+            var extendedProfile = await Context.ProfessorProfiles
+                .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
+
+            if (extendedProfile == null)
+            {
+                extendedProfile = new Thesis.Models.ProfessorProfileEntity
+                {
+                    UserId = currentUser.Id,
+                    ProfilePicture = profile.ProfilePicture,
+                    Bio = profile.Bio,
+                    Department = profile.Department,
+                    OfficeLocation = profile.OfficeLocation,
+                    OfficeHours = profile.OfficeHours,
+                    PhoneNumber = profile.PhoneNumber,
+                    Website = profile.Website,
+                    LinkedIn = profile.LinkedIn,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                Context.ProfessorProfiles.Add(extendedProfile);
+            }
+            else
+            {
+                extendedProfile.ProfilePicture = profile.ProfilePicture;
+                extendedProfile.UpdatedAt = DateTime.Now;
+            }
+
+            await Context.SaveChangesAsync();
+
+            // Update original profile
+            originalProfile.ProfilePicture = profile.ProfilePicture;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving profile picture: {ex.Message}");
+        }
+    }
+
+    private async Task UseDefaultAvatar()
+    {
+        try
+        {
+            profile.ProfilePicture = null;
+            StateHasChanged();
+
+            // Auto-save if in edit mode
+            if (isEditing)
+            {
+                await SaveProfile();
+            }
+            else
+            {
+                await SaveProfilePictureOnly();
+            }
+
+            await JSRuntime.InvokeVoidAsync("alert", "Profile picture removed successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error removing profile picture: {ex.Message}");
+        }
+    }
+
+    private async Task SimulateUploadProgress()
+    {
+        for (int i = 0; i <= 100; i += 10)
+        {
+            uploadProgress = i;
+            StateHasChanged();
+            await Task.Delay(50);
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/profhome");
+    }
+
+    private void RedirectToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    // Model Classes
+    public class ProfessorProfile
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string AcademicId { get; set; } = "";
+        public string Role { get; set; } = "";
+        public string? ProfilePicture { get; set; }
+        public string? Bio { get; set; }
+        public string? Department { get; set; }
+        public string? OfficeLocation { get; set; }
+        public string? OfficeHours { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Website { get; set; }
+        public string? LinkedIn { get; set; }
+    }
+
+    public class StudentComment
+    {
+        public int Id { get; set; }
+        public string StudentName { get; set; } = "";
+        public string CommentText { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class RatingBreakdown
+    {
+        public int Rating { get; set; }
+        public int Count { get; set; }
+        public double Percentage { get; set; }
+    }
+}
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Loading and Auth States */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(255, 255, 255, 0.2);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    .loading-container p {
+        margin-top: 25px;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .unauthorized-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+
+    .unauthorized-card {
+        background: white;
+        padding: 60px 50px;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+        max-width: 450px;
+        animation: slideUp 0.4s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .unauthorized-icon {
+        font-size: 5rem;
+        margin-bottom: 25px;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 100%
+
+    {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    }
+
+    .unauthorized-card h3 {
+        font-size: 2rem;
+        color: #2d3748;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .unauthorized-card p {
+        color: #718096;
+        margin-bottom: 35px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    /* Main Container */
+    .prof-profile {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 30px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    /* Header Bar */
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 25px 35px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+        .header-bar h2 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+    .back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+    /* Profile Container */
+    .profile-container {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 30px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+
+    /* Profile Card */
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+        animation: cardSlideUp 0.5s ease-out backwards;
+    }
+
+    @@keyframes cardSlideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .profile-card:hover {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+        padding: 25px 30px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(to right, #f8f9fa 0%, white 100%);
+    }
+
+        .card-header h3 {
+            font-size: 1.3rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+    .card-content {
+        padding: 30px;
+    }
+
+    /* Avatar Section */
+    .avatar-section {
+        text-align: center; /* Add this to center everything */
+    }
+
+    .avatar-container {
+        position: relative;
+        display: inline-block; /* Keep this but it will be centered by parent */
+        margin-bottom: 15px;
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #007bff;
+        display: block;
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+        width: 150px;
+        height: 150px;
+    }
+
+    .avatar-container:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .camera-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    .avatar-actions {
+        display: flex;
+        justify-content: center; /* Ensure buttons are centered */
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    /* Courses List */
+    .courses-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .course-item {
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-radius: 15px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+        .course-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+    .course-title {
+        font-size: 1.1rem;
+        color: #2d3748;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .course-description {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+
+    .course-meta {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .course-difficulty,
+    .course-method {
+        padding: 5px 12px;
+        background: white;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .no-courses {
+        text-align: center;
+        padding: 40px;
+        color: #718096;
+    }
+
+    /* Profile Form */
+    .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+        .form-group label {
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: white;
+        color: #2d3748;
+        font-family: inherit;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+        line-height: 1.6;
+    }
+
+    .read-only-field {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        color: #2d3748;
+        font-size: 0.95rem;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .bio-text {
+        min-height: 100px;
+        align-items: flex-start;
+        line-height: 1.6;
+    }
+
+    .placeholder-text {
+        color: #adb5bd;
+        font-style: italic;
+    }
+
+    .field-note {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: 5px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        padding-top: 25px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    /* Rating Section */
+    .rating-section {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .rating-overview {
+        text-align: center;
+        padding: 30px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-radius: 15px;
+    }
+
+    .rating-score {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    .score {
+        font-size: 4rem;
+        font-weight: 700;
+        color: #667eea;
+        line-height: 1;
+    }
+
+    .out-of {
+        font-size: 1.5rem;
+        color: #718096;
+        margin-left: 8px;
+    }
+
+    .rating-stars {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 15px;
+        font-size: 2rem;
+    }
+
+    .star {
+        color: #fbbf24;
+        transition: all 0.3s ease;
+    }
+
+        .star.filled {
+            color: #fbbf24;
+            text-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+        }
+
+        .star:not(.filled) {
+            color: #e5e7eb;
+        }
+
+    .rating-count {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    /* Rating Breakdown */
+    .rating-breakdown {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+
+        .rating-breakdown h4 {
+            font-size: 1.1rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+    .breakdown-item {
+        display: grid;
+        grid-template-columns: 100px 1fr 50px;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+        .breakdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .breakdown-stars {
+        display: flex;
+        gap: 3px;
+        font-size: 0.9rem;
+    }
+
+    .breakdown-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .breakdown-count {
+        text-align: right;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    /* Contact Information */
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .contact-item {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        align-items: center;
+        gap: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .contact-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+    .contact-label {
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .contact-value {
+        color: #4a5568;
+    }
+
+        .contact-value a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .contact-value a:hover {
+                color: #764ba2;
+                text-decoration: underline;
+            }
+
+    /* Comments Section */
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .comment-item {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+        .comment-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+    .comment-header {
+        margin-bottom: 12px;
+    }
+
+    .comment-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .student-name {
+        font-weight: 700;
+        color: #2d3748;
+        font-size: 1rem;
+    }
+
+    .comment-date {
+        font-size: 0.85rem;
+        color: #718096;
+    }
+
+    .comment-text {
+        color: #4a5568;
+        line-height: 1.6;
+        font-style: italic;
+        margin: 0;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+    .btn-outline {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 1200px) {
+        .profile-container
+
+    {
+        grid-template-columns: 350px 1fr;
+    }
+
+    }
+
+    @@media (max-width: 992px) {
+        .profile-container
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-left {
+        order: 2;
+    }
+
+    .profile-right {
+        order: 1;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .prof-profile
+
+    {
+        padding: 20px;
+    }
+
+    .header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px;
+    }
+
+        .header-bar h2 {
+            font-size: 1.5rem;
+        }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px;
+    }
+
+        .card-header .btn {
+            width: 100%;
+        }
+
+    .card-content {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .avatar-container {
+        width: 150px;
+        height: 150px;
+    }
+
+    .avatar-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+        .avatar-actions .btn {
+            width: 100%;
+        }
+
+    .contact-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .breakdown-item {
+        grid-template-columns: 80px 1fr 40px;
+        gap: 10px;
+    }
+
+    .breakdown-stars {
+        font-size: 0.8rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+
+    .rating-score .score {
+        font-size: 3rem;
+    }
+
+    .rating-stars {
+        font-size: 1.5rem;
+    }
+
+    }
+
+    @@media (max-width: 480px) {
+        .stat-card
+
+    {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .course-meta {
+        justify-content: center;
+    }
+
+    }
+
+    .upload-progress {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background-color: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #007bff;
+        transition: width 0.3s ease;
+    }
+
+    .avatar-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .avatar-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #007bff;
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+    }
+
+    .avatar-container:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .camera-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+</style>

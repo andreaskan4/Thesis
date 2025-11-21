@@ -19,6 +19,9 @@ namespace Thesis.Data
         public DbSet<ContactInfo> ContactInfo { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<MessageReply> MessageReplies { get; set; }
+        public DbSet<ProfessorProfileEntity> ProfessorProfiles { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<ProfessorRating> ProfessorRatings { get; set; }
 
         // ✅ Rename to match the actual table name
         public DbSet<AdminSystemSettings> AdminSystemSettings { get; set; }
@@ -64,7 +67,16 @@ namespace Thesis.Data
                       .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => new { e.StudentId, e.CourseId }).IsUnique();
             });
+            // Configure ProfessorProfileEntity for SQLite
+            modelBuilder.Entity<ProfessorProfileEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
 
+                // Ensure each user has only one profile
+                entity.HasIndex(e => e.UserId).IsUnique();
+            });
             // ✅ Configure Facility entity for SQLite
             modelBuilder.Entity<Facility>(entity =>
             {

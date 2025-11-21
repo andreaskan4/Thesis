@@ -52,20 +52,39 @@
                 <div class="user-role">Administrator</div>
             </div>
         </div>
-        <button class="logout-btn" @onclick="TriggerLogout">
+        <button class="logout-btn" @onclick="ShowLogoutConfirmation">
             <span class="logout-icon">🚪</span>
             Logout
         </button>
     </div>
 </div>
-
+@if (showLogoutModal)
+{
+    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+        <div style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 90%; max-width: 400px; overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">Confirm Logout</h3>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p style="margin: 0; color: #64748b;">Are you sure you want to log out?</p>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: white; color: #374151;" @onclick="CloseLogoutModal">Cancel</button>
+                <button type="button" style="padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: #ef4444; color: white;" @onclick="ConfirmLogout">Logout</button>
+            </div>
+        </div>
+    </div>
+}
 @code {
-    [Parameter] public EventCallback OnLogout { get; set; }
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool showLogoutModal = false;
 
     private string GetUserInitials()
     {
         var name = AuthStateService.CurrentUser?.Name ?? "";
-        if (string.IsNullOrEmpty(name)) return "A";
+        if (string.IsNullOrEmpty(name)) return "P";
 
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
@@ -74,9 +93,24 @@
         return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
     }
 
-    private async Task TriggerLogout()
+    private void ShowLogoutConfirmation()
     {
-        if (OnLogout.HasDelegate)
-            await OnLogout.InvokeAsync(null);
+        showLogoutModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseLogoutModal()
+    {
+        showLogoutModal = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmLogout()
+    {
+        showLogoutModal = false;
+        StateHasChanged();
+
+        await AuthStateService.LogoutAsync();
+        NavigationManager.NavigateTo("/", true);
     }
 }

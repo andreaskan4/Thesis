@@ -1,8 +1,10 @@
 ﻿@page "/profhome"
+@using Thesis.Models
 @using Thesis.Components.Layout
 @layout MainLayout
 @inject AuthStateService AuthStateService
 @inject NavigationManager Navigation
+@inject Data.AppDbContext Context
 
 <PageTitle>Gnosis - Professor Dashboard</PageTitle>
 
@@ -22,7 +24,10 @@ else if (AuthStateService.IsLoggedIn)
             <p class="welcome-text">Welcome back, @AuthStateService.CurrentUser?.Name!</p>
         </div>
         <div class="header-right">
-            <div class="date-display">@DateTime.Now.ToString("dddd, MMMM dd, yyyy")</div>
+            <div class="date-display">@currentDate.ToString("dddd, MMMM dd, yyyy")</div>
+            <button class="btn btn-outline btn-sm" @onclick="ShowLogoutModal" style="margin-left: 1rem;">
+                Logout
+            </button>
         </div>
     </div>
 
@@ -45,6 +50,17 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     }
 
+    <!-- Success/Error Message Toast -->
+    @if (!string.IsNullOrEmpty(toastMessage))
+    {
+        <div class="toast @toastType">
+            <div class="toast-content">
+                <span>@toastMessage</span>
+                <button class="toast-close" @onclick="HideToast">×</button>
+            </div>
+        </div>
+    }
+
     <!-- Content Area -->
     <div class="content-area">
         <!-- Stats Cards -->
@@ -52,28 +68,28 @@ else if (AuthStateService.IsLoggedIn)
             <div class="stat-card">
                 <div class="stat-icon">📈</div>
                 <div class="stat-content">
-                    <div class="stat-value">10</div>
+                    <div class="stat-value">@courses.Count</div>
                     <div class="stat-label">Courses</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">✅</div>
                 <div class="stat-content">
-                    <div class="stat-value">5</div>
+                    <div class="stat-value">@completedCoursesCount</div>
                     <div class="stat-label">Completed</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏰</div>
                 <div class="stat-content">
-                    <div class="stat-value">3</div>
+                    <div class="stat-value">@ongoingCoursesCount</div>
                     <div class="stat-label">Ongoing</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
-                    <div class="stat-value">120</div>
+                    <div class="stat-value">@totalStudents</div>
                     <div class="stat-label">Students</div>
                 </div>
             </div>
@@ -84,24 +100,27 @@ else if (AuthStateService.IsLoggedIn)
             <div class="content-card recent-activity">
                 <div class="card-header">
                     <h3>Recent Activity</h3>
-                    <a href="#" class="view-all">View All</a>
+                    <button class="view-all" @onclick="ViewAllActivity">View All</button>
                 </div>
                 <div class="card-content">
                     <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon">➕</div>
-                            <div class="activity-details">
-                                <div class="activity-title">New assignment posted</div>
-                                <div class="activity-time">3 hours ago</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">✅</div>
-                            <div class="activity-details">
-                                <div class="activity-title">Grades published</div>
-                                <div class="activity-time">Yesterday</div>
-                            </div>
-                        </div>
+                        @if (recentActivities.Any())
+                        {
+                            @foreach (var activity in recentActivities)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon">@activity.Icon</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">@activity.Description</div>
+                                        <div class="activity-time">@activity.TimeAgo</div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="no-data">No recent activity</div>
+                        }
                     </div>
                 </div>
             </div>
@@ -124,26 +143,75 @@ else if (AuthStateService.IsLoggedIn)
                             <span class="action-icon">👥</span>
                             <span class="action-text">Manage Students</span>
                         </button>
+                        <button class="action-btn" @onclick="GradeSubmissions">
+                            <span class="action-icon">📝</span>
+                            <span class="action-text">Grade Submissions</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Project Overview / Placeholder -->
+        <!-- Course Overview -->
         <div class="content-card full-width">
             <div class="card-header">
                 <h3>Course Overview</h3>
+                <div>
+                    <select class="form-select" @bind="selectedCourseId" @bind:after="LoadCourseData">
+                        <option value="0">All Courses</option>
+                        @foreach (var course in courses)
+                        {
+                            <option value="@course.Id">@course.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
             <div class="card-content">
-                <div class="placeholder-content">
-                    <p>Your course analytics and progress will be displayed here.</p>
-                    <div class="placeholder-chart">
-                        <div class="chart-placeholder">
-                            <p>📊 Chart Area</p>
-                            <p>Visualizations will appear here</p>
+                @if (courses.Any())
+                {
+                    <div class="course-analytics">
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <h4>Average Grade</h4>
+                                <div class="analytics-value">@GetAverageGrade().ToString("F1")</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Enrolled Students</h4>
+                                <div class="analytics-value">@GetTotalEnrollments()</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Graded Students</h4>
+                                <div class="analytics-value">@GetGradedStudentsCount()</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Pending Grades</h4>
+                                <div class="analytics-value">@GetPendingGradesCount()</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Grade Distribution</h4>
+                            <div class="grade-bars">
+                                @foreach (var range in gradeDistribution)
+                                {
+                                    <div class="grade-bar">
+                                        <div class="grade-range">@range.Range</div>
+                                        <div class="bar-container">
+                                            <div class="bar" style="width: @(range.Percentage)%;"></div>
+                                        </div>
+                                        <div class="grade-count">@range.Count</div>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div class="placeholder-content">
+                        <p>No courses available. Create your first course to get started.</p>
+                        <button class="btn btn-primary" @onclick="CreateCourse">Create First Course</button>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -165,14 +233,297 @@ else
 @code {
     private bool isLoading = true;
     private bool showLogoutModal = false;
+    private DateTime currentDate = DateTime.Now;
+    private string toastMessage = "";
+    private string toastType = "toast-success";
+    private int selectedCourseId = 0;
+
+    // Real data from database
+    private List<Course> courses = new();
+    private List<Enrollment> enrollments = new();
+    private List<Grade> grades = new();
+    private List<ActivityItem> recentActivities = new();
+    private List<GradeDistribution> gradeDistribution = new();
+
+    private int completedCoursesCount = 0;
+    private int ongoingCoursesCount = 0;
+    private int totalStudents = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.Delay(100);
-        isLoading = false;
+        try
+        {
+            await LoadRealData();
+            CalculateStatistics();
+            CalculateGradeDistribution();
+            await GenerateRecentActivities();
+            isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Error loading dashboard data", "error");
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadRealData()
+    {
+        var currentUser = AuthStateService.CurrentUser;
+        if (currentUser == null) return;
+
+        // Load professor's courses
+        courses = await Context.Courses
+            .Where(c => c.ProfessorId == currentUser.Id)
+            .ToListAsync();
+
+        // Load enrollments for professor's courses
+        var courseIds = courses.Select(c => c.Id).ToList();
+        if (courseIds.Any())
+        {
+            enrollments = await Context.Enrollments
+                .Where(e => courseIds.Contains(e.CourseId))
+                .ToListAsync();
+        }
+
+        // Load grades for professor's courses
+        if (courseIds.Any())
+        {
+            grades = await Context.Grades
+                .Where(g => courseIds.Contains(g.CourseId))
+                .ToListAsync();
+        }
+    }
+
+    private void CalculateStatistics()
+    {
+        totalStudents = enrollments.Select(e => e.StudentId).Distinct().Count();
+
+        // For simplicity, consider all courses as ongoing
+        // In a real app, you might have a status field or date-based logic
+        ongoingCoursesCount = courses.Count;
+        completedCoursesCount = 0; // You could implement completion logic based on dates
+    }
+
+    private void CalculateGradeDistribution()
+    {
+        var allGrades = selectedCourseId == 0
+            ? grades.Select(g => g.GradeValue).ToList()
+            : grades.Where(g => g.CourseId == selectedCourseId).Select(g => g.GradeValue).ToList();
+
+        if (!allGrades.Any())
+        {
+            gradeDistribution = new List<GradeDistribution>
+            {
+                new() { Range = "9-10", Count = 0, Percentage = 0 },
+                new() { Range = "8-8.9", Count = 0, Percentage = 0 },
+                new() { Range = "7-7.9", Count = 0, Percentage = 0 },
+                new() { Range = "6-6.9", Count = 0, Percentage = 0 },
+                new() { Range = "0-5.9", Count = 0, Percentage = 0 }
+            };
+            return;
+        }
+
+        gradeDistribution = new List<GradeDistribution>
+        {
+            new() { Range = "9-10", Count = allGrades.Count(g => g >= 9), Percentage = 0 },
+            new() { Range = "8-8.9", Count = allGrades.Count(g => g >= 8 && g < 9), Percentage = 0 },
+            new() { Range = "7-7.9", Count = allGrades.Count(g => g >= 7 && g < 8), Percentage = 0 },
+            new() { Range = "6-6.9", Count = allGrades.Count(g => g >= 6 && g < 7), Percentage = 0 },
+            new() { Range = "0-5.9", Count = allGrades.Count(g => g < 6), Percentage = 0 }
+        };
+
+        var total = allGrades.Count;
+        foreach (var range in gradeDistribution)
+        {
+            range.Percentage = total > 0 ? (range.Count * 100) / total : 0;
+        }
+    }
+
+    private async Task GenerateRecentActivities()
+    {
+        recentActivities = new List<ActivityItem>();
+        var currentUser = AuthStateService.CurrentUser;
+        if (currentUser == null) return;
+
+        // Recent grade entries
+        var recentGrades = await Context.Grades
+            .Where(g => courses.Select(c => c.Id).Contains(g.CourseId))
+            .OrderByDescending(g => g.CreatedAt)
+            .Take(5)
+            .ToListAsync();
+
+        foreach (var grade in recentGrades)
+        {
+            var course = courses.FirstOrDefault(c => c.Id == grade.CourseId);
+            var student = await Context.Users.FirstOrDefaultAsync(u => u.Id == grade.StudentId);
+
+            if (course != null && student != null)
+            {
+                var timeAgo = GetTimeAgo(grade.CreatedAt);
+                recentActivities.Add(new ActivityItem
+                {
+                    Icon = "📝",
+                    Description = $"Graded {student.Name} in {course.Name}: {grade.GradeValue:F1}",
+                    TimeAgo = timeAgo
+                });
+            }
+        }
+
+        // Recent enrollments
+        var recentEnrollments = await Context.Enrollments
+            .Where(e => courses.Select(c => c.Id).Contains(e.CourseId))
+            .OrderByDescending(e => e.EnrollmentDate)
+            .Take(3)
+            .ToListAsync();
+
+        foreach (var enrollment in recentEnrollments)
+        {
+            var course = courses.FirstOrDefault(c => c.Id == enrollment.CourseId);
+            var student = await Context.Users.FirstOrDefaultAsync(u => u.Id == enrollment.StudentId);
+
+            if (course != null && student != null)
+            {
+                var timeAgo = GetTimeAgo(enrollment.EnrollmentDate);
+                recentActivities.Add(new ActivityItem
+                {
+                    Icon = "👥",
+                    Description = $"New student {student.Name} enrolled in {course.Name}",
+                    TimeAgo = timeAgo
+                });
+            }
+        }
+
+        // Recent messages (if any)
+        var recentMessages = await Context.Messages
+            .Where(m => m.SenderRole == "Student")
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(2)
+            .ToListAsync();
+
+        foreach (var message in recentMessages)
+        {
+            var timeAgo = GetTimeAgo(message.CreatedAt);
+            recentActivities.Add(new ActivityItem
+            {
+                Icon = "📧",
+                Description = $"New message from {message.SenderName}: {message.Subject}",
+                TimeAgo = timeAgo
+            });
+        }
+
+        // Sort by time (most recent first)
+        recentActivities = recentActivities
+            .OrderByDescending(a => GetActivityDateTime(a.TimeAgo))
+            .Take(5)
+            .ToList();
+    }
+
+    private string GetTimeAgo(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+
+        if (timeSpan.TotalDays >= 1)
+            return $"{(int)timeSpan.TotalDays} days ago";
+        else if (timeSpan.TotalHours >= 1)
+            return $"{(int)timeSpan.TotalHours} hours ago";
+        else if (timeSpan.TotalMinutes >= 1)
+            return $"{(int)timeSpan.TotalMinutes} minutes ago";
+        else
+            return "Just now";
+    }
+
+    private DateTime GetActivityDateTime(string timeAgo)
+    {
+        if (timeAgo.Contains("days"))
+        {
+            var days = int.Parse(timeAgo.Split(' ')[0]);
+            return DateTime.Now.AddDays(-days);
+        }
+        else if (timeAgo.Contains("hours"))
+        {
+            var hours = int.Parse(timeAgo.Split(' ')[0]);
+            return DateTime.Now.AddHours(-hours);
+        }
+        else if (timeAgo.Contains("minutes"))
+        {
+            var minutes = int.Parse(timeAgo.Split(' ')[0]);
+            return DateTime.Now.AddMinutes(-minutes);
+        }
+        else
+        {
+            return DateTime.Now;
+        }
+    }
+
+    private async Task LoadCourseData()
+    {
+        CalculateGradeDistribution();
         StateHasChanged();
     }
 
+    private double GetAverageGrade()
+    {
+        var relevantGrades = selectedCourseId == 0
+            ? grades.Select(g => g.GradeValue)
+            : grades.Where(g => g.CourseId == selectedCourseId).Select(g => g.GradeValue);
+
+        return relevantGrades.Any() ? relevantGrades.Average() : 0;
+    }
+
+    private int GetTotalEnrollments()
+    {
+        return selectedCourseId == 0
+            ? enrollments.Count
+            : enrollments.Count(e => e.CourseId == selectedCourseId);
+    }
+
+    private int GetGradedStudentsCount()
+    {
+        return selectedCourseId == 0
+            ? grades.Select(g => g.StudentId).Distinct().Count()
+            : grades.Where(g => g.CourseId == selectedCourseId).Select(g => g.StudentId).Distinct().Count();
+    }
+
+    private int GetPendingGradesCount()
+    {
+        if (selectedCourseId == 0)
+        {
+            var enrolledStudents = enrollments.Select(e => e.StudentId).Distinct();
+            var gradedStudents = grades.Select(g => g.StudentId).Distinct();
+            return enrolledStudents.Except(gradedStudents).Count();
+        }
+        else
+        {
+            var courseEnrollments = enrollments.Where(e => e.CourseId == selectedCourseId).Select(e => e.StudentId);
+            var courseGrades = grades.Where(g => g.CourseId == selectedCourseId).Select(g => g.StudentId);
+            return courseEnrollments.Except(courseGrades).Count();
+        }
+    }
+
+    // Navigation Methods
+    private void CreateAssignment() => Navigation.NavigateTo("/assignments/create");
+    private void ViewCourses() => Navigation.NavigateTo("/courses");
+    private void ManageStudents() => Navigation.NavigateTo("/students");
+    private void GradeSubmissions() => Navigation.NavigateTo("/grading");
+    private void ViewAllActivity() => Navigation.NavigateTo("/activity");
+    private void CreateCourse() => Navigation.NavigateTo("/courses/create");
+
+    // Toast Methods
+    private void ShowToast(string message, string type = "success")
+    {
+        toastMessage = message;
+        toastType = type == "error" ? "toast-error" : "toast-success";
+        StateHasChanged();
+    }
+
+    private void HideToast()
+    {
+        toastMessage = "";
+        StateHasChanged();
+    }
+
+    // Logout Methods
     private void ShowLogoutModal() => showLogoutModal = true;
     private void CloseLogoutModal() => showLogoutModal = false;
 
@@ -182,12 +533,211 @@ else
         Navigation.NavigateTo("/", true);
     }
 
-    private void CreateAssignment() => Console.WriteLine("Create Assignment clicked");
-    private void ViewCourses() => Console.WriteLine("View Courses clicked");
-    private void ManageStudents() => Console.WriteLine("Manage Students clicked");
+    // Helper classes for UI
+    public class ActivityItem
+    {
+        public string Icon { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+    }
+
+    public class GradeDistribution
+    {
+        public string Range { get; set; } = "";
+        public int Count { get; set; }
+        public int Percentage { get; set; }
+    }
 }
+
 <style>
-    /* --- Modal Styles --- */
+    /* Toast Styles */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10001;
+        animation: slideIn 0.3s ease;
+    }
+
+    .toast-success {
+        background: #10b981;
+        color: white;
+    }
+
+    .toast-error {
+        background: #ef4444;
+        color: white;
+    }
+
+    .toast-content {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: inherit;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Form Controls */
+    .form-select {
+        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: white;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+
+    /* Analytics Styles */
+    .course-analytics {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .analytics-card {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .analytics-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .analytics-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .chart-container {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .chart-container h4 {
+        margin: 0 0 1rem 0;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    .grade-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .grade-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .grade-range {
+        min-width: 60px;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .bar-container {
+        flex: 1;
+        background: #e2e8f0;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        transition: width 0.3s ease;
+    }
+
+    .grade-count {
+        min-width: 30px;
+        text-align: right;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    /* No Data State */
+    .no-data {
+        text-align: center;
+        color: #64748b;
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    .placeholder-content {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+    }
+
+    /* Button Styles */
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .analytics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Keep all existing styles from the original code */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -253,7 +803,6 @@ else
             background: #dc2626;
         }
 
-    /* --- Dashboard Container --- */
     .dashboard-container {
         display: flex;
         height: 100vh;
@@ -262,7 +811,6 @@ else
         background-color: #f8fafc;
     }
 
-    /* --- Main Content --- */
     .main-content {
         flex: 1;
         display: flex;
@@ -305,7 +853,6 @@ else
         overflow-y: auto;
     }
 
-    /* --- Stats Grid --- */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -348,7 +895,6 @@ else
         margin-top: 0.25rem;
     }
 
-    /* --- Content Grid --- */
     .content-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -387,6 +933,9 @@ else
         text-decoration: none;
         font-size: 0.875rem;
         font-weight: 500;
+        background: none;
+        border: none;
+        cursor: pointer;
     }
 
         .view-all:hover {
@@ -397,7 +946,6 @@ else
         padding: 1.5rem;
     }
 
-    /* --- Activity List --- */
     .activity-item {
         display: flex;
         align-items: center;
@@ -428,7 +976,6 @@ else
         margin-top: 0.125rem;
     }
 
-    /* --- Quick Actions --- */
     .actions-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -465,7 +1012,6 @@ else
         font-weight: 500;
     }
 
-    /* --- Placeholder Chart --- */
     .placeholder-chart {
         background: #f8fafc;
         border: 2px dashed #cbd5e1;
@@ -479,7 +1025,6 @@ else
         margin: 0.5rem 0;
     }
 
-    /* --- Loading Spinner --- */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -498,20 +1043,12 @@ else
         animation: spin 1s linear infinite;
         margin-bottom: 1rem;
     }
+
     @@keyframes spin {
-        0%
-
-    {
-        transform: rotate(0deg);
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
-    100% {
-        transform: rotate(360deg);
-    }
-
-    }
-
-    /* --- Logged Out / Home Page --- */
     .home-container {
         min-height: 100vh;
         width: 100vw;
@@ -546,7 +1083,7 @@ else
         .welcome-section h1 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
-            text-shadow: 2px2px4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .welcome-section p {
