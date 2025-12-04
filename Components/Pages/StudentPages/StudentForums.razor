@@ -903,6 +903,37 @@ else
     private void RedirectToHome() => Navigation.NavigateTo("/");
 }
 <style>
+    /* Remove sidepanel scrollbar - Add this at the top */
+    ::deep .sidebar,
+    ::deep .sidepanel,
+    ::deep .blazor-sidebar,
+    ::deep [class*="sidebar"],
+    ::deep [class*="side-nav"],
+    ::deep [class*="nav-menu"],
+    ::deep aside {
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+    }
+
+        ::deep .sidebar::-webkit-scrollbar,
+        ::deep .sidepanel::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+    /* Firefox */
+    ::deep .sidebar,
+    ::deep .sidepanel {
+        scrollbar-width: none !important;
+    }
+
+    /* IE and Edge */
+    ::deep .sidebar,
+    ::deep .sidepanel {
+        -ms-overflow-style: none !important;
+    }
+
     /* Modern Forum Interface Styles */
 
     /* Main Container */
@@ -911,7 +942,27 @@ else
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
         flex-direction: column;
+        overflow-y: auto; /* Keep scrollbar for main forum */
     }
+
+        /* Style forum scrollbar */
+        .student-forum::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .student-forum::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .student-forum::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+            .student-forum::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
 
     /* Header Bar */
     .header-bar {
@@ -984,6 +1035,7 @@ else
         max-width: 1400px;
         margin: 0 auto;
         width: 100%;
+        overflow-y: visible; /* Allow content to flow naturally */
     }
 
     .forum-content {
@@ -1273,18 +1325,15 @@ else
     }
 
     @@keyframes slideDown {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .form-group {
@@ -1454,16 +1503,13 @@ else
     }
 
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+        }
 
-    {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
+        to {
+            opacity: 1;
+        }
     }
 
     .modal-content {
@@ -1480,18 +1526,15 @@ else
     }
 
     @@keyframes slideUp {
-        from
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
 
-    {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
     .modal-header {
@@ -1659,12 +1702,9 @@ else
     }
 
     @@keyframes spin {
-        to
-
-    {
-        transform: rotate(360deg);
-    }
-
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     /* Unauthorized */
@@ -1705,88 +1745,82 @@ else
 
     /* Responsive Design */
     @@media (max-width: 1024px) {
-        .forum-stats
+        .forum-stats {
+            display: none;
+        }
 
-    {
-        display: none;
-    }
+        .header-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
 
-    .header-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-    }
-
-    .header-actions {
-        justify-content: space-between;
-    }
-
+        .header-actions {
+            justify-content: space-between;
+        }
     }
 
     @@media (max-width: 768px) {
-        .forum-container
-
-    {
-        padding: 1rem;
-    }
-
-    .header-bar {
-        padding: 1rem;
-    }
-
-        .header-bar h2 {
-            font-size: 1.5rem;
+        .forum-container {
+            padding: 1rem;
         }
 
-    .filter-buttons {
-        flex-direction: column;
-    }
+        .header-bar {
+            padding: 1rem;
+        }
 
-    .filter-btn {
-        width: 100%;
-    }
+            .header-bar h2 {
+                font-size: 1.5rem;
+            }
 
-    .question-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
+        .filter-buttons {
+            flex-direction: column;
+        }
 
-    .question-footer {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .form-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-
-        .form-actions .btn {
+        .filter-btn {
             width: 100%;
         }
 
-    .modal-content {
-        max-width: 100%;
-        border-radius: 16px;
-    }
+        .question-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
 
-    .modal-body {
-        padding: 1.5rem;
-    }
+        .question-footer {
+            flex-direction: column;
+            align-items: flex-start;
+        }
 
-    .modal-footer {
-        flex-direction: column;
-    }
-
-        .modal-footer .btn {
+        .form-actions {
+            flex-direction: column;
             width: 100%;
         }
 
-    .answer-header {
-        flex-wrap: wrap;
-    }
+            .form-actions .btn {
+                width: 100%;
+            }
 
+        .modal-content {
+            max-width: 100%;
+            border-radius: 16px;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            flex-direction: column;
+        }
+
+            .modal-footer .btn {
+                width: 100%;
+            }
+
+        .answer-header {
+            flex-wrap: wrap;
+        }
     }
 
     /* Smooth Scrolling */
