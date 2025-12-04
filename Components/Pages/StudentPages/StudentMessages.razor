@@ -31,7 +31,7 @@ else
     <div class="student-messages">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>📨 Message Center</h2>
+            <h2>Message Center</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="ShowNewMessageModal">
                     ✉️ New Message
@@ -89,13 +89,13 @@ else
                                     <div class="message-preview">
                                         <div class="message-header">
                                             <span class="sender-name">
-                                                @if (message.SenderRole == currentUserRole)
+                                                @if (IsCurrentUserSender(message))
                                                 {
                                                     <text>You → @message.RecipientName</text>
                                                 }
                                                 else
                                                 {
-                                                    <text>@message.SenderName</text>
+                                                    <text>@message.SenderName → You</text>
                                                 }
                                             </span>
                                             <span class="message-time">@FormatMessageTime(message.CreatedAt)</span>
@@ -104,13 +104,13 @@ else
                                         <div class="message-excerpt">@GetMessageExcerpt(message.Content)</div>
                                         <div class="message-meta">
                                             <span class="sender-role">
-                                                @if (message.SenderRole == currentUserRole)
+                                                @if (IsCurrentUserSender(message))
                                                 {
                                                     <text>To: @message.RecipientRole</text>
                                                 }
                                                 else
                                                 {
-                                                    <text>@message.SenderRole</text>
+                                                    <text>From: @message.SenderRole</text>
                                                 }
                                             </span>
                                             @if (!message.IsRead && message.SenderRole != currentUserRole)
@@ -152,7 +152,7 @@ else
                                     <h3>@selectedMessage.Subject</h3>
                                     <div class="message-sender">
                                         <div class="sender-avatar">
-                                            @if (selectedMessage.SenderRole == "Student")
+                                            @if (IsCurrentUserSender(selectedMessage))
                                             {
                                                 <div class="avatar student">🎓</div>
                                             }
@@ -166,21 +166,21 @@ else
                                             }
                                         </div>
                                         <div class="sender-details">
-                                            @if (selectedMessage.SenderRole == currentUserRole)
+                                            @if (IsCurrentUserSender(selectedMessage))
                                             {
                                                 <div class="sender-name">You → @selectedMessage.RecipientName</div>
                                                 <div class="sender-email">@selectedMessage.RecipientEmail • To: @selectedMessage.RecipientRole</div>
                                             }
                                             else
                                             {
-                                                <div class="sender-name">@selectedMessage.SenderName</div>
-                                                <div class="sender-email">@selectedMessage.SenderEmail • @selectedMessage.SenderRole</div>
+                                                <div class="sender-name">@selectedMessage.SenderName → You</div>
+                                                <div class="sender-email">@selectedMessage.SenderEmail • From: @selectedMessage.SenderRole</div>
                                             }
                                         </div>
                                     </div>
                                 </div>
                                 <div class="message-actions">
-                                    @if (selectedMessage.SenderRole != currentUserRole)
+                                    @if (!IsCurrentUserSender(selectedMessage))
                                     {
                                         <button class="btn btn-outline" @onclick="MarkAsRead" title="Mark as read">
                                             @if (selectedMessage.IsRead)
@@ -200,11 +200,11 @@ else
                                 <!-- Conversation Scroll Area -->
                                 <div class="conversation-scroll-area">
                                     <!-- Original Message -->
-                                    <div class="conversation-item @(selectedMessage.SenderRole == currentUserRole ? "sent" : "received")">
+                                    <div class="conversation-item @(IsCurrentUserSender(selectedMessage) ? "sent" : "received")">
                                         <div class="message-content">
                                             <div class="message-text">@selectedMessage.Content</div>
                                             <div class="message-time">@FormatDetailedTime(selectedMessage.CreatedAt)</div>
-                                            @if (selectedMessage.SenderRole == currentUserRole)
+                                            @if (IsCurrentUserSender(selectedMessage))
                                             {
                                                 <button class="delete-single-btn" @onclick="() => DeleteSingleReply(selectedMessage)" title="Delete this message">
                                                     🗑️
@@ -734,7 +734,11 @@ else
             await JSRuntime.InvokeVoidAsync("alert", $"Error sending reply: {ex.Message}");
         }
     }
-
+    private bool IsCurrentUserSender(Message message)
+    {
+        var currentUser = AuthStateService.CurrentUser;
+        return currentUser != null && message.SenderId == currentUser.Id;
+    }
     private void ClearReply()
     {
         replyMessage = "";

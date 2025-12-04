@@ -33,6 +33,7 @@ namespace Thesis.Data
         public DbSet<FoodSchedule> FoodSchedules { get; set; }
         public DbSet<MealVote> MealVotes { get; set; }
         public DbSet<CafeteriaWorker> CafeteriaWorkers { get; set; }
+        public DbSet<StudentSettings> StudentSettings { get; set; }
 
         // ✅ Rename to match the actual table name
         public DbSet<AdminSystemSettings> AdminSystemSettings { get; set; }
@@ -111,6 +112,18 @@ namespace Thesis.Data
                       .HasForeignKey(e => e.CourseId)
                       .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => new { e.StudentId, e.CourseId }).IsUnique();
+            });
+            modelBuilder.Entity<StudentSettings>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.StudentId).IsUnique();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
+
+                entity.HasOne(ss => ss.Student)
+                      .WithMany()
+                      .HasForeignKey(ss => ss.StudentId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
             // Configure ProfessorProfileEntity for SQLite
             modelBuilder.Entity<ProfessorProfileEntity>(entity =>

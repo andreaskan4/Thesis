@@ -51,6 +51,43 @@
             </div>
         }
     </div>
+
+    <!-- Add JavaScript functions here -->
+    <script>
+        // File download function for Student Settings
+        window.downloadFile = function(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        };
+
+        // Auto theme detection for Student Settings
+        window.applyAutoTheme = function() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        };
+
+        // Dark theme toggle helper
+        window.toggleDarkTheme = function(enable) {
+            if (enable) {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        };
+
+        // Print helper
+        window.printPage = function() {
+            window.print();
+        };
+    </script>
 </body>
 </html>
 

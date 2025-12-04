@@ -1,5 +1,7 @@
 ﻿@inject AuthStateService AuthStateService
 @inject NavigationManager Navigation
+@inject Data.AppDbContext Context
+@implements IDisposable
 
 <div class="admin-sidebar">
     <div class="sidebar-header">
@@ -46,9 +48,25 @@
 
     <div class="sidebar-footer">
         <div class="user-info">
-            <div class="user-avatar">@GetUserInitials()</div>
+            <div class="user-avatar">
+                @if (!string.IsNullOrEmpty(profilePictureUrl))
+                {
+                    <img src="@profilePictureUrl"
+                         alt="Profile"
+                         class="avatar-image"
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='@GetUserInitials()';" />
+                    @if (string.IsNullOrEmpty(profilePictureUrl))
+                    {
+                        <span class="avatar-initials">@GetUserInitials()</span>
+                    }
+                }
+                else
+                {
+                    <span class="avatar-initials">@GetUserInitials()</span>
+                }
+            </div>
             <div class="user-details">
-                <div class="user-name">@AuthStateService.CurrentUser?.Name</div>
+                <div class="user-name">@AuthStateService.CurrentUser?.Name @AuthStateService.CurrentUser?.LastName</div>
                 <div class="user-role">Professor</div>
             </div>
         </div>
@@ -58,39 +76,114 @@
         </button>
     </div>
 </div>
+
 @if (showLogoutModal)
 {
-    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;">
-        <div style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 90%; max-width: 400px; overflow: hidden;">
-            <div style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
-                <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">Confirm Logout</h3>
+    <div class="modal-overlay" @onclick="CloseLogoutModal">
+        <div class="modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>Confirm Logout</h3>
             </div>
-            <div style="padding: 1.5rem;">
-                <p style="margin: 0; color: #64748b;">Are you sure you want to log out?</p>
+            <div class="modal-body">
+                <p>Are you sure you want to log out?</p>
             </div>
-            <div style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; justify-content: flex-end;">
-                <button type="button" style="padding: 0.75rem 1.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: white; color: #374151;" @onclick="CloseLogoutModal">Cancel</button>
-                <button type="button" style="padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; background: #ef4444; color: white;" @onclick="ConfirmLogout">Logout</button>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" @onclick="CloseLogoutModal">Cancel</button>
+                <button type="button" class="btn-danger" @onclick="ConfirmLogout">Logout</button>
             </div>
         </div>
     </div>
 }
+
 @code {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
     private bool showLogoutModal = false;
+    private string profilePictureUrl = string.Empty;
+    private Timer? profilePictureTimer;
+    private bool isInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfilePicture();
+
+        // Set up a timer to refresh the profile picture periodically
+        profilePictureTimer = new Timer(async _ =>
+        {
+            await LoadProfilePicture();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5));
+
+        isInitialized = true;
+    }
+
+    private async Task LoadProfilePicture()
+    {
+        try
+        {
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load extended profile from database
+            var extendedProfile = await Context.ProfessorProfiles
+                .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
+
+            if (extendedProfile != null && !string.IsNullOrEmpty(extendedProfile.ProfilePicture))
+            {
+                profilePictureUrl = GetProfileImageUrl(extendedProfile.ProfilePicture);
+            }
+            else
+            {
+                profilePictureUrl = string.Empty;
+            }
+
+            if (isInitialized)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading profile picture: {ex.Message}");
+            profilePictureUrl = string.Empty;
+        }
+    }
+
+    private string GetProfileImageUrl(string profilePicture)
+    {
+        if (string.IsNullOrEmpty(profilePicture))
+        {
+            return string.Empty;
+        }
+
+        // If it's already a data URL, return as is
+        if (profilePicture.StartsWith("data:"))
+        {
+            return profilePicture;
+        }
+
+        // If it's a relative path, ensure it starts with /
+        if (!profilePicture.StartsWith("/") && !profilePicture.StartsWith("http"))
+        {
+            return "/" + profilePicture;
+        }
+
+        return profilePicture;
+    }
 
     private string GetUserInitials()
     {
         var name = AuthStateService.CurrentUser?.Name ?? "";
-        if (string.IsNullOrEmpty(name)) return "P";
+        var lastName = AuthStateService.CurrentUser?.LastName ?? "";
 
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 2)
-            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(lastName))
+            return $"{name[0]}{lastName[0]}".ToUpper();
 
-        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+        if (!string.IsNullOrEmpty(name))
+            return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+
+        return "P";
     }
 
     private void ShowLogoutConfirmation()
@@ -113,7 +206,20 @@
         await AuthStateService.LogoutAsync();
         NavigationManager.NavigateTo("/", true);
     }
+
+    // Method to manually refresh the profile picture (call this after updating profile)
+    public async Task RefreshProfilePicture()
+    {
+        await LoadProfilePicture();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        profilePictureTimer?.Dispose();
+    }
 }
+
 <style>
     .admin-sidebar {
         width: 280px;
@@ -193,15 +299,43 @@
         justify-content: center;
         font-weight: 600;
         font-size: 0.875rem;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .avatar-initials {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .user-details {
         flex: 1;
+        min-width: 0;
     }
 
     .user-name {
         font-weight: 600;
         font-size: 0.875rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .user-role {
@@ -229,4 +363,84 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 400px;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1e293b;
+        }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+        .modal-body p {
+            margin: 0;
+            color: #64748b;
+        }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .btn-secondary {
+        padding: 0.75rem 1.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        color: #374151;
+    }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+    .btn-danger {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #ef4444;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
 </style>

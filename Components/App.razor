@@ -25,5 +25,11 @@
         link.click();
         document.body.removeChild(link);
     }
+    function triggerFileInput(elementId) {
+        const fileInput = document.getElementById(elementId);
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
 </script>
 </html>
