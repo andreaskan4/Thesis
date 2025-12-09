@@ -68,9 +68,9 @@
                     <span class="avatar-initials">@GetUserInitials()</span>
                 }
             </div>
-            <div class="user-details">
-                <div class="user-name">@AuthStateService.CurrentUser?.Name @AuthStateService.CurrentUser?.LastName</div>
-                <div class="user-role">Professor</div>
+            <div class="userdetails">
+                <div class="username">@AuthStateService.CurrentUser?.Name @AuthStateService.CurrentUser?.LastName</div>
+                <div class="userrole">Professor</div>
             </div>
         </div>
         <button class="logout-btn" @onclick="ShowLogoutConfirmation">
@@ -356,12 +356,12 @@
         font-size: 0.875rem;
     }
 
-    .user-details {
+    .userdetails {
         flex: 1;
         min-width: 0;
     }
 
-    .user-name {
+    .username {
         font-weight: 600;
         font-size: 0.875rem;
         white-space: nowrap;
@@ -369,7 +369,7 @@
         text-overflow: ellipsis;
     }
 
-    .user-role {
+    .userrole {
         font-size: 0.75rem;
         color: rgba(255,255,255,0.7);
     }

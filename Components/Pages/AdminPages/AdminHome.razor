@@ -43,13 +43,6 @@ else
                         <div class="date">@currentDate</div>
                         <div class="time">@currentTime</div>
                     </div>
-                    <div class="notification-bell">
-                        <span class="bell-icon">🔔</span>
-                        @if (pendingNotifications > 0)
-                        {
-                            <span class="notification-badge">@pendingNotifications</span>
-                        }
-                    </div>
                 </div>
             </div>
 
@@ -213,7 +206,6 @@ else
     private int totalStudents = 0;
     private int totalTeachers = 0;
     private int totalCourses = 0;
-    private int pendingNotifications = 0;
     private string lastUpdate = "Just now";
 
     // Trend indicators

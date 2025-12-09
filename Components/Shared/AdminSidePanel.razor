@@ -50,9 +50,9 @@
     <div class="sidebar-footer">
         <div class="user-info">
             <div class="user-avatar">@GetUserInitials()</div>
-            <div class="user-details">
-                <div class="user-name">@AuthStateService.CurrentUser?.Name</div>
-                <div class="user-role">Administrator</div>
+            <div class="userdetails">
+                <div class="username">@AuthStateService.CurrentUser?.Name</div>
+                <div class="userrole">Administrator</div>
             </div>
         </div>
         <button class="logout-btn" @onclick="ShowLogoutConfirmation">
@@ -229,16 +229,16 @@
         font-size: 0.875rem;
     }
 
-    .user-details {
+    .userdetails {
         flex: 1;
     }
 
-    .user-name {
+    .username {
         font-weight: 600;
         font-size: 0.875rem;
     }
 
-    .user-role {
+    .userrole {
         font-size: 0.75rem;
         color: rgba(255,255,255,0.7);
     }

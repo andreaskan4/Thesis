@@ -271,7 +271,7 @@ else
         </div>
     </div>
 
-    <!-- New Message Modal -->
+    <!-- New Message Modal (Copied from Admin Page) -->
     @if (showNewMessageModal)
     {
         <div class="modal-overlay">
@@ -282,63 +282,115 @@ else
                 </div>
                 <div class="modal-body">
                     <form class="new-message-form">
+                        <!-- Search Bar for Users -->
                         <div class="form-group">
-                            <label>Recipient Type</label>
-                            <select @bind="newMessage.RecipientType" class="form-control">
-                                <option value="Student">Student</option>
-                                <option value="Admin">Administrator</option>
-                                <option value="Teacher">Teacher</option>
-                            </select>
+                            <label>Search Users</label>
+                            <input type="text" @bind="userSearchTerm" @oninput="OnUserSearch"
+                                   placeholder="Search by name or email..." class="form-control search-input" />
                         </div>
 
-                        @if (newMessage.RecipientType == "Student")
-                        {
-                            <div class="form-group">
-                                <label>Select Student</label>
-                                <select @bind="newMessage.RecipientId" class="form-control">
-                                    <option value="0">Choose a student...</option>
-                                    @foreach (var student in availableStudents)
-                                    {
-                                        <option value="@student.Id">@student.Name - @student.Email</option>
-                                    }
-                                </select>
+                        <!-- User Type Filter -->
+                        <div class="form-group">
+                            <label>Filter by Role</label>
+                            <div class="role-filter-buttons">
+                                <button type="button" class="role-filter-btn @(selectedUserRole == "all" ? "active" : "")"
+                                        @onclick='() => SetUserRoleFilter("all")'>
+                                    All Users (@allUsers.Count)
+                                </button>
+                                <button type="button" class="role-filter-btn @(selectedUserRole == "Student" ? "active" : "")"
+                                        @onclick='() => SetUserRoleFilter("Student")'>
+                                    Students (@allUsers.Count(u => u.Role == "Student"))
+                                </button>
+                                <button type="button" class="role-filter-btn @(selectedUserRole == "Teacher" ? "active" : "")"
+                                        @onclick='() => SetUserRoleFilter("Teacher")'>
+                                    Teachers (@allUsers.Count(u => u.Role == "Teacher"))
+                                </button>
+                                <button type="button" class="role-filter-btn @(selectedUserRole == "Admin" ? "active" : "")"
+                                        @onclick='() => SetUserRoleFilter("Admin")'>
+                                    Administrators (@allUsers.Count(u => u.Role == "Admin"))
+                                </button>
                             </div>
-                        }
-                        else if (newMessage.RecipientType == "Teacher")
-                        {
-                            <div class="form-group">
-                                <label>Select Teacher</label>
-                                <select @bind="newMessage.RecipientId" class="form-control">
-                                    <option value="0">Choose a teacher...</option>
-                                    @foreach (var teacher in availableTeachers)
-                                    {
-                                        <option value="@teacher.Id">@teacher.Name - @teacher.Email</option>
-                                    }
-                                </select>
-                            </div>
-                        }
-                        else if (newMessage.RecipientType == "Admin")
-                        {
-                            <div class="form-group">
-                                <label>Select Administrator</label>
-                                <select @bind="newMessage.RecipientId" class="form-control">
-                                    <option value="0">Choose an administrator...</option>
-                                    @foreach (var admin in availableAdmins)
-                                    {
-                                        <option value="@admin.Id">@admin.Name - @admin.Email</option>
-                                    }
-                                </select>
-                            </div>
-                        }
+                        </div>
 
+                        <!-- User Selection -->
+                        <div class="form-group">
+                            <label>Select Recipient</label>
+                            <div class="users-list">
+                                @if (isLoadingUsers)
+                                {
+                                    <div class="loading-users">
+                                        <div class="spinner"></div>
+                                        <p>Loading users...</p>
+                                    </div>
+                                }
+                                else if (!string.IsNullOrEmpty(userLoadError))
+                                {
+                                    <div class="error-loading-users">
+                                        <div class="error-icon">❌</div>
+                                        <h4>Error Loading Users</h4>
+                                        <p>@userLoadError</p>
+                                        <button class="btn btn-outline" @onclick="LoadUsersAsync">Retry</button>
+                                    </div>
+                                }
+                                else if (filteredUsers.Any())
+                                {
+                                    foreach (var user in filteredUsers)
+                                    {
+                                        <div class="user-item @(selectedUser?.Id == user.Id ? "selected" : "")"
+                                             @onclick="() => SelectUser(user)">
+                                            <div class="user-avatar @user.Role.ToLower()">
+                                                @if (user.Role == "Student")
+                                                {
+                                                    <text>🎓</text>
+                                                }
+                                                else if (user.Role == "Teacher")
+                                                {
+                                                    <text>👨‍🏫</text>
+                                                }
+                                                else
+                                                {
+                                                    <text>👤</text>
+                                                }
+                                            </div>
+                                            <div class="user-info">
+                                                <div class="user-name">@user.Name @user.LastName</div>
+                                                <div class="user-details">
+                                                    <span class="user-email">@user.Email</span>
+                                                    <span class="user-role">@user.Role</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-users-found">
+                                        <div class="empty-icon">👤</div>
+                                        <h4>No Users Found</h4>
+                                        <p>Try adjusting your search or filter criteria</p>
+                                        <p style="font-size: 12px; margin-top: 10px;">
+                                            Total users in database: @allUsers.Count<br />
+                                            Students: @allUsers.Count(u => u.Role == "Student")<br />
+                                            Teachers: @allUsers.Count(u => u.Role == "Teacher")<br />
+                                            Administrators: @allUsers.Count(u => u.Role == "Admin")
+                                        </p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Message Subject -->
                         <div class="form-group">
                             <label>Subject</label>
-                            <input type="text" @bind="newMessage.Subject" class="form-control" placeholder="Enter message subject..." />
+                            <input type="text" @bind="newMessage.Subject" class="form-control"
+                                   placeholder="Enter message subject..." />
                         </div>
 
+                        <!-- Message Content -->
                         <div class="form-group">
                             <label>Message</label>
-                            <textarea @bind="newMessage.Content" class="form-control" rows="6" placeholder="Type your message here..."></textarea>
+                            <textarea @bind="newMessage.Content" class="form-control message-textarea"
+                                      placeholder="Type your message here..." rows="6"></textarea>
                         </div>
                     </form>
                 </div>
@@ -374,11 +426,15 @@ else
     private int unreadMessagesCount = 0;
     private int sentMessagesCount = 0;
 
-    // New Message
+    // New Message Modal (from Admin page)
     private NewMessageModel newMessage = new();
-    private List<User> availableStudents = new();
-    private List<User> availableTeachers = new();
-    private List<User> availableAdmins = new();
+    private List<User> allUsers = new();
+    private List<User> filteredUsers = new();
+    private string userSearchTerm = "";
+    private string selectedUserRole = "all";
+    private User? selectedUser = null;
+    private bool isLoadingUsers = false;
+    private string userLoadError = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -428,35 +484,6 @@ else
                 .Include(m => m.Replies)
                 .Where(m => m.SenderId == currentUser.Id || m.RecipientId == currentUser.Id)
                 .OrderByDescending(m => m.CreatedAt)
-                .ToListAsync();
-
-            // Load available students (students enrolled in teacher's courses)
-            var teacherCourses = await Context.Courses
-                .Where(c => c.ProfessorId == currentUser.Id)
-                .Select(c => c.Id)
-                .ToListAsync();
-
-            var studentIds = await Context.Enrollments
-                .Where(e => teacherCourses.Contains(e.CourseId))
-                .Select(e => e.StudentId)
-                .Distinct()
-                .ToListAsync();
-
-            availableStudents = await Context.Users
-                .Where(u => studentIds.Contains(u.Id) && u.Role == "Student")
-                .OrderBy(u => u.Name)
-                .ToListAsync();
-
-            // Load available teachers (excluding current user)
-            availableTeachers = await Context.Users
-                .Where(u => u.Role == "Teacher" && u.Id != currentUser.Id)
-                .OrderBy(u => u.Name)
-                .ToListAsync();
-
-            // Load available admins
-            availableAdmins = await Context.Users
-                .Where(u => u.Role == "Admin")
-                .OrderBy(u => u.Name)
                 .ToListAsync();
 
             UpdateMessageStats();
@@ -512,7 +539,9 @@ else
                 m.Subject.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                 m.Content.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                 m.SenderName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                (m.RecipientName != null && m.RecipientName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                (m.RecipientName != null && m.RecipientName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                m.SenderRole.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (m.RecipientRole != null && m.RecipientRole.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
             );
         }
 
@@ -619,7 +648,7 @@ else
                 }
 
                 await LoadData();
-                
+
             }
             catch (Exception ex)
             {
@@ -667,7 +696,6 @@ else
                     selectedMessage = allMessages.FirstOrDefault(m => m.Id == selectedMessage.Id);
                 }
 
-                
             }
             catch (Exception ex)
             {
@@ -698,7 +726,7 @@ else
                 await LoadData();
 
                 selectedMessage = null;
-                
+
             }
             catch (Exception ex)
             {
@@ -740,7 +768,7 @@ else
             selectedMessage = allMessages.FirstOrDefault(m => m.Id == selectedMessage.Id);
 
             replyMessage = "";
-            
+
         }
         catch (Exception ex)
         {
@@ -754,9 +782,18 @@ else
         StateHasChanged();
     }
 
-    private void ShowNewMessageModal()
+    // New Message Modal Functions (from Admin page)
+    private async void ShowNewMessageModal()
     {
+        Console.WriteLine("Opening new message modal...");
         newMessage = new NewMessageModel();
+        userSearchTerm = "";
+        selectedUserRole = "all";
+        selectedUser = null;
+
+        // Load users when modal opens
+        await LoadUsersAsync();
+
         showNewMessageModal = true;
         StateHasChanged();
     }
@@ -765,6 +802,124 @@ else
     {
         showNewMessageModal = false;
         newMessage = new NewMessageModel();
+        userSearchTerm = "";
+        selectedUserRole = "all";
+        selectedUser = null;
+        userLoadError = "";
+        StateHasChanged();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        try
+        {
+            isLoadingUsers = true;
+            userLoadError = "";
+            StateHasChanged();
+
+            Console.WriteLine("Starting to load users from database...");
+
+            var currentUser = AuthStateService.CurrentUser;
+            if (currentUser == null) return;
+
+            // Load all users except the current user
+            allUsers = await Context.Users
+                .Where(u => u.Id != currentUser.Id) // Exclude current user
+                .OrderBy(u => u.Name)
+                .ThenBy(u => u.LastName)
+                .ToListAsync();
+
+            Console.WriteLine($"Successfully loaded {allUsers.Count} users from database");
+
+            if (allUsers.Any())
+            {
+                Console.WriteLine("Sample users:");
+                foreach (var user in allUsers.Take(5))
+                {
+                    Console.WriteLine($"- {user.Name} {user.LastName} ({user.Email}) - {user.Role}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No users found in database");
+                userLoadError = "No users found in the database.";
+            }
+
+            // Apply initial filters
+            ApplyUserFilters();
+
+            isLoadingUsers = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading users: {ex.Message}");
+            userLoadError = $"Failed to load users: {ex.Message}";
+            allUsers = new List<User>();
+            filteredUsers = new List<User>();
+            isLoadingUsers = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyUserFilters()
+    {
+        Console.WriteLine($"Applying user filters: search='{userSearchTerm}', role='{selectedUserRole}'");
+        Console.WriteLine($"Total users available: {allUsers?.Count ?? 0}");
+
+        if (allUsers == null || !allUsers.Any())
+        {
+            filteredUsers = new List<User>();
+            Console.WriteLine("No users available to filter");
+            return;
+        }
+
+        var query = allUsers.AsQueryable();
+
+        // Apply role filter
+        if (selectedUserRole != "all")
+        {
+            query = query.Where(u => u.Role == selectedUserRole);
+            Console.WriteLine($"Applied role filter: {selectedUserRole}");
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(userSearchTerm))
+        {
+            var search = userSearchTerm.ToLower();
+            query = query.Where(u =>
+                (u.Name != null && u.Name.ToLower().Contains(search)) ||
+                (u.LastName != null && u.LastName.ToLower().Contains(search)) ||
+                (u.Email != null && u.Email.ToLower().Contains(search)) ||
+                (u.Role != null && u.Role.ToLower().Contains(search))
+            );
+            Console.WriteLine($"Applied search filter: {userSearchTerm}");
+        }
+
+        filteredUsers = query.OrderBy(u => u.Name).ThenBy(u => u.LastName).ToList();
+        Console.WriteLine($"Filtered users count: {filteredUsers.Count}");
+    }
+
+    private void OnUserSearch(ChangeEventArgs e)
+    {
+        userSearchTerm = e.Value?.ToString() ?? "";
+        ApplyUserFilters();
+        StateHasChanged();
+    }
+
+    private void SetUserRoleFilter(string role)
+    {
+        selectedUserRole = role;
+        ApplyUserFilters();
+        StateHasChanged();
+    }
+
+    private void SelectUser(User user)
+    {
+        selectedUser = user;
+        newMessage.RecipientId = user.Id;
+        newMessage.RecipientType = user.Role;
+        Console.WriteLine($"Selected user: {user.Name} {user.LastName} ({user.Role})");
         StateHasChanged();
     }
 
@@ -772,38 +927,16 @@ else
     {
         return !string.IsNullOrWhiteSpace(newMessage.Subject) &&
                !string.IsNullOrWhiteSpace(newMessage.Content) &&
-               newMessage.RecipientId > 0;
+               selectedUser != null;
     }
 
     private async Task SendNewMessage()
     {
-        if (!CanSendMessage()) return;
-
+        if (!CanSendMessage() || selectedUser == null) return;
         try
         {
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
-
-            // Find recipient
-            User? recipient = null;
-            if (newMessage.RecipientType == "Student")
-            {
-                recipient = availableStudents.FirstOrDefault(s => s.Id == newMessage.RecipientId);
-            }
-            else if (newMessage.RecipientType == "Teacher")
-            {
-                recipient = availableTeachers.FirstOrDefault(t => t.Id == newMessage.RecipientId);
-            }
-            else if (newMessage.RecipientType == "Admin")
-            {
-                recipient = availableAdmins.FirstOrDefault(a => a.Id == newMessage.RecipientId);
-            }
-
-            if (recipient == null)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Recipient not found.");
-                return;
-            }
 
             var message = new Message
             {
@@ -811,10 +944,10 @@ else
                 SenderName = currentUser.Name ?? "Teacher",
                 SenderEmail = currentUser.Email ?? "teacher@university.edu",
                 SenderRole = "Teacher",
-                RecipientId = recipient.Id,
-                RecipientName = recipient.Name,
-                RecipientEmail = recipient.Email,
-                RecipientRole = newMessage.RecipientType,
+                RecipientId = selectedUser.Id,
+                RecipientName = $"{selectedUser.Name} {selectedUser.LastName}",
+                RecipientEmail = selectedUser.Email,
+                RecipientRole = selectedUser.Role,
                 Subject = newMessage.Subject.Trim(),
                 Content = newMessage.Content.Trim(),
                 IsRead = false,
@@ -823,13 +956,12 @@ else
 
             Context.Messages.Add(message);
             await Context.SaveChangesAsync();
-
             await LoadData();
             CloseNewMessageModal();
-            
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error sending message: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", $"Error sending message: {ex.Message}");
         }
     }
@@ -869,36 +1001,49 @@ else
     // Models
     private class NewMessageModel
     {
-        public string RecipientType { get; set; } = "Student";
+        public string RecipientType { get; set; } = "";
         public int RecipientId { get; set; }
         public string Subject { get; set; } = "";
         public string Content { get; set; } = "";
     }
 }
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    /* Teacher Messages Page - Blue/Purple Gradient with White Balance */
+
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+        --accent-gradient: linear-gradient(135deg, #4c6ef5 0%, #9775fa 100%);
+        --dark-gradient: linear-gradient(135deg, #3730a3 0%, #581c87 100%);
+        --light-gradient: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+        --primary-blue: #667eea;
+        --primary-purple: #764ba2;
+        --accent-blue: #5e72e4;
+        --accent-purple: #9775fa;
+        --dark-blue: #3730a3;
+        --dark-purple: #581c87;
+        --light-blue: #e0e7ff;
+        --light-purple: #ede9fe;
+        --border-color: #e5e7eb;
     }
 
-    /* Loading and Auth States */
+    /* Loading Container */
     .loading-container {
         display: flex;
         flex-direction: column;
-        align-items: center;
         justify-content: center;
+        align-items: center;
         min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
     }
 
     .spinner {
-        width: 60px;
-        height: 60px;
-        border: 5px solid rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
         border-top-color: white;
         border-radius: 50%;
-        animation: spin 1s ease-in-out infinite;
+        animation: spin 1s linear infinite;
     }
 
     @@keyframes spin {
@@ -911,223 +1056,230 @@ else
     }
 
     .loading-container p {
-        margin-top: 25px;
+        margin-top: 20px;
         color: white;
-        font-size: 1.2rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        font-size: 1.1rem;
+        font-weight: 500;
     }
 
+    /* Unauthorized Container */
     .unauthorized-container {
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
         min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
         padding: 20px;
     }
 
     .unauthorized-card {
         background: white;
-        padding: 60px 50px;
-        border-radius: 24px;
+        border-radius: 16px;
+        padding: 48px;
         text-align: center;
-        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-        max-width: 450px;
-        animation: slideUp 0.4s ease-out;
-    }
-
-    @@keyframes slideUp {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
     }
 
     .unauthorized-icon {
-        font-size: 5rem;
-        margin-bottom: 25px;
-        animation: bounce 2s ease-in-out infinite;
-    }
-
-    @@keyframes bounce {
-        0%, 100%
-
-    {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
-
+        font-size: 64px;
+        margin-bottom: 24px;
     }
 
     .unauthorized-card h3 {
-        font-size: 2rem;
-        color: #2d3748;
-        margin-bottom: 15px;
-        font-weight: 700;
+        color: var(--dark-purple);
+        margin-bottom: 12px;
+        font-size: 1.5rem;
     }
 
     .unauthorized-card p {
-        color: #718096;
-        margin-bottom: 35px;
-        font-size: 1.1rem;
-        line-height: 1.6;
+        color: #64748b;
+        margin-bottom: 24px;
     }
 
     /* Main Container */
     .teacher-messages {
         min-height: 100vh;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 30px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #f8f9ff 0%, #faf5ff 100%);
+        padding: 20px;
     }
 
     /* Header Bar */
     .header-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding: 25px 35px;
         background: white;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 16px;
     }
 
-        .header-bar h2 {
-            color: #2d3748;
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+    .back-btn {
+        background: white;
+        border: 2px solid var(--light-purple);
+        padding: 10px 20px;
+        border-radius: 10px;
+        color: var(--dark-purple);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .back-btn:hover {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: var(--primary-purple);
+            transform: translateX(-4px);
         }
+
+    .header-bar h2 {
+        color: var(--dark-purple);
+        margin: 0;
+        font-size: 1.8rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 
     .header-actions {
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 16px;
         flex-wrap: wrap;
     }
 
     .message-stats {
         display: flex;
-        gap: 15px;
+        gap: 12px;
+        flex-wrap: wrap;
     }
 
     .stat-item {
         padding: 8px 16px;
-        background: #f8f9fa;
-        border-radius: 12px;
+        background: white;
+        border: 2px solid var(--light-purple);
+        border-radius: 10px;
+        color: var(--dark-blue);
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #4a5568;
-        border: 2px solid transparent;
     }
 
         .stat-item:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            background: var(--light-gradient);
+            border-color: var(--accent-purple);
+            transform: translateY(-2px);
         }
 
         .stat-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-gradient);
+            color: white;
+            border-color: var(--primary-purple);
+        }
+
+    /* Buttons */
+    .btn {
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-outline {
+        background: white;
+        color: var(--primary-blue);
+        border: 2px solid var(--primary-blue);
+    }
+
+        .btn-outline:hover {
+            background: var(--primary-gradient);
             color: white;
             border-color: transparent;
         }
 
-    .back-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 12px;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
     /* Messages Container */
     .messages-container {
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    @@keyframes fadeIn {
-        from
-
-    {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        min-height: calc(100vh - 200px);
     }
 
     .loading {
+        padding: 48px;
         text-align: center;
-        padding: 60px 40px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-        color: #667eea;
+        color: var(--dark-purple);
         font-size: 1.1rem;
-        font-weight: 600;
     }
 
     /* Messages Layout */
     .messages-layout {
         display: grid;
         grid-template-columns: 400px 1fr;
-        gap: 25px;
-        height: calc(100vh - 250px);
+        height: calc(100vh - 200px);
+    }
+
+    @@media (max-width: 968px) {
+        .messages-layout
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .message-detail {
+        display: none;
+    }
+
     }
 
     /* Messages List */
     .messages-list {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        background: #fafafa;
     }
 
     .list-header {
-        padding: 25px;
-        border-bottom: 2px solid #e2e8f0;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        background: white;
     }
 
         .list-header h3 {
+            color: var(--dark-purple);
+            margin: 0 0 16px 0;
             font-size: 1.3rem;
-            color: #2d3748;
-            font-weight: 700;
-            margin-bottom: 15px;
         }
 
     .search-box {
@@ -1137,85 +1289,80 @@ else
     .search-input {
         width: 100%;
         padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 0.9rem;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.95rem;
         transition: all 0.3s ease;
+        background: white;
     }
 
         .search-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-    /* Messages Scroll */
     .messages-scroll {
         flex: 1;
         overflow-y: auto;
-        padding: 10px;
+        padding: 12px;
     }
-
-        .messages-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .messages-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .messages-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 10px;
-        }
-
-            .messages-scroll::-webkit-scrollbar-thumb:hover {
-                background: #a0aec0;
-            }
 
     /* Message Item */
     .message-item {
         display: flex;
-        align-items: flex-start;
         gap: 12px;
-        padding: 15px;
-        border-radius: 12px;
+        padding: 16px;
         margin-bottom: 8px;
+        border-radius: 12px;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        background: white;
+        border: 2px solid transparent;
         position: relative;
     }
 
         .message-item:hover {
-            background: #f8f9fa;
+            background: #f8f9ff;
+            border-color: var(--light-purple);
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
         }
 
         .message-item.selected {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border-left: 4px solid #667eea;
+            background: var(--primary-gradient);
+            color: white;
+            border-color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .message-item.unread {
-            background: rgba(102, 126, 234, 0.05);
-            font-weight: 600;
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+            border-color: var(--accent-purple);
         }
+
+            .message-item.unread.selected {
+                background: var(--primary-gradient);
+            }
 
     .message-avatar {
         flex-shrink: 0;
     }
 
     .avatar {
-        width: 45px;
-        height: 45px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.5rem;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
         .avatar.student {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
         }
 
         .avatar.teacher {
@@ -1223,7 +1370,7 @@ else
         }
 
         .avatar.admin {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         }
 
     .message-preview {
@@ -1235,83 +1382,100 @@ else
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
 
     .sender-name {
         font-weight: 700;
-        color: #2d3748;
-        font-size: 0.95rem;
+        color: var(--dark-purple);
+    }
+
+    .message-item.selected .sender-name {
+        color: white;
     }
 
     .message-time {
-        font-size: 0.75rem;
-        color: #718096;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    .message-item.selected .message-time {
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .message-subject {
         font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 5px;
-        white-space: nowrap;
+        color: var(--dark-blue);
+        margin-bottom: 4px;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .message-item.selected .message-subject {
+        color: white;
     }
 
     .message-excerpt {
-        font-size: 0.85rem;
-        color: #718096;
-        white-space: nowrap;
+        font-size: 0.9rem;
+        color: #64748b;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
         margin-bottom: 8px;
+    }
+
+    .message-item.selected .message-excerpt {
+        color: rgba(255, 255, 255, 0.85);
     }
 
     .message-meta {
         display: flex;
+        gap: 12px;
         align-items: center;
-        gap: 10px;
         flex-wrap: wrap;
     }
 
     .sender-role {
-        font-size: 0.75rem;
-        color: #667eea;
-        padding: 2px 8px;
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--accent-blue);
+        font-weight: 600;
+    }
+
+    .message-item.selected .sender-role {
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .unread-badge {
-        font-size: 0.7rem;
-        padding: 3px 8px;
-        background: #ef4444;
+        background: var(--accent-gradient);
         color: white;
-        border-radius: 8px;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 700;
     }
 
     .replies-count {
-        font-size: 0.75rem;
-        color: #667eea;
+        font-size: 0.85rem;
+        color: var(--accent-purple);
+        font-weight: 600;
+    }
+
+    .message-item.selected .replies-count {
+        color: white;
     }
 
     .delete-message-btn {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 12px;
+        right: 12px;
         background: rgba(239, 68, 68, 0.1);
         border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 6px;
         cursor: pointer;
-        opacity: 0;
         transition: all 0.3s ease;
-        font-size: 1rem;
+        opacity: 0;
     }
 
     .message-item:hover .delete-message-btn {
@@ -1325,78 +1489,69 @@ else
 
     /* Empty Messages */
     .empty-messages {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 30px;
+        padding: 48px 24px;
         text-align: center;
+        background: white;
     }
 
     .empty-icon {
-        font-size: 4rem;
-        margin-bottom: 20px;
+        font-size: 64px;
+        margin-bottom: 16px;
         opacity: 0.5;
     }
 
     .empty-messages h3 {
-        color: #2d3748;
-        font-size: 1.3rem;
-        margin-bottom: 10px;
+        color: var(--dark-purple);
+        margin-bottom: 8px;
     }
 
     .empty-messages p {
-        color: #718096;
+        color: #64748b;
     }
 
     /* Message Detail */
     .message-detail {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        height: 100%;
+        background: white;
     }
 
     .detail-header {
-        padding: 25px 30px;
-        border-bottom: 2px solid #e2e8f0;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        background: white;
     }
 
     .message-info h3 {
+        color: var(--dark-purple);
+        margin: 0 0 16px 0;
         font-size: 1.5rem;
-        color: #2d3748;
-        margin-bottom: 15px;
-        font-weight: 700;
     }
 
     .message-sender {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         align-items: center;
     }
 
-    .sender-avatar .avatar {
-        width: 50px;
-        height: 50px;
+    .sender-details {
+        flex: 1;
     }
 
     .sender-name {
         font-weight: 700;
-        color: #2d3748;
-        font-size: 1rem;
+        color: var(--dark-purple);
+        margin-bottom: 4px;
     }
 
     .sender-email {
-        font-size: 0.85rem;
-        color: #718096;
-        margin-top: 4px;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .message-actions {
+        margin-top: 16px;
     }
 
     /* Message Conversation */
@@ -1405,193 +1560,142 @@ else
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: #f9fafb;
     }
 
     .conversation-scroll-area {
         flex: 1;
         overflow-y: auto;
-        padding: 25px 30px;
-        background: linear-gradient(to bottom, #fafbfc 0%, #f5f6f8 100%);
+        padding: 24px;
     }
-
-        .conversation-scroll-area::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .conversation-scroll-area::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .conversation-scroll-area::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-        }
-
-            .conversation-scroll-area::-webkit-scrollbar-thumb:hover {
-                background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
-            }
 
     .conversation-item {
-        display: flex;
         margin-bottom: 20px;
-        animation: messageSlideIn 0.3s ease-out;
+        display: flex;
     }
 
-    @@keyframes messageSlideIn {
-        from
+        .conversation-item.sent {
+            justify-content: flex-end;
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-
-    .conversation-item.received {
-        justify-content: flex-start;
-    }
-
-    .conversation-item.sent {
-        justify-content: flex-end;
-    }
+        .conversation-item.received {
+            justify-content: flex-start;
+        }
 
     .message-content {
         max-width: 70%;
-        padding: 15px 20px;
-        border-radius: 18px;
         position: relative;
+    }
+
+    .conversation-item.sent .message-content {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 16px 16px 4px 16px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .conversation-item.received .message-content {
         background: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-bottom-left-radius: 4px;
-    }
-
-    .conversation-item.sent .message-content {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        border-bottom-right-radius: 4px;
+        color: var(--dark-purple);
+        border-radius: 16px 16px 16px 4px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 2px solid var(--light-purple);
     }
 
     .reply-header {
         display: flex;
-        justify-content: space-between;
+        gap: 8px;
         align-items: center;
         margin-bottom: 8px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .conversation-item.received .reply-header {
-        border-bottom-color: #e2e8f0;
     }
 
     .replier-name {
         font-weight: 700;
-        font-size: 0.9rem;
     }
 
     .replier-role {
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-    }
-
-    .conversation-item.received .replier-role {
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
+        font-size: 0.85rem;
+        opacity: 0.8;
     }
 
     .message-text {
         line-height: 1.6;
         margin-bottom: 8px;
-        word-wrap: break-word;
-    }
-
-    .conversation-item.sent .message-text {
-        color: white;
     }
 
     .message-time {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         opacity: 0.7;
     }
 
     .delete-single-btn {
         position: absolute;
-        top: -8px;
-        right: -8px;
-        background: rgba(239, 68, 68, 0.9);
-        border: 2px solid white;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: none;
-        align-items: center;
-        justify-content: center;
+        top: 8px;
+        right: 8px;
+        background: rgba(239, 68, 68, 0.1);
+        border: none;
+        padding: 4px 8px;
+        border-radius: 6px;
         cursor: pointer;
-        font-size: 0.9rem;
         transition: all 0.3s ease;
+        opacity: 0;
     }
 
     .message-content:hover .delete-single-btn {
-        display: flex;
+        opacity: 1;
     }
 
     .delete-single-btn:hover {
-        background: #dc2626;
+        background: #ef4444;
         transform: scale(1.1);
     }
 
-    /* Reply Section - FIXED POSITION */
+    /* Reply Section */
     .reply-section {
-        padding: 20px 30px;
+        padding: 24px;
+        border-top: 1px solid var(--border-color);
         background: white;
-        border-top: 2px solid #e2e8f0;
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
     }
 
     .reply-form {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 16px;
     }
 
     .form-group {
-        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
+        .form-group label {
+            font-weight: 600;
+            color: var(--dark-purple);
+        }
+
     .form-control {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
+        padding: 12px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
         font-size: 0.95rem;
-        transition: all 0.3s ease;
         font-family: inherit;
+        transition: all 0.3s ease;
         resize: vertical;
-        min-height: 80px;
+        background: white;
     }
 
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
     .form-actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         justify-content: flex-end;
     }
 
@@ -1601,248 +1705,363 @@ else
         align-items: center;
         justify-content: center;
         height: 100%;
+        background: white;
     }
 
     .select-message-prompt {
         text-align: center;
+        padding: 48px;
     }
 
     .prompt-icon {
-        font-size: 5rem;
-        margin-bottom: 20px;
-        opacity: 0.5;
+        font-size: 80px;
+        margin-bottom: 24px;
+        opacity: 0.3;
     }
 
     .select-message-prompt h3 {
-        color: #2d3748;
+        color: var(--dark-purple);
+        margin-bottom: 12px;
         font-size: 1.5rem;
-        margin-bottom: 10px;
     }
 
     .select-message-prompt p {
-        color: #718096;
+        color: #64748b;
+        font-size: 1.1rem;
     }
 
-    /* Modal */
+    /* Modal Overlay */
     .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 10000;
-        animation: fadeIn 0.3s ease-out;
+        z-index: 1000;
+        padding: 20px;
     }
 
     .modal-content {
         background: white;
-        border-radius: 24px;
-        max-width: 600px;
-        width: 90%;
+        border-radius: 20px;
+        max-width: 700px;
+        width: 100%;
         max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
-        animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
     }
 
-    @@keyframes modalSlideUp {
+    @@keyframes modalSlideIn {
         from
 
     {
         opacity: 0;
-        transform: translateY(50px) scale(0.9);
+        transform: translateY(-20px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 
     }
 
     .modal-header {
-        padding: 25px 30px;
-        border-bottom: 2px solid #e2e8f0;
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: linear-gradient(to right, #f8f9fa 0%, white 100%);
+        background: white;
     }
 
         .modal-header h3 {
+            margin: 0;
+            color: var(--dark-purple);
             font-size: 1.5rem;
-            color: #2d3748;
-            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
     .close-btn {
         background: none;
         border: none;
         font-size: 2rem;
+        color: #9ca3af;
         cursor: pointer;
-        color: #adb5bd;
-        transition: all 0.3s ease;
-        width: 40px;
-        height: 40px;
+        padding: 0;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        transition: all 0.3s ease;
     }
 
         .close-btn:hover {
-            background: #e9ecef;
-            color: #495057;
-            transform: rotate(90deg);
+            background: var(--light-gradient);
+            color: var(--dark-purple);
         }
 
     .modal-body {
-        padding: 30px;
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: white;
     }
 
+    .modal-footer {
+        padding: 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        background: #f9fafb;
+    }
+
+    /* New Message Form Styles */
     .new-message-form {
         display: flex;
         flex-direction: column;
         gap: 20px;
     }
 
-        .new-message-form .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .new-message-form label {
-            font-weight: 700;
-            color: #2d3748;
-            font-size: 0.95rem;
-        }
-
-    .modal-footer {
-        padding: 20px 30px;
-        background: #f8f9fa;
-        border-top: 2px solid #e2e8f0;
+    .role-filter-buttons {
         display: flex;
-        justify-content: flex-end;
-        gap: 12px;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
-    /* Buttons */
-    .btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        font-size: 0.95rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-    .btn-outline {
+    .role-filter-btn {
+        padding: 8px 16px;
         background: white;
-        color: #667eea;
-        border: 2px solid #667eea;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--dark-blue);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
     }
 
-        .btn-outline:hover {
-            background: #667eea;
+        .role-filter-btn:hover {
+            background: var(--light-gradient);
+            border-color: var(--accent-purple);
+        }
+
+        .role-filter-btn.active {
+            background: var(--primary-gradient);
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            border-color: var(--primary-purple);
+        }
+
+    /* Users List */
+    .users-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        background: #fafafa;
+    }
+
+    .loading-users {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+    }
+
+        .loading-users p {
+            margin-top: 16px;
+            color: var(--dark-purple);
+            font-weight: 500;
+        }
+
+    .error-loading-users {
+        text-align: center;
+        padding: 48px 24px;
+    }
+
+    .error-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+
+    .error-loading-users h4 {
+        color: #ef4444;
+        margin-bottom: 8px;
+    }
+
+    .error-loading-users p {
+        color: #64748b;
+        margin-bottom: 16px;
+    }
+
+    .user-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 8px;
+    }
+
+        .user-item:hover {
+            background: #f8f9ff;
+            border-color: var(--light-purple);
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .user-item.selected {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: var(--primary-purple);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+    .user-avatar {
+        flex-shrink: 0;
+    }
+
+    .user-info {
+        flex: 1;
+    }
+
+    .user-name {
+        font-weight: 700;
+        color: var(--dark-purple);
+        margin-bottom: 4px;
+    }
+
+    .user-item.selected .user-name {
+        color: white;
+    }
+
+    .user-details {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+    }
+
+    .user-email {
+        color: #64748b;
+    }
+
+    .user-item.selected .user-email {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .user-role {
+        color: var(--accent-blue);
+        font-weight: 600;
+    }
+
+    .user-item.selected .user-role {
+        color: white;
+        font-weight: 700;
+    }
+
+    .no-users-found {
+        text-align: center;
+        padding: 48px 24px;
+        background: white;
+        border-radius: 10px;
+    }
+
+        .no-users-found .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .no-users-found h4 {
+            color: var(--dark-purple);
+            margin-bottom: 8px;
+        }
+
+        .no-users-found p {
+            color: #64748b;
+        }
+
+    .message-textarea {
+        min-height: 150px;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f3f4f6;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--accent-gradient);
+        border-radius: 10px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-gradient);
         }
 
     /* Responsive Design */
-    @@media (max-width: 1200px) {
-        .messages-layout
+    @@media (max-width: 768px) {
+        .header-bar
 
     {
-        grid-template-columns: 350px 1fr;
+        flex-direction: column;
+        align-items: stretch;
     }
 
+    .header-actions {
+        flex-direction: column;
     }
 
-    @@media (max-width: 992px) {
-        .messages-layout
+    .message-stats {
+        justify-content: space-between;
+    }
 
-    {
+    .messages-layout {
         grid-template-columns: 1fr;
         height: auto;
     }
 
     .messages-list {
-        height: 400px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
     }
 
-    .message-detail {
-        height: 600px;
-    }
-
-    }
-
-    @@media (max-width: 768px) {
-        .teacher-messages
-
-    {
-        padding: 20px;
-    }
-
-    .header-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 20px;
-    }
-
-        .header-bar h2 {
-            font-size: 1.5rem;
-        }
-
-    .header-actions {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .message-stats {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .stat-item {
-        width: 100%;
-        text-align: center;
-    }
-
-    .message-content {
+    .conversation-item .message-content {
         max-width: 85%;
     }
 
-    .reply-section {
-        padding: 15px 20px;
+    .role-filter-buttons {
+        flex-direction: column;
     }
 
-    .modal-content {
-        width: 95%;
+    .role-filter-btn {
+        width: 100%;
     }
 
     }

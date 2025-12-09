@@ -6,6 +6,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Thesis.Components.Models
 @using Thesis.Models
+@using System.Text
 
 
 <PageTitle>Thesis - Admin Settings</PageTitle>
@@ -73,26 +74,10 @@ else
                                 <div class="setting-badge">Current</div>
                             </div>
                             <div class="setting-control">
-                                <select @bind="AdminSystemSettings.AcademicYear" class="setting-select">
+                                <select @bind="academicYear" class="setting-select">
                                     <option value="2023-2024">2023-2024</option>
                                     <option value="2024-2025">2024-2025</option>
-                                    <option value="2025-2026">2025-2026</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>Grading Scale</h4>
-                                    <p>Default grading scale for all courses</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <select @bind="AdminSystemSettings.GradingScale" class="setting-select">
-                                    <option value="0-10">0-10 Scale</option>
-                                    <option value="0-100">0-100 Scale</option>
-                                    <option value="A-F">A-F Letter Grades</option>
+                                    <option value="2025-2026" selected>2025-2026</option>
                                 </select>
                             </div>
                         </div>
@@ -106,7 +91,7 @@ else
                             </div>
                             <div class="setting-control">
                                 <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.AutoBackup" />
+                                    <input type="checkbox" @bind="autoBackup" />
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -120,7 +105,7 @@ else
                                 </div>
                             </div>
                             <div class="setting-control">
-                                <select @bind="AdminSystemSettings.BackupFrequency" class="setting-select" disabled="@(!AdminSystemSettings.AutoBackup)">
+                                <select @bind="backupFrequency" class="setting-select" disabled="@(!adminSystemSettings.AutoBackup)">
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
@@ -150,25 +135,9 @@ else
                             </div>
                             <div class="setting-control">
                                 <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.AllowStudentRegistration" />
+                                    <input type="checkbox" @bind="allowStudentRegistration" />
                                     <span class="toggle-slider"></span>
                                 </label>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>Default User Role</h4>
-                                    <p>Default role for new registrations</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <select @bind="AdminSystemSettings.DefaultUserRole" class="setting-select">
-                                    <option value="Student">Student</option>
-                                    <option value="Teacher">Teacher</option>
-                                    <option value="Pending">Pending Approval</option>
-                                </select>
                             </div>
                         </div>
 
@@ -180,101 +149,11 @@ else
                                 </div>
                             </div>
                             <div class="setting-control">
-                                <select @bind="AdminSystemSettings.PasswordPolicy" class="setting-select">
+                                <select @bind="passwordPolicy" class="setting-select">
                                     <option value="weak">Weak (4+ characters)</option>
                                     <option value="medium">Medium (6+ characters)</option>
                                     <option value="strong">Strong (8+ characters, mixed)</option>
                                 </select>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>Session Timeout</h4>
-                                    <p>Automatic logout after inactivity</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <select @bind="AdminSystemSettings.SessionTimeout" class="setting-select">
-                                    <option value="30">30 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="120">2 hours</option>
-                                    <option value="240">4 hours</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notification Settings -->
-                <div class="settings-section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span class="section-icon">🔔</span>
-                            <h3>Notifications</h3>
-                        </div>
-                        <p class="section-description">Configure system notifications and alerts</p>
-                    </div>
-
-                    <div class="settings-grid">
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>Email Notifications</h4>
-                                    <p>Send email alerts for important events</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.EmailNotifications" />
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>Grade Alerts</h4>
-                                    <p>Notify when grades are entered or changed</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.GradeAlerts" />
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>New User Alerts</h4>
-                                    <p>Notify when new users register</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.NewUserAlerts" />
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="setting-card">
-                            <div class="setting-header">
-                                <div class="setting-info">
-                                    <h4>System Maintenance</h4>
-                                    <p>Notify before system maintenance</p>
-                                </div>
-                            </div>
-                            <div class="setting-control">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" @bind="AdminSystemSettings.MaintenanceAlerts" />
-                                    <span class="toggle-slider"></span>
-                                </label>
                             </div>
                         </div>
                     </div>
@@ -435,6 +314,7 @@ else
     private bool isLoading = true;
     private bool isSaving = false;
     private bool isCleaning = false;
+    private bool isExporting = false;
     private bool hasUnsavedChanges = false;
 
     // System Settings - Using AdminSystemSettings class
@@ -458,6 +338,57 @@ else
     // Property to expose AdminSystemSettings to the UI
     private AdminSystemSettings AdminSystemSettings => adminSystemSettings;
 
+    // Wrapper properties for two-way binding with change detection
+    private string academicYear
+    {
+        get => adminSystemSettings.AcademicYear;
+        set
+        {
+            adminSystemSettings.AcademicYear = value;
+            CheckForChanges();
+        }
+    }
+
+    private bool autoBackup
+    {
+        get => adminSystemSettings.AutoBackup;
+        set
+        {
+            adminSystemSettings.AutoBackup = value;
+            CheckForChanges();
+        }
+    }
+
+    private string backupFrequency
+    {
+        get => adminSystemSettings.BackupFrequency;
+        set
+        {
+            adminSystemSettings.BackupFrequency = value;
+            CheckForChanges();
+        }
+    }
+
+    private bool allowStudentRegistration
+    {
+        get => adminSystemSettings.AllowStudentRegistration;
+        set
+        {
+            adminSystemSettings.AllowStudentRegistration = value;
+            CheckForChanges();
+        }
+    }
+
+    private string passwordPolicy
+    {
+        get => adminSystemSettings.PasswordPolicy;
+        set
+        {
+            adminSystemSettings.PasswordPolicy = value;
+            CheckForChanges();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await CheckAuthorization();
@@ -466,6 +397,12 @@ else
             await LoadSettings();
             await LoadDatabaseStats();
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Check for changes whenever parameters are set
+        CheckForChanges();
     }
 
     private async Task CheckAuthorization()
@@ -499,17 +436,10 @@ else
                 {
                     Id = settings.Id,
                     AcademicYear = settings.AcademicYear,
-                    GradingScale = settings.GradingScale,
                     AutoBackup = settings.AutoBackup,
                     BackupFrequency = settings.BackupFrequency,
                     AllowStudentRegistration = settings.AllowStudentRegistration,
-                    DefaultUserRole = settings.DefaultUserRole,
                     PasswordPolicy = settings.PasswordPolicy,
-                    SessionTimeout = settings.SessionTimeout,
-                    EmailNotifications = settings.EmailNotifications,
-                    GradeAlerts = settings.GradeAlerts,
-                    NewUserAlerts = settings.NewUserAlerts,
-                    MaintenanceAlerts = settings.MaintenanceAlerts,
                     LastBackup = settings.LastBackup,
                     CreatedAt = settings.CreatedAt,
                     UpdatedAt = settings.UpdatedAt
@@ -518,22 +448,18 @@ else
             else
             {
                 // Create default settings if none exist
-                adminSystemSettings = new AdminSystemSettings();
-                // You might need to map AdminSystemSettings to your entity model here
+                adminSystemSettings = new AdminSystemSettings
+                {
+                    AcademicYear = "2025-2026" // Set default to current academic year
+                };
+
                 var newSettings = new AdminSystemSettings
                 {
                     AcademicYear = adminSystemSettings.AcademicYear,
-                    GradingScale = adminSystemSettings.GradingScale,
                     AutoBackup = adminSystemSettings.AutoBackup,
                     BackupFrequency = adminSystemSettings.BackupFrequency,
                     AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
-                    DefaultUserRole = adminSystemSettings.DefaultUserRole,
                     PasswordPolicy = adminSystemSettings.PasswordPolicy,
-                    SessionTimeout = adminSystemSettings.SessionTimeout,
-                    EmailNotifications = adminSystemSettings.EmailNotifications,
-                    GradeAlerts = adminSystemSettings.GradeAlerts,
-                    NewUserAlerts = adminSystemSettings.NewUserAlerts,
-                    MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
@@ -541,21 +467,18 @@ else
                 await Context.SaveChangesAsync();
             }
 
-            // Store original settings for change detection
+            // Store original settings for change detection - create a NEW instance
             originalSettings = new AdminSystemSettings
             {
+                Id = adminSystemSettings.Id,
                 AcademicYear = adminSystemSettings.AcademicYear,
-                GradingScale = adminSystemSettings.GradingScale,
                 AutoBackup = adminSystemSettings.AutoBackup,
                 BackupFrequency = adminSystemSettings.BackupFrequency,
                 AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
-                DefaultUserRole = adminSystemSettings.DefaultUserRole,
                 PasswordPolicy = adminSystemSettings.PasswordPolicy,
-                SessionTimeout = adminSystemSettings.SessionTimeout,
-                EmailNotifications = adminSystemSettings.EmailNotifications,
-                GradeAlerts = adminSystemSettings.GradeAlerts,
-                NewUserAlerts = adminSystemSettings.NewUserAlerts,
-                MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts
+                LastBackup = adminSystemSettings.LastBackup,
+                CreatedAt = adminSystemSettings.CreatedAt,
+                UpdatedAt = adminSystemSettings.UpdatedAt
             };
 
             hasUnsavedChanges = false;
@@ -597,8 +520,18 @@ else
         return $"{totalUsers} users, {totalCourses} courses, {totalGrades} grades";
     }
 
-    // This method is no longer needed since we're using property setters
-    // The @bind directive will automatically update the properties
+    // Check if current settings differ from original settings
+    private void CheckForChanges()
+    {
+        hasUnsavedChanges =
+            adminSystemSettings.AcademicYear != originalSettings.AcademicYear ||
+            adminSystemSettings.AutoBackup != originalSettings.AutoBackup ||
+            adminSystemSettings.BackupFrequency != originalSettings.BackupFrequency ||
+            adminSystemSettings.AllowStudentRegistration != originalSettings.AllowStudentRegistration ||
+            adminSystemSettings.PasswordPolicy != originalSettings.PasswordPolicy;
+
+        StateHasChanged();
+    }
 
     private async Task SaveSettings()
     {
@@ -613,37 +546,27 @@ else
             {
                 // Update existing settings with AdminSystemSettings values
                 existingSettings.AcademicYear = adminSystemSettings.AcademicYear;
-                existingSettings.GradingScale = adminSystemSettings.GradingScale;
                 existingSettings.AutoBackup = adminSystemSettings.AutoBackup;
                 existingSettings.BackupFrequency = adminSystemSettings.BackupFrequency;
                 existingSettings.AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration;
-                existingSettings.DefaultUserRole = adminSystemSettings.DefaultUserRole;
                 existingSettings.PasswordPolicy = adminSystemSettings.PasswordPolicy;
-                existingSettings.SessionTimeout = adminSystemSettings.SessionTimeout;
-                existingSettings.EmailNotifications = adminSystemSettings.EmailNotifications;
-                existingSettings.GradeAlerts = adminSystemSettings.GradeAlerts;
-                existingSettings.NewUserAlerts = adminSystemSettings.NewUserAlerts;
-                existingSettings.MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts;
                 existingSettings.UpdatedAt = DateTime.Now;
             }
 
             await Context.SaveChangesAsync();
 
-            // Update original settings
+            // Update original settings - create a NEW instance with current values
             originalSettings = new AdminSystemSettings
             {
+                Id = adminSystemSettings.Id,
                 AcademicYear = adminSystemSettings.AcademicYear,
-                GradingScale = adminSystemSettings.GradingScale,
                 AutoBackup = adminSystemSettings.AutoBackup,
                 BackupFrequency = adminSystemSettings.BackupFrequency,
                 AllowStudentRegistration = adminSystemSettings.AllowStudentRegistration,
-                DefaultUserRole = adminSystemSettings.DefaultUserRole,
                 PasswordPolicy = adminSystemSettings.PasswordPolicy,
-                SessionTimeout = adminSystemSettings.SessionTimeout,
-                EmailNotifications = adminSystemSettings.EmailNotifications,
-                GradeAlerts = adminSystemSettings.GradeAlerts,
-                NewUserAlerts = adminSystemSettings.NewUserAlerts,
-                MaintenanceAlerts = adminSystemSettings.MaintenanceAlerts
+                LastBackup = adminSystemSettings.LastBackup,
+                CreatedAt = adminSystemSettings.CreatedAt,
+                UpdatedAt = DateTime.Now
             };
 
             hasUnsavedChanges = false;
@@ -676,8 +599,13 @@ else
     private void PerformReset()
     {
         // Reset to default values using AdminSystemSettings
-        adminSystemSettings = new AdminSystemSettings();
-        hasUnsavedChanges = !adminSystemSettings.Equals(originalSettings);
+        adminSystemSettings = new AdminSystemSettings
+        {
+            AcademicYear = "2025-2026" // Reset to current academic year
+        };
+
+        // Force UI to update by calling CheckForChanges
+        CheckForChanges();
         showResetModal = false;
         StateHasChanged();
     }
@@ -687,21 +615,19 @@ else
         // Restore original settings
         adminSystemSettings = new AdminSystemSettings
         {
+            Id = originalSettings.Id,
             AcademicYear = originalSettings.AcademicYear,
-            GradingScale = originalSettings.GradingScale,
             AutoBackup = originalSettings.AutoBackup,
             BackupFrequency = originalSettings.BackupFrequency,
             AllowStudentRegistration = originalSettings.AllowStudentRegistration,
-            DefaultUserRole = originalSettings.DefaultUserRole,
             PasswordPolicy = originalSettings.PasswordPolicy,
-            SessionTimeout = originalSettings.SessionTimeout,
-            EmailNotifications = originalSettings.EmailNotifications,
-            GradeAlerts = originalSettings.GradeAlerts,
-            NewUserAlerts = originalSettings.NewUserAlerts,
-            MaintenanceAlerts = originalSettings.MaintenanceAlerts
+            LastBackup = originalSettings.LastBackup,
+            CreatedAt = originalSettings.CreatedAt,
+            UpdatedAt = originalSettings.UpdatedAt
         };
 
-        hasUnsavedChanges = false;
+        // Force UI to update
+        CheckForChanges();
         StateHasChanged();
     }
 
@@ -743,8 +669,7 @@ else
         {
             var twoYearsAgo = DateTime.Now.AddYears(-2);
             cleanupStats.GradesToDelete = await Context.Grades
-            .Where(g => g.CreatedAt < twoYearsAgo)
-
+                .Where(g => g.CreatedAt < twoYearsAgo)
                 .CountAsync();
         }
 
@@ -779,8 +704,7 @@ else
             {
                 var twoYearsAgo = DateTime.Now.AddYears(-2);
                 var oldGrades = await Context.Grades
-                .Where(g => g.CreatedAt < twoYearsAgo)
-
+                    .Where(g => g.CreatedAt < twoYearsAgo)
                     .ToListAsync();
 
                 Context.Grades.RemoveRange(oldGrades);
@@ -800,7 +724,6 @@ else
 
             await Context.SaveChangesAsync();
 
-            // Reload stats
             await LoadDatabaseStats();
 
             await JSRuntime.InvokeVoidAsync("alert", $"Cleanup completed! {totalDeleted} items removed.");
@@ -822,42 +745,113 @@ else
     {
         try
         {
-            // Export users to CSV
+            isExporting = true;
+            StateHasChanged();
+
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
             var users = await Context.Users.ToListAsync();
-            var userCsv = "Id,Name,LastName,Email,Role,CreatedAt\n" +
-                         string.Join("\n", users.Select(u =>
-                             $"{u.Id},{u.Name},{u.LastName},{u.Email},{u.Role},{u.CreatedAt:yyyy-MM-dd}"));
+            var userCsv = GenerateUserCsv(users);
+            await JSRuntime.InvokeVoidAsync("downloadFile", $"users_export_{timestamp}.csv", userCsv);
 
-            // Export courses to CSV
-            var courses = await Context.Courses.ToListAsync();
-            var courseCsv = "Id,Name,Description,ProfessorId\n" +
-                           string.Join("\n", courses.Select(c =>
-                               $"{c.Id},{c.Name},{c.Description?.Replace(",", ";")},{c.ProfessorId}"));
+            var courses = await Context.Courses
+                .Include(c => c.Professor)
+                .ToListAsync();
+            var courseCsv = GenerateCourseCsv(courses);
+            await JSRuntime.InvokeVoidAsync("downloadFile", $"courses_export_{timestamp}.csv", courseCsv);
 
-            // Export grades to CSV
-            var grades = await Context.Grades.ToListAsync();
-            var gradeCsv = "Id,StudentId,CourseId,GradeValue\n" +
-                          string.Join("\n", grades.Select(g =>
-                              $"{g.Id},{g.StudentId},{g.CourseId},{g.GradeValue}"));
 
-            // Create download links (simplified - in real app, you'd create actual file downloads)
-            await JSRuntime.InvokeVoidAsync("alert",
-                $"Data exported successfully!\n\n" +
-                $"Users: {users.Count} records\n" +
-                $"Courses: {courses.Count} records\n" +
-                $"Grades: {grades.Count} records\n\n" +
-                $"In a real application, these would be downloaded as CSV files.");
+            var grades = await Context.Grades
+                .Include(g => g.Student)
+                .Include(g => g.Course)
+                .ToListAsync();
+            var gradeCsv = GenerateGradeCsv(grades);
+            await JSRuntime.InvokeVoidAsync("downloadFile", $"grades_export_{timestamp}.csv", gradeCsv);
+
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error exporting data: {ex.Message}");
         }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GenerateUserCsv(List<User> users)
+    {
+        var csv = new StringBuilder();
+
+        csv.AppendLine("Id,Name,LastName,Email,AcademicId,Role,CreatedAt");
+
+        foreach (var user in users)
+        {
+            var name = EscapeCsvField(user.Name ?? "");
+            var lastName = EscapeCsvField(user.LastName ?? "");
+            var email = EscapeCsvField(user.Email ?? "");
+            var academicId = EscapeCsvField(user.AcademicId ?? "");
+            var role = EscapeCsvField(user.Role ?? "");
+            var createdAt = user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+
+            csv.AppendLine($"{user.Id},{name},{lastName},{email},{academicId},{role},{createdAt}");
+        }
+
+        return csv.ToString();
+    }
+
+    private string GenerateCourseCsv(List<Course> courses)
+    {
+        var csv = new StringBuilder();
+
+        csv.AppendLine("Id,Name,Description,ProfessorId,ProfessorName,DifficultyRating,GradingMethod,AverageGradesJson");
+
+        foreach (var course in courses)
+        {
+            var name = EscapeCsvField(course.Name ?? "");
+            var description = EscapeCsvField(course.Description ?? "");
+            var professorName = EscapeCsvField(course.Professor?.Name + " " + course.Professor?.LastName ?? "");
+            var gradingMethod = course.GradingMethod?.ToString() ?? "Not set";
+            var averageGradesJson = EscapeCsvField(course.AverageGradesJson ?? "");
+
+            csv.AppendLine($"{course.Id},{name},{description},{course.ProfessorId},{professorName},{course.DifficultyRating},{gradingMethod},{averageGradesJson}");
+        }
+
+        return csv.ToString();
+    }
+
+    private string GenerateGradeCsv(List<Grade> grades)
+    {
+        var csv = new StringBuilder();
+
+        csv.AppendLine("Id,StudentId,StudentName,CourseId,CourseName,GradeValue,CreatedAt,UpdatedAt");
+
+        foreach (var grade in grades)
+        {
+            var studentName = EscapeCsvField(grade.Student?.Name + " " + grade.Student?.LastName ?? "");
+            var courseName = EscapeCsvField(grade.Course?.Name ?? "");
+
+            csv.AppendLine($"{grade.Id},{grade.StudentId},{studentName},{grade.CourseId},{courseName},{grade.GradeValue},{grade.CreatedAt:yyyy-MM-dd HH:mm:ss},{grade.UpdatedAt:yyyy-MM-dd HH:mm:ss}");
+        }
+
+        return csv.ToString();
+    }
+
+    private string EscapeCsvField(string field)
+    {
+        // If field contains comma, quote, or newline, wrap in quotes and escape quotes
+        if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
+        {
+            return "\"" + field.Replace("\"", "\"\"") + "\"";
+        }
+        return field;
     }
 
     private void GoBack() => Navigation.NavigateTo("/adminhome");
     private void RedirectToHome() => Navigation.NavigateTo("/");
 
-    // Cleanup Stats Model (keep this if you don't have it in AdminSystemSettings.cs)
+    // Cleanup Stats Model
     public class CleanupStats
     {
         public int GradesToDelete { get; set; }
@@ -865,6 +859,7 @@ else
         public int TotalToDelete => GradesToDelete + UsersToDelete;
     }
 }
+
 <style>
     .cleanup-stats {
         background: #f8fafc;
@@ -873,21 +868,21 @@ else
         margin-top: 15px;
     }
 
-    .cleanup-stats h4 {
-        margin: 0 0 10px 0;
-        color: #2d3748;
-        font-size: 1rem;
-    }
+        .cleanup-stats h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
 
-    .cleanup-stats ul {
-        margin: 0;
-        padding-left: 20px;
-        color: #4a5568;
-    }
+        .cleanup-stats ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #4a5568;
+        }
 
-    .cleanup-stats li {
-        margin-bottom: 5px;
-    }
+        .cleanup-stats li {
+            margin-bottom: 5px;
+        }
 
     .loading {
         text-align: center;
@@ -897,6 +892,7 @@ else
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
         color: #64748b;
     }
+
     .admin-settings {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
