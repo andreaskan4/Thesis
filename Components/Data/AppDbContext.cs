@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Thesis.Models;
-using Thesis.Components.Models; // ✅ cleaner import
+using Thesis.Components.Models;
 
 namespace Thesis.Data
 {
@@ -35,14 +35,12 @@ namespace Thesis.Data
         public DbSet<CafeteriaWorker> CafeteriaWorkers { get; set; }
         public DbSet<StudentSettings> StudentSettings { get; set; }
 
-        // ✅ Rename to match the actual table name
         public DbSet<AdminSystemSettings> AdminSystemSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // ✅ Ensure EF maps to the correct SQLite table
             modelBuilder.Entity<AdminSystemSettings>().ToTable("AdminSystemSettings");
 
             modelBuilder.Entity<User>(entity =>
@@ -73,14 +71,12 @@ namespace Thesis.Data
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.UpdatedAt).IsRequired();
 
-                // Relationship with User (Student)
                 entity.HasOne(e => e.Student)
                       .WithMany()
                       .HasForeignKey(e => e.StudentId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Configure ForumAnswer
             modelBuilder.Entity<ForumAnswer>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -88,13 +84,11 @@ namespace Thesis.Data
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.UpdatedAt).IsRequired();
 
-                // Relationship with ForumQuestion
                 entity.HasOne(e => e.Question)
                       .WithMany(q => q.Answers)
                       .HasForeignKey(e => e.QuestionId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // Relationship with User (Student who answered)
                 entity.HasOne(e => e.Student)
                       .WithMany()
                       .HasForeignKey(e => e.StudentId)
@@ -125,17 +119,14 @@ namespace Thesis.Data
                       .HasForeignKey(ss => ss.StudentId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
-            // Configure ProfessorProfileEntity for SQLite
             modelBuilder.Entity<ProfessorProfileEntity>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
 
-                // Ensure each user has only one profile
                 entity.HasIndex(e => e.UserId).IsUnique();
             });
-            // ✅ Configure Facility entity for SQLite
             modelBuilder.Entity<Facility>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -148,7 +139,6 @@ namespace Thesis.Data
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
             });
 
-            // ✅ Configure ContactInfo entity for SQLite
             modelBuilder.Entity<ContactInfo>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -174,7 +164,6 @@ namespace Thesis.Data
                 .HasConversion<double>()
                 .HasColumnType("decimal(10,2)");
 
-            // Configure relationships
             modelBuilder.Entity<FoodMeal>()
                 .HasOne(fm => fm.FoodSchedule)
                 .WithMany(fs => fs.Meals)
