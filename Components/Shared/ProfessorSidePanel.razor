@@ -6,6 +6,9 @@
 <div class="admin-sidebar">
     <div class="sidebar-header">
         <div class="app-logo">
+            <div class="logo-placeholder">
+                <span class="placeholder-text">Logo</span>
+            </div>
             <h3>Gnosis Portal</h3>
         </div>
     </div>
@@ -235,10 +238,38 @@
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .app-logo h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 700;
+    /* Updated App Logo Styles */
+    .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; /* Space between logo and text */
+    }
+
+        .app-logo h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+    /* Logo Placeholder Styles */
+    .logo-placeholder {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px dashed rgba(255, 255, 255, 0.3); /* Dashed border to indicate placeholder */
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .placeholder-text {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 600;
     }
 
     .sidebar-nav {
