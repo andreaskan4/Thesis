@@ -4,7 +4,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Thesis - Manage Courses</PageTitle>
+<PageTitle>Gnosis - Manage Courses</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -42,7 +42,6 @@ else
         else
         {
             <div class="courses-container">
-                <!-- Course Form Section -->
                 <div class="form-section">
                     <h4>@(EditingCourse?.Id == 0 ? "Create New Course" : "Edit Course")</h4>
 
@@ -67,7 +66,6 @@ else
                         </select>
                     </div>
 
-                    <!-- Grading Method Display (Read-only) -->
                     <div class="form-field">
                         <label>Grading Method:</label>
                         <div class="grading-method-display">
@@ -86,7 +84,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Schedule Section -->
                     <div class="schedule-section">
                         <h5>Course Schedule</h5>
                         @foreach (var schedule in EditingCourseSchedules)
@@ -125,7 +122,6 @@ else
                     </div>
                 </div>
 
-                <!-- Courses List Section -->
                 <div class="courses-list-section">
                     <div class="section-header">
                         <h3>All Courses (@Courses.Count)</h3>
@@ -133,8 +129,6 @@ else
                             <input type="text" @bind="searchTerm" @oninput="OnSearch" placeholder="Search courses..." />
                         </div>
                     </div>
-
-                    <!-- Statistics section removed here -->
 
                     <div class="courses-grid">
                         @foreach (var course in FilteredCourses)
@@ -184,7 +178,6 @@ else
                                     </div>
                                 </div>
 
-                                <!-- Schedule Display -->
                                 <div class="course-schedule">
                                     <h5>Schedule:</h5>
                                     @if (GetCourseSchedules(course.Id).Any())
@@ -289,7 +282,6 @@ else
 
             Console.WriteLine($"Loaded {Courses.Count} courses, {Professors.Count} professors, {AllSchedules.Count} schedules");
 
-            // Log course details for debugging
             foreach (var course in Courses)
             {
                 Console.WriteLine($"Course: {course.Id} - {course.Name} - GradingMethod: {course.GradingMethod}");
@@ -344,11 +336,10 @@ else
             Name = course.Name,
             Description = course.Description,
             ProfessorId = course.ProfessorId,
-            GradingMethod = course.GradingMethod, // Keep existing grading method
+            GradingMethod = course.GradingMethod,
             DifficultyRating = course.DifficultyRating
         };
 
-        // Load existing schedules for this course
         EditingCourseSchedules = GetCourseSchedules(course.Id).Select(s => new Schedule
         {
             Id = s.Id,
@@ -382,13 +373,11 @@ else
 
         try
         {
-            // When creating a new course, set GradingMethod to null
             if (EditingCourse.Id == 0)
             {
-                EditingCourse.GradingMethod = null; // Set to null for new courses
+                EditingCourse.GradingMethod = null;
                 await GradesService.AddCourseAsync(EditingCourse);
 
-                // Add schedules for new course
                 foreach (var schedule in EditingCourseSchedules)
                 {
                     schedule.CourseId = EditingCourse.Id;
@@ -397,7 +386,6 @@ else
             }
             else
             {
-                // For existing courses, preserve the existing GradingMethod
                 var existingCourse = Courses.FirstOrDefault(c => c.Id == EditingCourse.Id);
                 if (existingCourse != null)
                 {
@@ -406,16 +394,13 @@ else
 
                 await GradesService.UpdateCourseAsync(EditingCourse);
 
-                // Update schedules for existing course
                 var existingSchedules = GetCourseSchedules(EditingCourse.Id);
 
-                // Remove old schedules
                 foreach (var existing in existingSchedules)
                 {
                     await GradesService.DeleteScheduleAsync(existing.Id);
                 }
 
-                // Add new schedules
                 foreach (var schedule in EditingCourseSchedules)
                 {
                     schedule.CourseId = EditingCourse.Id;

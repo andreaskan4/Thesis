@@ -24,14 +24,12 @@ namespace Thesis.Models
         [MaxLength(500)]
         public string? Description { get; set; }
 
-        // Professor teaching this course
         [Required]
         public int ProfessorId { get; set; }
 
         [ForeignKey(nameof(ProfessorId))]
         public User? Professor { get; set; }
 
-        // Store average grades per semester as JSON
         public string? AverageGradesJson { get; set; }
 
         [NotMapped]
@@ -43,14 +41,11 @@ namespace Thesis.Models
             set => AverageGradesJson = JsonSerializer.Serialize(value);
         }
 
-        // Average difficulty rating (1–5 stars)
         [Range(1, 5)]
         public double DifficultyRating { get; set; } = 3.0;
 
-        // CHANGED: Grading method is now nullable - professors will set this later
-        public GradingMethod? GradingMethod { get; set; }  // Removed [Required] and made nullable
+        public GradingMethod? GradingMethod { get; set; }
 
-        // Update these properties to handle null values
         [NotMapped]
         public string Method => GradingMethod?.ToString() ?? "Not set";
 

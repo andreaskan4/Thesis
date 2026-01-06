@@ -13,7 +13,6 @@ public class AuthStateService
     public AuthStateService(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
-        // Remove the auto-initialization from constructor
     }
 
     public User? CurrentUser

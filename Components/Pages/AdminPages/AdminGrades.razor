@@ -4,7 +4,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Thesis - Manage Grades</PageTitle>
+<PageTitle>Gnosis - Manage Grades</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -185,7 +185,6 @@ else
 
         try
         {
-            // Load all data
             var gradesTask = GradesService.GetAllGradesAsync();
             var studentsTask = GradesService.GetStudentsAsync();
             var coursesTask = GradesService.GetCoursesAsync();
@@ -283,7 +282,6 @@ else
             Console.WriteLine($"❌ ERROR saving grade: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
-            // Show a user-friendly error message
             await JSRuntime.InvokeVoidAsync("alert", $"Error saving grade: {ex.Message}");
         }
     }

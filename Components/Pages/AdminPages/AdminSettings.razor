@@ -9,7 +9,7 @@
 @using System.Text
 
 
-<PageTitle>Thesis - Admin Settings</PageTitle>
+<PageTitle>Gnosis - Admin Settings</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -33,7 +33,7 @@ else
 {
     <div class="admin-settings">
         <div class="header-bar">
-            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <button class="back-btn" @onclick="GoBack">Back to Dashboard</button>
             <h2>System Settings</h2>
             <div class="info-badge">
                 @if (hasUnsavedChanges)
@@ -54,7 +54,6 @@ else
         else
         {
             <div class="settings-container">
-                <!-- System Settings -->
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
@@ -115,7 +114,6 @@ else
                     </div>
                 </div>
 
-                <!-- User Management Settings -->
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
@@ -159,7 +157,6 @@ else
                     </div>
                 </div>
 
-                <!-- Database Management -->
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
@@ -204,7 +201,6 @@ else
                     </div>
                 </div>
 
-                <!-- Save Actions -->
                 <div class="actions-section">
                     <div class="actions-row">
                         <button class="btn btn-primary" @onclick="SaveSettings" disabled="@(!hasUnsavedChanges || isSaving)">
@@ -230,7 +226,6 @@ else
     </div>
 }
 
-<!-- Cleanup Confirmation Modal -->
 @if (showCleanupModal)
 {
     <div class="modal-overlay">
@@ -288,7 +283,6 @@ else
     </div>
 }
 
-<!-- Reset Confirmation Modal -->
 @if (showResetModal)
 {
     <div class="modal-overlay">
@@ -316,29 +310,19 @@ else
     private bool isCleaning = false;
     private bool isExporting = false;
     private bool hasUnsavedChanges = false;
-
-    // System Settings - Using AdminSystemSettings class
     private AdminSystemSettings adminSystemSettings = new();
     private AdminSystemSettings originalSettings = new();
-
-    // Database Stats
     private int totalUsers = 0;
     private int totalCourses = 0;
     private int totalGrades = 0;
     private string? lastBackup = null;
-
-    // Modal States
     private bool showCleanupModal = false;
     private bool showResetModal = false;
     private bool cleanOldGrades = true;
     private bool cleanInactiveUsers = false;
     private bool cleanTempFiles = true;
     private CleanupStats? cleanupStats = null;
-
-    // Property to expose AdminSystemSettings to the UI
     private AdminSystemSettings AdminSystemSettings => adminSystemSettings;
-
-    // Wrapper properties for two-way binding with change detection
     private string academicYear
     {
         get => adminSystemSettings.AcademicYear;
@@ -401,7 +385,6 @@ else
 
     protected override void OnParametersSet()
     {
-        // Check for changes whenever parameters are set
         CheckForChanges();
     }
 
@@ -427,11 +410,9 @@ else
             isLoading = true;
             StateHasChanged();
 
-            // Try to load settings from database
             var settings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
             if (settings != null)
             {
-                // Map the database settings to AdminSystemSettings
                 adminSystemSettings = new AdminSystemSettings
                 {
                     Id = settings.Id,
@@ -447,10 +428,9 @@ else
             }
             else
             {
-                // Create default settings if none exist
                 adminSystemSettings = new AdminSystemSettings
                 {
-                    AcademicYear = "2025-2026" // Set default to current academic year
+                    AcademicYear = "2025-2026"
                 };
 
                 var newSettings = new AdminSystemSettings
@@ -467,7 +447,6 @@ else
                 await Context.SaveChangesAsync();
             }
 
-            // Store original settings for change detection - create a NEW instance
             originalSettings = new AdminSystemSettings
             {
                 Id = adminSystemSettings.Id,
@@ -502,7 +481,6 @@ else
             totalCourses = await Context.Courses.CountAsync();
             totalGrades = await Context.Grades.CountAsync();
 
-            // Load last backup info
             var backupSetting = await Context.AdminSystemSettings
                 .Select(s => s.LastBackup)
                 .FirstOrDefaultAsync();
@@ -520,7 +498,6 @@ else
         return $"{totalUsers} users, {totalCourses} courses, {totalGrades} grades";
     }
 
-    // Check if current settings differ from original settings
     private void CheckForChanges()
     {
         hasUnsavedChanges =
@@ -540,11 +517,9 @@ else
             isSaving = true;
             StateHasChanged();
 
-            // Update the settings in database
             var existingSettings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
             if (existingSettings != null)
             {
-                // Update existing settings with AdminSystemSettings values
                 existingSettings.AcademicYear = adminSystemSettings.AcademicYear;
                 existingSettings.AutoBackup = adminSystemSettings.AutoBackup;
                 existingSettings.BackupFrequency = adminSystemSettings.BackupFrequency;
@@ -555,7 +530,6 @@ else
 
             await Context.SaveChangesAsync();
 
-            // Update original settings - create a NEW instance with current values
             originalSettings = new AdminSystemSettings
             {
                 Id = adminSystemSettings.Id,
@@ -598,13 +572,11 @@ else
 
     private void PerformReset()
     {
-        // Reset to default values using AdminSystemSettings
         adminSystemSettings = new AdminSystemSettings
         {
-            AcademicYear = "2025-2026" // Reset to current academic year
+            AcademicYear = "2025-2026"
         };
 
-        // Force UI to update by calling CheckForChanges
         CheckForChanges();
         showResetModal = false;
         StateHasChanged();
@@ -612,7 +584,6 @@ else
 
     private void CancelChanges()
     {
-        // Restore original settings
         adminSystemSettings = new AdminSystemSettings
         {
             Id = originalSettings.Id,
@@ -626,7 +597,6 @@ else
             UpdatedAt = originalSettings.UpdatedAt
         };
 
-        // Force UI to update
         CheckForChanges();
         StateHasChanged();
     }
@@ -635,7 +605,6 @@ else
     {
         try
         {
-            // Update last backup time
             var settings = await Context.AdminSystemSettings.FirstOrDefaultAsync();
             if (settings != null)
             {
@@ -643,11 +612,6 @@ else
                 await Context.SaveChangesAsync();
                 lastBackup = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
             }
-
-            // In a real application, you would:
-            // 1. Create a database backup file
-            // 2. Save it to a secure location
-            // 3. Log the backup operation
 
             await JSRuntime.InvokeVoidAsync("alert", $"Backup created successfully at {DateTime.Now:HH:mm}");
             StateHasChanged();
@@ -662,7 +626,6 @@ else
     {
         showCleanupModal = true;
 
-        // Calculate cleanup stats
         cleanupStats = new CleanupStats();
 
         if (cleanOldGrades)
@@ -840,7 +803,6 @@ else
 
     private string EscapeCsvField(string field)
     {
-        // If field contains comma, quote, or newline, wrap in quotes and escape quotes
         if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
         {
             return "\"" + field.Replace("\"", "\"\"") + "\"";
@@ -851,7 +813,6 @@ else
     private void GoBack() => Navigation.NavigateTo("/adminhome");
     private void RedirectToHome() => Navigation.NavigateTo("/");
 
-    // Cleanup Stats Model
     public class CleanupStats
     {
         public int GradesToDelete { get; set; }
@@ -1058,7 +1019,6 @@ else
             color: #94a3b8;
         }
 
-    /* Toggle Switch */
     .toggle-switch {
         position: relative;
         display: inline-block;
@@ -1104,7 +1064,6 @@ else
             transform: translateX(26px);
         }
 
-    /* Action Grid */
     .action-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1165,7 +1124,6 @@ else
         font-weight: 300;
     }
 
-    /* Actions Section */
     .actions-section {
         background: white;
         border-radius: 15px;
@@ -1241,7 +1199,6 @@ else
             background: #dc2626;
         }
 
-    /* Modal Styles */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1321,7 +1278,6 @@ else
         justify-content: flex-end;
     }
 
-    /* Loading and Unauthorized States */
     .loading-container, .unauthorized-container {
         display: flex;
         flex-direction: column;
@@ -1366,7 +1322,6 @@ else
         }
     }
 
-    /* Responsive Design */
     @@media (max-width: 768px) {
         .admin-settings {
             padding: 15px;

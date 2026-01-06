@@ -17,7 +17,6 @@ namespace Thesis.Models
         [Required]
         public DateTime VoteDate { get; set; }
 
-        // Navigation properties
         public User? Student { get; set; }
         public FoodMeal? Meal { get; set; }
 

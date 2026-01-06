@@ -5,7 +5,7 @@
 @inject GradesService GradesService
 @inject Data.AppDbContext Context
 
-<PageTitle>Thesis - Admin Dashboard</PageTitle>
+<PageTitle>Gnosis - Admin Dashboard</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -30,9 +30,7 @@ else if (!isAuthorized)
 else
 {
     <div class="admin-dashboard">
-        <!-- Main Content -->
         <div class="admin-main">
-            <!-- Top Bar -->
             <div class="top-bar">
                 <div class="top-bar-left">
                     <h1>Admin Dashboard</h1>
@@ -46,9 +44,7 @@ else
                 </div>
             </div>
 
-            <!-- Dashboard Content -->
             <div class="dashboard-content">
-                <!-- Stats Overview -->
                 <div class="stats-overview">
                     <div class="stat-card primary">
                         <div class="stat-icon">👥</div>
@@ -84,7 +80,6 @@ else
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="quick-actions-section">
                     <div class="section-header">
                         <h3>Quick Actions</h3>
@@ -126,7 +121,6 @@ else
                     </div>
                 </div>
 
-                <!-- Recent Activity & System Status -->
                 <div class="dashboard-grid">
                     <div class="recent-activity">
                         <div class="section-header">
@@ -198,8 +192,6 @@ else
     private bool isAuthorized = false;
     private bool isRefreshing = false;
     private Timer? clockTimer;
-
-    // Real dashboard data
     private string currentDate = "";
     private string currentTime = "";
     private int totalUsers = 0;
@@ -207,8 +199,6 @@ else
     private int totalTeachers = 0;
     private int totalCourses = 0;
     private string lastUpdate = "Just now";
-
-    // Trend indicators
     private string usersTrend = "Loading...";
     private string studentsTrend = "Loading...";
     private string teachersTrend = "Loading...";
@@ -254,20 +244,16 @@ else
         {
             Console.WriteLine("Loading real dashboard data from database...");
 
-            // Load all users and count by role
             var allUsers = await Context.Users.ToListAsync();
             totalUsers = allUsers.Count;
             totalStudents = allUsers.Count(u => u.Role == "Student");
             totalTeachers = allUsers.Count(u => u.Role == "Teacher");
 
-            // Load courses
             var allCourses = await Context.Courses.ToListAsync();
             totalCourses = allCourses.Count;
 
-            // Load recent activities from database
             await LoadRecentActivities(allUsers, allCourses);
 
-            // Calculate trends (you can enhance this with historical data later)
             CalculateTrends();
 
             lastUpdate = DateTime.Now.ToString("hh:mm tt");
@@ -279,7 +265,6 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading dashboard data: {ex.Message}");
-            // Fallback to sample data if there's an error
             LoadSampleData();
         }
     }
@@ -290,7 +275,6 @@ else
 
         try
         {
-            // Get recent grades
             var recentGrades = await Context.Grades
                 .Include(g => g.Student)
                 .Include(g => g.Course)
@@ -309,7 +293,6 @@ else
                 });
             }
 
-            // Get recent courses (if any new ones)
             var newCourses = courses.OrderByDescending(c => c.Id).Take(2);
             foreach (var course in newCourses)
             {
@@ -322,7 +305,6 @@ else
                 });
             }
 
-            // If no recent activities, add some generic ones
             if (!recentActivities.Any())
             {
                 recentActivities.AddRange(new List<ActivityItem>
@@ -335,7 +317,6 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading recent activities: {ex.Message}");
-            // Add fallback activities
             recentActivities.Add(new ActivityItem
             {
                 Icon = "🔔",
@@ -348,7 +329,6 @@ else
 
     private void CalculateTrends()
     {
-        // These are placeholder trends - you can enhance this with real historical data
         usersTrend = totalUsers > 0 ? "Active" : "No users";
         studentsTrend = totalStudents > 0 ? $"{totalStudents} enrolled" : "No students";
         teachersTrend = totalTeachers > 0 ? $"{totalTeachers} active" : "No teachers";
@@ -357,7 +337,6 @@ else
 
     private void LoadSampleData()
     {
-        // Fallback data in case of errors
         totalUsers = Context.Users.Count();
         totalStudents = Context.Users.Count(u => u.Role == "Student");
         totalTeachers = Context.Users.Count(u => u.Role == "Teacher");
@@ -381,7 +360,6 @@ else
         {
             Console.WriteLine("=== REFRESHING DASHBOARD DATA ===");
 
-            // Clear existing data to force refresh
             totalUsers = 0;
             totalStudents = 0;
             totalTeachers = 0;
@@ -389,9 +367,8 @@ else
             recentActivities.Clear();
 
             StateHasChanged();
-            await Task.Delay(100); // Small delay to show clearing
+            await Task.Delay(100);
 
-            // Reload all data
             await LoadRealDashboardData();
 
             Console.WriteLine("=== REFRESH COMPLETE ===");
@@ -403,7 +380,6 @@ else
             Console.WriteLine($"Error: {ex.Message}");
             Console.WriteLine($"Stack: {ex.StackTrace}");
 
-            // Fallback to sample data
             LoadSampleData();
         }
         finally
@@ -413,7 +389,6 @@ else
         }
     }
 
-    // Navigation methods
     private void NavigateToUsers() => Navigation.NavigateTo("/adminusers");
     private void NavigateToGrades() => Navigation.NavigateTo("/admingrades");
     private void NavigateToCourses() => Navigation.NavigateTo("/admincourses");
@@ -454,7 +429,6 @@ else
         color: #a0aec0;
         font-style: italic;
     }
-    /*refresh data css*/
     .refresh-btn {
         background: #3b82f6;
         color: white;
@@ -475,7 +449,6 @@ else
             background: #9ca3af;
             cursor: not-allowed;
         }
-    /* Base Styles */
     .admin-dashboard {
         display: flex;
         height: 100vh;
@@ -483,7 +456,6 @@ else
         font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
-    /* Sidebar Styles */
     .admin-sidebar {
         width: 280px;
         background: linear-gradient(180deg, #1e3a8a 0%, #3730a3 100%);
@@ -602,7 +574,6 @@ else
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-    /* Main Content Styles */
     .admin-main {
         flex: 1;
         display: flex;
@@ -685,7 +656,6 @@ else
         justify-content: center;
     }
 
-    /* Dashboard Content */
     .dashboard-content {
         flex: 1;
         padding: 2rem;
@@ -693,7 +663,6 @@ else
         background: #f8fafc;
     }
 
-    /* Stats Overview */
     .stats-overview {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -773,7 +742,6 @@ else
         color: #ef4444;
     }
 
-    /* Quick Actions */
     .quick-actions-section {
         background: white;
         border-radius: 12px;
@@ -872,7 +840,6 @@ else
         font-weight: 300;
     }
 
-    /* Dashboard Grid */
     .dashboard-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -991,7 +958,6 @@ else
             color: #3b82f6;
         }
 
-    /* Loading and Unauthorized States */
     .loading-container, .unauthorized-container {
         display: flex;
         flex-direction: column;
@@ -1036,7 +1002,6 @@ else
         }
     }
 
-    /* Modal Styles */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1119,7 +1084,6 @@ else
             background: #dc2626;
         }
 
-    /* Responsive Design */
     @@media (max-width: 1024px) {
         .dashboard-grid {
             grid-template-columns: 1fr;

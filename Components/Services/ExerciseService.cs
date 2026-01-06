@@ -13,7 +13,6 @@ namespace Thesis.Services
             _context = context;
         }
 
-        // Exercise methods
         public async Task<List<Exercise>> GetExercisesByCourseAsync(int courseId)
         {
             return await _context.Exercises
@@ -72,7 +71,6 @@ namespace Thesis.Services
             var exercise = await _context.Exercises.FindAsync(id);
             if (exercise != null)
             {
-                // Delete related submissions first
                 var submissions = await _context.ExerciseSubmissions
                     .Where(s => s.ExerciseId == id)
                     .ToListAsync();
@@ -83,7 +81,6 @@ namespace Thesis.Services
             }
         }
 
-        // Submission methods
         public async Task<List<ExerciseSubmission>> GetSubmissionsByExerciseAsync(int exerciseId)
         {
             return await _context.ExerciseSubmissions
@@ -154,7 +151,6 @@ namespace Thesis.Services
                 .Where(s => s.Exercise != null && s.Exercise.Course != null && s.Exercise.Course.ProfessorId == professorId)
                 .CountAsync();
         }
-        // Add these methods to your existing ExercisesService class
         public async Task<List<ExerciseSubmission>> GetSubmissionsByStudentAsync(int studentId)
         {
             return await _context.ExerciseSubmissions
@@ -173,7 +169,6 @@ namespace Thesis.Services
                 existing.Answer = submission.Answer;
                 existing.FilePath = submission.FilePath;
                 existing.SubmittedAt = DateTime.Now;
-                // Don't update Grade and GradedAt - those are for professors only
 
                 await _context.SaveChangesAsync();
             }

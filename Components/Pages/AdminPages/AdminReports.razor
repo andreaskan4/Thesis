@@ -6,7 +6,7 @@
 @using Thesis.Models
 @using System.Text
 
-<PageTitle>Thesis - Admin Reports</PageTitle>
+<PageTitle>Gnosis - Admin Reports</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -31,10 +31,10 @@ else
     <div class="admin-reports">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>📊 System Reports & Analytics</h2>
+            <h2>System Reports & Analytics</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="GenerateComprehensiveReport">
-                    📥 Generate Full Report
+                    Generate Full Report
                 </button>
             </div>
         </div>
@@ -97,7 +97,6 @@ else
             </div>
         </div>
 
-        <!-- Report Types -->
         <div class="reports-section">
             <div class="section-header">
                 <h3>📈 Generate Reports</h3>
@@ -105,7 +104,6 @@ else
             </div>
 
             <div class="reports-grid">
-                <!-- User Reports -->
                 <div class="report-card">
                     <div class="report-header">
                         <div class="report-icon">👥</div>
@@ -149,7 +147,6 @@ else
                     </div>
                 </div>
 
-                <!-- Academic Reports -->
                 <div class="report-card">
                     <div class="report-header">
                         <div class="report-icon">📚</div>
@@ -195,7 +192,6 @@ else
                     </div>
                 </div>
 
-                <!-- System Reports -->
                 <div class="report-card">
                     <div class="report-header">
                         <div class="report-icon">⚙️</div>
@@ -237,7 +233,6 @@ else
                     </div>
                 </div>
 
-                <!-- Facility Reports -->
                 <div class="report-card">
                     <div class="report-header">
                         <div class="report-icon">🏛️</div>
@@ -272,7 +267,6 @@ else
             </div>
         </div>
 
-        <!-- Recent Reports -->
         @if (recentReports.Any())
         {
             <div class="recent-reports">
@@ -325,7 +319,6 @@ else
             </div>
         }
 
-        <!-- Quick Actions -->
         <div class="quick-actions">
             <div class="section-header">
                 <h3>⚡ Quick Actions</h3>
@@ -362,7 +355,6 @@ else
     </div>
 }
 
-<!-- Report Viewer Modal -->
 @if (showReportViewer && currentReport != null)
 {
     <div class="modal-overlay">
@@ -406,7 +398,6 @@ else
     </div>
 }
 
-<!-- Custom Report Modal -->
 @if (showCustomReportModal)
 {
     <div class="modal-overlay">
@@ -486,15 +477,11 @@ else
     private string generatingReportType = "";
     private bool showReportViewer = false;
     private GeneratedReport? currentReport = null;
-
-    // Statistics
     private int totalUsers = 0;
     private int totalCourses = 0;
     private int totalGrades = 0;
     private int totalFacilities = 0;
     private double userGrowth = 0;
-
-    // Report Options
     private string userReportPeriod = "30";
     private string userReportFormat = "summary";
     private string academicSemester = "current";
@@ -504,8 +491,6 @@ else
     private bool includeSystemPerformance = true;
     private bool includeUserActivity = true;
     private string facilityReportType = "overview";
-
-    // Custom Report
     private bool showCustomReportModal = false;
     private string customReportName = "";
     private bool includeUsersData = true;
@@ -516,7 +501,6 @@ else
     private DateTime customReportEndDate = DateTime.Now;
     private string customReportFormat = "pdf";
 
-    // Recent Reports
     private List<GeneratedReport> recentReports = new();
 
     protected override async Task OnInitializedAsync()
@@ -556,7 +540,6 @@ else
             totalGrades = await Context.Grades.CountAsync();
             totalFacilities = await Context.Facilities.CountAsync();
 
-            // Calculate user growth
             var lastMonthUsers = await Context.Users
                 .Where(u => u.CreatedAt >= DateTime.Now.AddDays(-60) && u.CreatedAt < DateTime.Now.AddDays(-30))
                 .CountAsync();
@@ -580,7 +563,6 @@ else
 
     private void LoadRecentReports()
     {
-        // In a real app, you might load this from localStorage or database
         recentReports = new List<GeneratedReport>();
     }
 
@@ -599,7 +581,7 @@ else
 
             var reportContent = new StringBuilder();
             reportContent.AppendLine("USER ANALYTICS REPORT");
-            reportContent.AppendLine("=====================");
+            reportContent.AppendLine("---------------------");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine($"Period: Last {userReportPeriod} days");
             reportContent.AppendLine();
@@ -660,7 +642,7 @@ else
 
             var reportContent = new StringBuilder();
             reportContent.AppendLine("ACADEMIC PERFORMANCE REPORT");
-            reportContent.AppendLine("===========================");
+            reportContent.AppendLine("---------------------------");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine($"Semester: {academicSemester}");
             reportContent.AppendLine();
@@ -731,7 +713,7 @@ else
         {
             var reportContent = new StringBuilder();
             reportContent.AppendLine("SYSTEM USAGE REPORT");
-            reportContent.AppendLine("===================");
+            reportContent.AppendLine("-------------------");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine();
             reportContent.AppendLine("System Statistics:");
@@ -801,7 +783,7 @@ else
 
             var reportContent = new StringBuilder();
             reportContent.AppendLine("FACILITY USAGE REPORT");
-            reportContent.AppendLine("=====================");
+            reportContent.AppendLine("---------------------");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine($"Report Type: {facilityReportType}");
             reportContent.AppendLine();
@@ -857,14 +839,11 @@ else
 
         try
         {
-            // Generate combined report with data from all areas
             var reportContent = new StringBuilder();
             reportContent.AppendLine("COMPREHENSIVE SYSTEM REPORT");
             reportContent.AppendLine("===========================");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine();
-
-            // User Statistics
             var users = await Context.Users.ToListAsync();
             reportContent.AppendLine("USER STATISTICS");
             reportContent.AppendLine("---------------");
@@ -873,8 +852,6 @@ else
             reportContent.AppendLine($"Teachers: {users.Count(u => u.Role == "Teacher")}");
             reportContent.AppendLine($"Admins: {users.Count(u => u.Role == "Admin")}");
             reportContent.AppendLine();
-
-            // Academic Statistics
             var grades = await Context.Grades.ToListAsync();
             var courses = await Context.Courses.ToListAsync();
             reportContent.AppendLine("ACADEMIC STATISTICS");
@@ -883,8 +860,6 @@ else
             reportContent.AppendLine($"Total Grades: {grades.Count}");
             reportContent.AppendLine($"Average Grade: {(grades.Any() ? grades.Average(g => g.GradeValue) : 0):0.0}");
             reportContent.AppendLine();
-
-            // Facility Statistics
             var facilities = await Context.Facilities.ToListAsync();
             reportContent.AppendLine("FACILITY STATISTICS");
             reportContent.AppendLine("-------------------");
@@ -923,22 +898,18 @@ else
     {
         try
         {
-            // Export users
             var users = await Context.Users.ToListAsync();
             var userCsv = "Id,Name,LastName,Email,Role,CreatedAt\n" +
                          string.Join("\n", users.Select(u => $"{u.Id},{u.Name},{u.LastName},{u.Email},{u.Role},{u.CreatedAt:yyyy-MM-dd}"));
 
-            // Export courses
             var courses = await Context.Courses.ToListAsync();
             var courseCsv = "Id,Name,Description\n" +
                            string.Join("\n", courses.Select(c => $"{c.Id},{c.Name},{c.Description?.Replace(",", ";")}"));
 
-            // Export grades
             var grades = await Context.Grades.ToListAsync();
             var gradeCsv = "Id,StudentId,CourseId,GradeValue\n" +
                           string.Join("\n", grades.Select(g => $"{g.Id},{g.StudentId},{g.CourseId},{g.GradeValue}"));
 
-            // Create a comprehensive report for the export
             var exportContent = $"USER DATA:\n{userCsv}\n\nCOURSE DATA:\n{courseCsv}\n\nGRADE DATA:\n{gradeCsv}";
 
             var exportReport = new GeneratedReport
@@ -973,7 +944,7 @@ else
         {
             var reportContent = new StringBuilder();
             reportContent.AppendLine("SYSTEM BACKUP REPORT");
-            reportContent.AppendLine("====================");
+            reportContent.AppendLine("--------------------");
             reportContent.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}");
             reportContent.AppendLine();
             reportContent.AppendLine("Backup Summary:");
@@ -1042,28 +1013,24 @@ else
             {
                 var users = await Context.Users.ToListAsync();
                 reportContent.AppendLine($"USERS DATA: {users.Count} records");
-                // Add user statistics...
             }
 
             if (includeCoursesData)
             {
                 var courses = await Context.Courses.ToListAsync();
                 reportContent.AppendLine($"COURSES DATA: {courses.Count} records");
-                // Add course statistics...
             }
 
             if (includeGradesData)
             {
                 var grades = await Context.Grades.ToListAsync();
                 reportContent.AppendLine($"GRADES DATA: {grades.Count} records");
-                // Add grade statistics...
             }
 
             if (includeFacilitiesData)
             {
                 var facilities = await Context.Facilities.ToListAsync();
                 reportContent.AppendLine($"FACILITIES DATA: {facilities.Count} records");
-                // Add facility statistics...
             }
 
             var report = new GeneratedReport
@@ -1112,11 +1079,9 @@ else
                 return;
             }
 
-            // Convert content to byte array
             var contentBytes = Encoding.UTF8.GetBytes(report.Content);
             var base64 = Convert.ToBase64String(contentBytes);
 
-            // Trigger download using JavaScript
             await JSRuntime.InvokeVoidAsync("downloadFile", report.FileName, base64, "text/plain");
 
             await JSRuntime.InvokeVoidAsync("alert", $"Report '{report.Type}' downloaded successfully!");
@@ -1157,13 +1122,12 @@ else
 
     private int CalculateFileSize(string content)
     {
-        return Encoding.UTF8.GetByteCount(content) / 1024; // Size in KB
+        return Encoding.UTF8.GetByteCount(content) / 1024; //in KB
     }
 
     private void GoBack() => Navigation.NavigateTo("/adminhome");
     private void RedirectToHome() => Navigation.NavigateTo("/");
 
-    // Model Classes
     public class GeneratedReport
     {
         public string Type { get; set; } = "";
@@ -1263,7 +1227,6 @@ else
         color: #383d41;
     }
 
-    /* Keep all your existing CSS styles from the previous version */
     .admin-reports {
         padding: 20px;
         max-width: 1400px;
@@ -1294,7 +1257,7 @@ else
         color: #2c3e50;
         font-size: 28px;
     }
-    /* Loading and Auth States */
+
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -1397,7 +1360,6 @@ else
         line-height: 1.6;
     }
 
-    /* Main Container */
     .admin-reports {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -1405,7 +1367,6 @@ else
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Header Bar */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -1452,7 +1413,6 @@ else
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-    /* Statistics Overview */
     .stats-overview {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1546,7 +1506,6 @@ else
             color: #dc2626;
         }
 
-    /* Reports Section */
     .reports-section {
         margin-bottom: 40px;
     }
@@ -1577,7 +1536,6 @@ else
         gap: 30px;
     }
 
-    /* Report Cards */
     .report-card {
         background: white;
         border-radius: 20px;
@@ -1781,7 +1739,6 @@ else
         gap: 10px;
     }
 
-    /* Quick Actions */
     .quick-actions {
         margin-bottom: 40px;
     }
@@ -1861,7 +1818,6 @@ else
         transform: translateX(5px);
     }
 
-    /* Modal */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1952,7 +1908,6 @@ else
             transform: rotate(90deg);
         }
 
-    /* Custom Report Form */
     .custom-report-form {
         display: flex;
         flex-direction: column;
@@ -1987,7 +1942,6 @@ else
         min-height: 100px;
     }
 
-    /* Buttons */
     .btn {
         padding: 12px 24px;
         border: none;
@@ -2058,7 +2012,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1024px) {
         .reports-grid
 

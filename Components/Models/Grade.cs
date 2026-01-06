@@ -19,7 +19,6 @@ namespace Thesis.Models
         [Column("Grade")] 
         public double GradeValue { get; set; }
 
-        // Navigation properties
         [ForeignKey(nameof(StudentId))]
         public User? Student { get; set; }
 

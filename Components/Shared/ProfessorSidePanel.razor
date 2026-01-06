@@ -6,45 +6,43 @@
 <div class="admin-sidebar">
     <div class="sidebar-header">
         <div class="app-logo">
-            <div class="logo-placeholder">
-                <span class="placeholder-text">Logo</span>
-            </div>
+            <img src="/Gnosis-logo/default.png" alt="Gnosis Logo" style="width: 40px; height: 40px;" />
             <h3>Gnosis Portal</h3>
         </div>
     </div>
 
     <nav class="sidebar-nav">
         <a class="nav-item active" href="/profhome">
-            <span class="nav-icon">📊</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Dashboard</span>
         </a>
         <a class="nav-item" href="/profprofile">
-            <span class="nav-icon">👤</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Profile</span>
         </a>
         <a class="nav-item" href="/profgrades">
-            <span class="nav-icon">📚</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Grade Management</span>
         </a>
         <a class="nav-item" href="/profcourse">
-            <span class="nav-icon">📚</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Course Management</span>
         </a>
         <a class="nav-item" href="/profann">
-            <span class="nav-icon">📝</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Announcements</span>
         </a>
         <a class="nav-item" href="/profex">
-            <span class="nav-icon">📈</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Exercises</span>
         </a>
         <a class="nav-item" href="/profmessages">
-            <span class="nav-icon">📝</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">Messages</span>
         </a>
         <div class="nav-divider"></div>
         <a class="nav-item" href="/profsettings">
-            <span class="nav-icon">⚙️</span>
+            <span class="nav-icon"></span>
             <span class="nav-text">System Settings</span>
         </a>
     </nav>
@@ -111,7 +109,6 @@
     {
         await LoadProfilePicture();
 
-        // Set up a timer to refresh the profile picture periodically
         profilePictureTimer = new Timer(async _ =>
         {
             await LoadProfilePicture();
@@ -128,7 +125,6 @@
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load extended profile from database
             var extendedProfile = await Context.ProfessorProfiles
                 .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
 
@@ -160,13 +156,11 @@
             return string.Empty;
         }
 
-        // If it's already a data URL, return as is
         if (profilePicture.StartsWith("data:"))
         {
             return profilePicture;
         }
 
-        // If it's a relative path, ensure it starts with /
         if (!profilePicture.StartsWith("/") && !profilePicture.StartsWith("http"))
         {
             return "/" + profilePicture;
@@ -210,7 +204,6 @@
         NavigationManager.NavigateTo("/", true);
     }
 
-    // Method to manually refresh the profile picture (call this after updating profile)
     public async Task RefreshProfilePicture()
     {
         await LoadProfilePicture();
@@ -238,11 +231,10 @@
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    /* Updated App Logo Styles */
     .app-logo {
         display: flex;
         align-items: center;
-        gap: 0.75rem; /* Space between logo and text */
+        gap: 0.75rem;
     }
 
         .app-logo h3 {
@@ -252,12 +244,11 @@
             line-height: 1.2;
         }
 
-    /* Logo Placeholder Styles */
     .logo-placeholder {
         width: 40px;
         height: 40px;
         background: rgba(255, 255, 255, 0.1);
-        border: 1px dashed rgba(255, 255, 255, 0.3); /* Dashed border to indicate placeholder */
+        border: 1px dashed rgba(255, 255, 255, 0.3);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -394,7 +385,6 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-    /* Modal styles */
     .modal-overlay {
         position: fixed;
         top: 0;

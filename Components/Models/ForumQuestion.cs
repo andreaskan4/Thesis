@@ -20,7 +20,7 @@ namespace Thesis.Models
         [Required]
         public string Content { get; set; } = string.Empty;
 
-        public string Tags { get; set; } = string.Empty; // Comma-separated tags
+        public string Tags { get; set; } = string.Empty;
 
         [NotMapped]
         public List<string> TagsList => string.IsNullOrEmpty(Tags)
@@ -36,7 +36,6 @@ namespace Thesis.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(StudentId))]
         public User? Student { get; set; }
 

@@ -21,7 +21,6 @@ namespace Thesis.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(ProfessorId))]
         public User? Professor { get; set; }
 

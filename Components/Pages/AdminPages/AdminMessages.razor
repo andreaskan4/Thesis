@@ -6,7 +6,7 @@
 @using Thesis.Models
 @using System.Text.Json
 
-<PageTitle>Thesis - Admin Messages</PageTitle>
+<PageTitle>Gnosis - Admin Messages</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -38,19 +38,19 @@ else
                 </button>
                 <div class="message-stats">
                     <span class="stat-item @(activeFilter == "all" ? "active" : "")" @onclick='() => SetFilter("all")'>
-                        📬 All: @allMessagesCount
+                        All: @allMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "unread" ? "active" : "")" @onclick='() => SetFilter("unread")'>
-                        📪 Unread: @unreadMessagesCount
+                        Unread: @unreadMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "sent" ? "active" : "")" @onclick='() => SetFilter("sent")'>
-                        📤 Sent: @sentMessagesCount
+                        Sent: @sentMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "students" ? "active" : "")" @onclick='() => SetFilter("students")'>
-                        🎓 Students: @studentMessagesCount
+                        Students: @studentMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "teachers" ? "active" : "")" @onclick='() => SetFilter("teachers")'>
-                        👨‍🏫 Teachers: @teacherMessagesCount
+                        Teachers: @teacherMessagesCount
                     </span>
                 </div>
             </div>
@@ -64,7 +64,6 @@ else
             else
             {
                 <div class="messages-layout">
-                    <!-- Messages List -->
                     <div class="messages-list">
                         <div class="list-header">
                             <h3>Messages</h3>
@@ -149,7 +148,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Message Detail -->
                     <div class="message-detail">
                         @if (selectedMessage != null)
                         {
@@ -203,9 +201,7 @@ else
                             </div>
 
                             <div class="message-conversation">
-                                <!-- Conversation Scroll Area -->
                                 <div class="conversation-scroll-area">
-                                    <!-- Original Message -->
                                     <div class="conversation-item @(selectedMessage.SenderRole == "Admin" ? "sent" : "received")">
                                         <div class="message-content">
                                             <div class="message-text">@selectedMessage.Content</div>
@@ -219,7 +215,6 @@ else
                                         </div>
                                     </div>
 
-                                    <!-- Replies -->
                                     @foreach (var reply in selectedMessage.Replies.OrderBy(r => r.CreatedAt))
                                     {
                                         <div class="conversation-item @(reply.SenderRole == "Admin" ? "sent" : "received")">
@@ -241,7 +236,6 @@ else
                                     }
                                 </div>
 
-                                <!-- Reply Section -->
                                 <div class="reply-section">
                                     <form class="reply-form">
                                         <div class="form-group">
@@ -277,7 +271,6 @@ else
         </div>
     </div>
 
-    <!-- New Message Modal -->
     @if (showNewMessageModal)
     {
         <div class="modal-overlay">
@@ -289,14 +282,12 @@ else
                 <div class="modal-body">
 
                     <form class="new-message-form">
-                        <!-- Search Bar for Users -->
                         <div class="form-group">
                             <label>Search Users</label>
                             <input type="text" @bind="userSearchTerm" @oninput="OnUserSearch"
                                    placeholder="Search by name or email..." class="form-control search-input" />
                         </div>
 
-                        <!-- User Type Filter -->
                         <div class="form-group">
                             <label>Filter by Role</label>
                             <div class="role-filter-buttons">
@@ -315,7 +306,6 @@ else
                             </div>
                         </div>
 
-                        <!-- User Selection -->
                         <div class="form-group">
                             <label>Select Recipient</label>
                             <div class="users-list">
@@ -381,14 +371,12 @@ else
                             </div>
                         </div>
 
-                        <!-- Message Subject -->
                         <div class="form-group">
                             <label>Subject</label>
                             <input type="text" @bind="newMessage.Subject" class="form-control"
                                    placeholder="Enter message subject..." />
                         </div>
 
-                        <!-- Message Content -->
                         <div class="form-group">
                             <label>Message</label>
                             <textarea @bind="newMessage.Content" class="form-control message-textarea"
@@ -413,23 +401,17 @@ else
     private bool isAuthorized = false;
     private bool isLoading = true;
     private bool showNewMessageModal = false;
-
-    // Messages
     private List<Message> allMessages = new();
     private List<Message> filteredMessages = new();
     private Message? selectedMessage = null;
     private string activeFilter = "all";
     private string searchTerm = "";
     private string replyMessage = "";
-
-    // Stats
     private int allMessagesCount = 0;
     private int unreadMessagesCount = 0;
     private int sentMessagesCount = 0;
     private int studentMessagesCount = 0;
     private int teacherMessagesCount = 0;
-
-    // New Message Modal
     private NewMessageModel newMessage = new();
     private List<User> allUsers = new();
     private List<User> filteredUsers = new();
@@ -512,11 +494,9 @@ else
 
             Console.WriteLine("Starting to load users from database...");
 
-            // Test database connection first
             var testConnection = await Context.Users.AnyAsync();
             Console.WriteLine($"Database connection test: {testConnection}");
 
-            // Load all users with Student or Teacher role
             allUsers = await Context.Users
                 .Where(u => u.Role == "Student" || u.Role == "Teacher")
                 .OrderBy(u => u.Name)
@@ -538,7 +518,6 @@ else
                 userLoadError = "No users found in the database. Please make sure there are students or teachers registered.";
             }
 
-            // Apply initial filters
             ApplyUserFilters();
 
             isLoadingUsers = false;
@@ -617,14 +596,12 @@ else
 
         var query = allUsers.AsQueryable();
 
-        // Apply role filter
         if (selectedUserRole != "all")
         {
             query = query.Where(u => u.Role == selectedUserRole);
             Console.WriteLine($"Applied role filter: {selectedUserRole}");
         }
 
-        // Apply search filter
         if (!string.IsNullOrWhiteSpace(userSearchTerm))
         {
             var search = userSearchTerm.ToLower();
@@ -843,7 +820,6 @@ else
         selectedUserRole = "all";
         selectedUser = null;
 
-        // Load users when modal opens
         await LoadUsersAsync();
 
         showNewMessageModal = true;
@@ -903,7 +879,6 @@ else
         }
     }
 
-    // Helper methods
     private string GetMessageExcerpt(string content, int length = 80)
     {
         if (string.IsNullOrEmpty(content)) return "";
@@ -929,7 +904,6 @@ else
     private void GoBack() => Navigation.NavigateTo("/adminhome");
     private void RedirectToHome() => Navigation.NavigateTo("/");
 
-    // Models
     private class NewMessageModel
     {
         public string RecipientType { get; set; } = "Student";
@@ -939,8 +913,6 @@ else
     }
 }
 <style>
-    /* Admin Messages Page - Blue/Purple Gradient with White Balance */
-
     :root {
         --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         --secondary-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
@@ -958,7 +930,6 @@ else
         --border-color: #e5e7eb;
     }
 
-    /* Loading Container */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -993,7 +964,6 @@ else
         font-weight: 500;
     }
 
-    /* Unauthorized Container */
     .unauthorized-container {
         display: flex;
         justify-content: center;
@@ -1028,14 +998,12 @@ else
         margin-bottom: 24px;
     }
 
-    /* Main Container */
     .admin-messages {
         min-height: 100vh;
         background: linear-gradient(135deg, #f8f9ff 0%, #faf5ff 100%);
         padding: 20px;
     }
 
-    /* Header Bar */
     .header-bar {
         background: white;
         border-radius: 16px;
@@ -1115,7 +1083,6 @@ else
             border-color: var(--primary-purple);
         }
 
-    /* Buttons */
     .btn {
         padding: 10px 24px;
         border-radius: 10px;
@@ -1157,7 +1124,6 @@ else
             border-color: transparent;
         }
 
-    /* Messages Container */
     .messages-container {
         background: white;
         border-radius: 16px;
@@ -1174,7 +1140,6 @@ else
         font-size: 1.1rem;
     }
 
-    /* Messages Layout */
     .messages-layout {
         display: grid;
         grid-template-columns: 400px 1fr;
@@ -1194,7 +1159,6 @@ else
 
     }
 
-    /* Messages List */
     .messages-list {
         border-right: 1px solid var(--border-color);
         display: flex;
@@ -1240,7 +1204,6 @@ else
         padding: 12px;
     }
 
-    /* Message Item */
     .message-item {
         display: flex;
         gap: 12px;
@@ -1419,7 +1382,6 @@ else
         transform: scale(1.1);
     }
 
-    /* Empty Messages */
     .empty-messages {
         padding: 48px 24px;
         text-align: center;
@@ -1441,7 +1403,6 @@ else
         color: #64748b;
     }
 
-    /* Message Detail */
     .message-detail {
         display: flex;
         flex-direction: column;
@@ -1486,7 +1447,6 @@ else
         margin-top: 16px;
     }
 
-    /* Message Conversation */
     .message-conversation {
         flex: 1;
         display: flex;
@@ -1584,7 +1544,6 @@ else
         transform: scale(1.1);
     }
 
-    /* Reply Section */
     .reply-section {
         padding: 24px;
         border-top: 1px solid var(--border-color);
@@ -1631,7 +1590,6 @@ else
         justify-content: flex-end;
     }
 
-    /* No Message Selected */
     .no-message-selected {
         display: flex;
         align-items: center;
@@ -1662,7 +1620,6 @@ else
         font-size: 1.1rem;
     }
 
-    /* Modal Overlay */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1762,7 +1719,6 @@ else
         background: #f9fafb;
     }
 
-    /* New Message Form Styles */
     .new-message-form {
         display: flex;
         flex-direction: column;
@@ -1798,7 +1754,6 @@ else
             border-color: var(--primary-purple);
         }
 
-    /* Users List */
     .users-list {
         max-height: 400px;
         overflow-y: auto;
@@ -1937,7 +1892,6 @@ else
         min-height: 150px;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -1957,7 +1911,6 @@ else
             background: var(--primary-gradient);
         }
 
-    /* Responsive Design */
     @@media (max-width: 768px) {
         .header-bar
 

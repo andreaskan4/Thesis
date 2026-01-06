@@ -10,7 +10,6 @@ namespace Thesis.Models
         [Required]
         public DateTime Day { get; set; }
 
-        // Navigation properties
         public List<FoodMeal> Meals { get; set; } = new();
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;

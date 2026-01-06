@@ -23,7 +23,6 @@ namespace Thesis.Models
 
         public string Room { get; set; } = "";
 
-        // Navigation property
         [ForeignKey(nameof(CourseId))]
         public Course? Course { get; set; }
     }

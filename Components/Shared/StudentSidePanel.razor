@@ -8,9 +8,7 @@
 <div class="admin-sidebar">
     <div class="sidebar-header">
         <div class="app-logo">
-            <div class="logo-placeholder">
-                <span class="placeholder-text">Logo</span>
-            </div>
+            <img src="/Gnosis-logo/default.png" alt="Gnosis Logo" style="width: 40px; height: 40px;" />
             <h3>Gnosis Portal</h3>
         </div>
     </div>
@@ -121,8 +119,7 @@
         await LoadProfilePicture();
         currentUserId = AuthStateService.CurrentUser?.Id ?? 0;
 
-        // Set up a timer to refresh the profile picture every 30 seconds
-        refreshTimer = new System.Timers.Timer(30000); // 30 seconds
+        refreshTimer = new System.Timers.Timer(30000);
         refreshTimer.Elapsed += async (sender, e) => await RefreshProfilePicture();
         refreshTimer.AutoReset = true;
         refreshTimer.Enabled = true;
@@ -267,11 +264,10 @@
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    /* Updated App Logo Styles */
     .app-logo {
         display: flex;
         align-items: center;
-        gap: 0.75rem; /* Space between logo and text */
+        gap: 0.75rem;
     }
 
         .app-logo h3 {
@@ -281,12 +277,11 @@
             line-height: 1.2;
         }
 
-    /* Logo Placeholder Styles */
     .logo-placeholder {
         width: 40px;
         height: 40px;
         background: rgba(255, 255, 255, 0.1);
-        border: 1px dashed rgba(255, 255, 255, 0.3); /* Dashed border to indicate placeholder */
+        border: 1px dashed rgba(255, 255, 255, 0.3);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -416,7 +411,6 @@
         font-size: 1rem;
     }
 
-    /* Logout Modal Styles */
     .logout-modal-overlay {
         position: fixed;
         top: 0;
@@ -514,7 +508,6 @@
             background: #dc2626;
         }
 
-    /* Responsive Design */
     @@media (max-width: 768px) {
         .admin-sidebar {
             width: 250px;

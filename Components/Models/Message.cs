@@ -16,7 +16,7 @@ namespace Thesis.Models
         public string SenderEmail { get; set; } = string.Empty;
 
         [Required]
-        public string SenderRole { get; set; } = string.Empty; // "Student" or "Teacher"
+        public string SenderRole { get; set; } = string.Empty;
 
         [Required]
         public string Subject { get; set; } = string.Empty;
@@ -33,7 +33,6 @@ namespace Thesis.Models
         public string? RecipientRole { get; set; }
         public int SenderId { get; set; }
 
-        // Navigation property for replies
         public List<MessageReply> Replies { get; set; } = new List<MessageReply>();
     }
 }

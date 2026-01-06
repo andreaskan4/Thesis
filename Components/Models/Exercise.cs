@@ -37,7 +37,6 @@ namespace Thesis.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(CourseId))]
         public Course? Course { get; set; }
 
@@ -67,7 +66,6 @@ namespace Thesis.Models
 
         public DateTime? GradedAt { get; set; }
 
-        // Navigation properties
         [ForeignKey(nameof(ExerciseId))]
         public Exercise? Exercise { get; set; }
 

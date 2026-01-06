@@ -65,7 +65,6 @@ public class GradesService
     }
     public async Task AddCourseAsync(Course course)
     {
-        // Ensure GradingMethod is null for new courses
         course.GradingMethod = null;
         _context.Courses.Add(course);
         await _context.SaveChangesAsync();
@@ -89,7 +88,6 @@ public class GradesService
         {
             Console.WriteLine($"Attempting to delete course with ID: {id}");
 
-            // First, check if the course exists
             var course = await _context.Courses.FindAsync(id);
             if (course == null)
             {
@@ -97,19 +95,15 @@ public class GradesService
                 return;
             }
 
-            // Check for related enrollments
             var relatedEnrollments = await _context.Enrollments.Where(e => e.CourseId == id).ToListAsync();
             Console.WriteLine($"Found {relatedEnrollments.Count} enrollments linked to this course");
 
-            // Check for related grades
             var relatedGrades = await _context.Grades.Where(g => g.CourseId == id).ToListAsync();
             Console.WriteLine($"Found {relatedGrades.Count} grades linked to this course");
 
-            // Check for related schedules  
             var relatedSchedules = await _context.Schedules.Where(s => s.CourseId == id).ToListAsync();
             Console.WriteLine($"Found {relatedSchedules.Count} schedules linked to this course");
 
-            // Delete related enrollments first
             if (relatedEnrollments.Any())
             {
                 Console.WriteLine("Deleting related enrollments...");
@@ -117,7 +111,6 @@ public class GradesService
                 await _context.SaveChangesAsync();
             }
 
-            // Delete related grades
             if (relatedGrades.Any())
             {
                 Console.WriteLine("Deleting related grades...");
@@ -125,7 +118,6 @@ public class GradesService
                 await _context.SaveChangesAsync();
             }
 
-            // Delete related schedules
             if (relatedSchedules.Any())
             {
                 Console.WriteLine("Deleting related schedules...");
@@ -133,7 +125,6 @@ public class GradesService
                 await _context.SaveChangesAsync();
             }
 
-            // Now delete the course
             Console.WriteLine("Deleting course...");
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();

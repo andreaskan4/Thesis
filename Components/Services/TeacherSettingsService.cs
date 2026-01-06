@@ -20,7 +20,6 @@ namespace Thesis.Services
 
             if (settings == null)
             {
-                // Create default settings if none exist
                 settings = new TeacherSettings
                 {
                     TeacherId = teacherId,
@@ -48,7 +47,6 @@ namespace Thesis.Services
 
             if (existingSettings != null)
             {
-                // Update all properties
                 existingSettings.DefaultGradingScale = newSettings.DefaultGradingScale;
                 existingSettings.AutoPublishGrades = newSettings.AutoPublishGrades;
                 existingSettings.GradeNotifications = newSettings.GradeNotifications;
@@ -85,7 +83,6 @@ namespace Thesis.Services
             }
             else
             {
-                // Create new settings
                 newSettings.TeacherId = teacherId;
                 newSettings.CreatedAt = DateTime.Now;
                 newSettings.UpdatedAt = DateTime.Now;

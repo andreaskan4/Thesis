@@ -18,15 +18,15 @@ namespace Thesis.Models
 
         [Required]
         [MaxLength(20)]
-        public string Type { get; set; } = "Lunch"; // Breakfast, Lunch, Dinner, Snack
+        public string Type { get; set; } = "Lunch"; 
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; }
 
         [Required]
-        [Range(1, 480)] // 1 minute to 8 hours
-        public int PreparationTime { get; set; } // in minutes
+        [Range(1, 480)]
+        public int PreparationTime { get; set; }
 
         [Required]
         [Range(1, 1000)]
@@ -42,7 +42,6 @@ namespace Thesis.Models
 
         public int? FoodScheduleId { get; set; }
 
-        // Navigation properties
         public FoodSchedule? FoodSchedule { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;

@@ -24,7 +24,6 @@ namespace Thesis.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(QuestionId))]
         public ForumQuestion? Question { get; set; }
 

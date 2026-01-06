@@ -18,12 +18,10 @@ namespace Thesis.Models
         [Required]
         public string CommentText { get; set; } = string.Empty;
 
-        // EF Core will handle DateTime to SQLite TEXT conversion
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public bool IsApproved { get; set; } = true;
 
-        // Navigation properties
         [ForeignKey(nameof(StudentId))]
         public User? Student { get; set; }
 

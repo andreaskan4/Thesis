@@ -7,7 +7,7 @@
 @using Thesis.Models
 @using System.Text.Json
 
-<PageTitle>Thesis - University Management</PageTitle>
+<PageTitle>Gnosis - University Management</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -31,11 +31,11 @@ else
 {
     <div class="admin-uni">
         <div class="header-bar">
-            <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
+            <button class="back-btn" @onclick="GoBack">Back to Dashboard</button>
             <h2>University Management</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="ShowAddFacilityModal">
-                    ➕ Add New Facility
+                    Add New Facility
                 </button>
             </div>
         </div>
@@ -43,10 +43,10 @@ else
         <div class="management-tabs">
             <div class="tab-headers">
                 <button class="tab-header @(activeTab == "facilities" ? "active" : "")" @onclick='() => SwitchTab("facilities")'>
-                    🏛️ Facilities
+                    Facilities
                 </button>
                 <button class="tab-header @(activeTab == "contact" ? "active" : "")" @onclick='() => SwitchTab("contact")'>
-                    📞 Contact Information
+                    Contact Information
                 </button>
             </div>
 
@@ -101,19 +101,19 @@ else
                                         </div>
                                         <div class="facility-actions">
                                             <button class="btn btn-sm btn-outline" @onclick="() => ShowUploadModal(facility)">
-                                                📤 Upload Photos
+                                                Upload Photos
                                             </button>
                                             @if (facility.Photos.Any())
                                             {
                                                 <button class="btn btn-sm btn-outline" @onclick="() => ShowManageModal(facility)">
-                                                    🖼️ Manage Photos
+                                                    Manage Photos
                                                 </button>
                                             }
                                             <button class="btn btn-sm btn-outline" @onclick="() => EditFacility(facility)">
-                                                ✏️ Edit
+                                                Edit
                                             </button>
                                             <button class="btn btn-sm btn-danger" @onclick="() => DeleteFacility(facility)">
-                                                🗑️ Delete
+                                                Delete
                                             </button>
                                         </div>
                                     </div>
@@ -139,7 +139,7 @@ else
                     <div class="contact-section">
                         <div class="contact-card">
                             <div class="section-header">
-                                <h3>📞 University Contact Information</h3>
+                                <h3>University Contact Information</h3>
                                 <button class="btn btn-outline" @onclick="EditContactInfo">
                                     @(contactInfo == null ? "Add Contact Info" : "Edit Contact Info")
                                 </button>
@@ -149,19 +149,19 @@ else
                             {
                                 <div class="contact-details">
                                     <div class="contact-row">
-                                        <span class="contact-label">🏢 Main Address:</span>
+                                        <span class="contact-label">Main Address:</span>
                                         <span>@(contactInfo.MainAddress ?? "Not specified")</span>
                                     </div>
                                     <div class="contact-row">
-                                        <span class="contact-label">📞 Phone:</span>
+                                        <span class="contact-label">Phone:</span>
                                         <span>@(contactInfo.PhoneNumber ?? "Not specified")</span>
                                     </div>
                                     <div class="contact-row">
-                                        <span class="contact-label">📧 Email:</span>
+                                        <span class="contact-label">Email:</span>
                                         <span>@(contactInfo.Email ?? "Not specified")</span>
                                     </div>
                                     <div class="contact-row">
-                                        <span class="contact-label">👤 Secretary Name:</span>
+                                        <span class="contact-label">Secretary Name:</span>
                                         <span>@(contactInfo.SecretaryName ?? "Not specified")</span>
                                     </div>
                                     <div class="social-media">
@@ -216,7 +216,6 @@ else
     </div>
 }
 
-<!-- Add/Edit Facility Modal -->
 @if (showFacilityModal)
 {
     <div class="modal-overlay">
@@ -276,7 +275,6 @@ else
     </div>
 }
 
-<!-- Upload Photos Modal -->
 @if (showUploadModal)
 {
     <div class="modal-overlay">
@@ -287,7 +285,7 @@ else
             </div>
             <div class="modal-body">
                 <div class="upload-section">
-                    <h4>📤 Upload New Photos</h4>
+                    <h4>Upload New Photos</h4>
                     <div class="upload-area">
                         <InputFile multiple accept="image/*" OnChange="HandleFileUpload" />
                         <div class="upload-hint">
@@ -317,7 +315,7 @@ else
                 @if (currentFacility?.Photos != null && currentFacility.Photos.Any())
                 {
                     <div class="existing-photos-section">
-                        <h4>🖼️ Current Photos (@currentFacility.Photos.Count)</h4>
+                        <h4>Current Photos (@currentFacility.Photos.Count)</h4>
                         <div class="current-photos-grid">
                             @foreach (var photo in currentFacility.Photos.OrderBy(p => p.SortOrder).Take(3))
                             {
@@ -338,7 +336,7 @@ else
                         </div>
                         <div class="manage-photos-link">
                             <button class="btn btn-sm btn-outline" @onclick="SwitchToManageModal">
-                                🖼️ Manage All Photos
+                                Manage All Photos
                             </button>
                         </div>
                     </div>
@@ -361,7 +359,6 @@ else
     </div>
 }
 
-<!-- Manage Photos Modal -->
 @if (showManageModal)
 {
     <div class="modal-overlay">
@@ -371,11 +368,10 @@ else
                 <button class="close-btn" @onclick="CloseManageModal">×</button>
             </div>
             <div class="modal-body">
-                <!-- Existing Photos Management Section -->
                 @if (currentFacility?.Photos != null && currentFacility.Photos.Any())
                 {
                     <div class="existing-photos-section">
-                        <h4>🖼️ Existing Photos (@currentFacility.Photos.Count)</h4>
+                        <h4>Existing Photos (@currentFacility.Photos.Count)</h4>
                         <div class="photos-management">
                             <div class="photos-grid">
                                 @foreach (var photo in currentFacility.Photos.OrderBy(p => p.SortOrder))
@@ -424,13 +420,13 @@ else
 
                             <div class="management-actions">
                                 <button class="btn btn-outline" @onclick="ReorderPhotos">
-                                    🔄 Update Order
+                                    Update Order
                                 </button>
                                 <button class="btn btn-outline" @onclick="ClearFeatured">
-                                    🚫 Clear Featured
+                                    Clear Featured
                                 </button>
                                 <button class="btn btn-primary" @onclick="SwitchToUploadModal">
-                                    📤 Add More Photos
+                                    Add More Photos
                                 </button>
                             </div>
                         </div>
@@ -460,7 +456,6 @@ else
     </div>
 }
 
-<!-- Contact Information Modal -->
 @if (showContactModal)
 {
     <div class="modal-overlay">
@@ -532,22 +527,15 @@ else
     private bool isLoading = true;
     private bool isSaving = false;
     private bool isUploading = false;
-
     private string activeTab = "facilities";
-
-    // Facilities
     private List<Facility> facilities = new();
     private bool showFacilityModal = false;
     private bool editingFacility = false;
     private Facility newFacility = new();
     private Facility? currentFacility = null;
-
-    // Photos
     private bool showUploadModal = false;
     private bool showManageModal = false;
     private List<UploadedPhoto> uploadedPhotos = new();
-
-    // Contact Information
     private ContactInfo? contactInfo = null;
     private bool showContactModal = false;
     private ContactInfo newContactInfo = new();
@@ -592,11 +580,9 @@ else
             isLoading = true;
             StateHasChanged();
 
-            // Load facilities
             facilities = await Context.Facilities.ToListAsync();
             Console.WriteLine($"Loaded {facilities.Count} facilities");
 
-            // Debug: Check photos for each facility
             foreach (var facility in facilities)
             {
                 Console.WriteLine($"Facility: {facility.Name}, Photos count: {facility.Photos.Count}");
@@ -606,7 +592,6 @@ else
                 }
             }
 
-            // Load contact information
             contactInfo = await Context.ContactInfo.FirstOrDefaultAsync();
             Console.WriteLine($"Contact info loaded: {contactInfo != null}");
 
@@ -636,13 +621,11 @@ else
         StateHasChanged();
     }
 
-    // Helper method to get display photo
     private FacilityPhoto? GetDisplayPhoto(Facility facility)
     {
         return facility.Photos.FirstOrDefault(p => p.IsFeatured) ?? facility.Photos.FirstOrDefault();
     }
 
-    // Facility Management methods
     private void ShowAddFacilityModal()
     {
         newFacility = new Facility();
@@ -746,7 +729,6 @@ else
         }
     }
 
-    // Photo Management methods - Separate modals
     private void ShowUploadModal(Facility facility)
     {
         currentFacility = facility;
@@ -847,7 +829,6 @@ else
             var facility = await Context.Facilities.FindAsync(currentFacility.Id);
             if (facility == null) return;
 
-            // Add new uploaded photos
             var currentPhotos = facility.Photos;
             int startOrder = currentPhotos.Any() ? currentPhotos.Max(p => p.SortOrder) + 1 : 0;
 
@@ -921,18 +902,15 @@ else
         }
     }
 
-    // Photo editing methods
     private void SetFeaturedPhoto(FacilityPhoto photo)
     {
         if (currentFacility == null) return;
 
-        // Clear existing featured photo
         foreach (var p in currentFacility.Photos)
         {
             p.IsFeatured = false;
         }
 
-        // Set new featured photo
         photo.IsFeatured = true;
         StateHasChanged();
     }
@@ -1025,7 +1003,6 @@ else
         }
     }
 
-    // Contact Information Management
     private void EditContactInfo()
     {
         newContactInfo = contactInfo != null ? new ContactInfo
@@ -1124,7 +1101,6 @@ else
         box-sizing: border-box;
     }
 
-    /* Loading States */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -1227,7 +1203,6 @@ else
         line-height: 1.6;
     }
 
-    /* Main Container */
     .admin-uni {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -1235,7 +1210,6 @@ else
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Header Bar */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -1280,7 +1254,6 @@ else
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-    /* Tabs */
     .management-tabs {
         background: white;
         border-radius: 20px;
@@ -1327,7 +1300,6 @@ else
         padding: 35px;
     }
 
-    /* Loading State */
     .loading {
         text-align: center;
         padding: 60px;
@@ -1336,7 +1308,6 @@ else
         font-weight: 600;
     }
 
-    /* Facilities Grid */
     .facilities-section {
         animation: fadeIn 0.5s ease-out;
     }
@@ -1481,7 +1452,6 @@ else
         background: #f8f9fa;
     }
 
-    /* Contact Section */
     .contact-section {
         animation: fadeIn 0.5s ease-out;
     }
@@ -1585,7 +1555,6 @@ else
         font-size: 1.1rem;
     }
 
-    /* Empty State */
     .empty-state {
         grid-column: 1 / -1;
         text-align: center;
@@ -1611,7 +1580,6 @@ else
         margin-bottom: 30px;
     }
 
-    /* Modal */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1706,7 +1674,6 @@ else
             transform: rotate(90deg);
         }
 
-    /* Forms */
     .form-group {
         margin-bottom: 22px;
     }
@@ -1754,7 +1721,6 @@ else
             font-weight: 700;
         }
 
-    /* Upload Area */
     .upload-area {
         border: 3px dashed #667eea;
         border-radius: 16px;
@@ -1839,7 +1805,6 @@ else
             transform: scale(1.1);
         }
 
-    /* Buttons */
     .btn {
         padding: 12px 24px;
         border: none;
@@ -1901,7 +1866,6 @@ else
         transform: none !important;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 10px;
     }
@@ -1920,7 +1884,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1024px) {
         .facilities-grid
 

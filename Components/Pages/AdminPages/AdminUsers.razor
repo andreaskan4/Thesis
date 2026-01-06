@@ -4,7 +4,7 @@
 @inject AppDbContext DbContext
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Admin - User Management</PageTitle>
+<PageTitle>Gnosis - User Management</PageTitle>
 
 <div class="admin-users-page">
     <div class="page-header">
@@ -46,7 +46,7 @@
                                 <div class="cafeteria-worker-toggle">
                                     @if (isCafeteriaWorker)
                                     {
-                                        <span class="worker-status active">👨‍🍳 Active</span>
+                                        <span class="worker-status active">Active</span>
                                         <button class="btn btn-sm btn-warning" @onclick="() => RemoveCafeteriaWorker(user)">
                                             Remove
                                         </button>
@@ -79,7 +79,6 @@
     </div>
 </div>
 
-<!-- Add/Edit User Modal -->
 @if (showUserModal)
 {
     <div class="modal-overlay">
@@ -129,7 +128,6 @@
     </div>
 }
 
-<!-- Delete Confirmation Modal -->
 @if (showDeleteModal)
 {
     <div class="modal-overlay">
@@ -144,7 +142,7 @@
                 @if (cafeteriaWorkers.Any(cw => cw.StudentId == deletingUser.Id))
                 {
                     <div class="warning-card">
-                        <strong>⚠️ Cafeteria Worker</strong>
+                        <strong>Warning: Cafeteria Worker</strong>
                         <p>This user is also a cafeteria worker. Their worker status will also be removed.</p>
                     </div>
                 }
@@ -157,7 +155,6 @@
     </div>
 }
 
-<!-- Cafeteria Worker Role Modal -->
 @if (showCafeteriaWorkerModal)
 {
     <div class="modal-overlay">
@@ -180,7 +177,7 @@
                         </select>
                     </div>
                     <div class="info-card">
-                        <h4>👨‍🍳 Cafeteria Worker Permissions</h4>
+                        <h4>Cafeteria Worker Permissions</h4>
                         <ul>
                             <li>View and manage weekly food schedule</li>
                             <li>Add, edit, and delete meals</li>
@@ -260,7 +257,7 @@
             LastName = user.LastName,
             Email = user.Email,
             AcademicId = user.AcademicId,
-            Password = "", // Don't pre-fill password for security
+            Password = "",
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };
@@ -298,7 +295,6 @@
                     user.AcademicId = editingUser.AcademicId;
                     user.Role = editingUser.Role;
 
-                    // Only update password if provided
                     if (!string.IsNullOrWhiteSpace(editingUser.Password))
                     {
                         user.Password = editingUser.Password;
@@ -342,7 +338,6 @@
             var user = await DbContext.Users.FindAsync(deletingUser.Id);
             if (user != null)
             {
-                // Remove cafeteria worker status if exists
                 var worker = await DbContext.CafeteriaWorkers
                     .FirstOrDefaultAsync(cw => cw.StudentId == user.Id);
                 if (worker != null)
@@ -365,7 +360,6 @@
         }
     }
 
-    // Cafeteria Worker Management
     private void AddCafeteriaWorker(User user)
     {
         selectedUser = user;
@@ -396,13 +390,11 @@
 
             if (existingWorker != null)
             {
-                // Reactivate existing worker
                 existingWorker.IsActive = true;
                 existingWorker.Role = cafeteriaWorkerRole;
             }
             else
             {
-                // Create new worker
                 var worker = new CafeteriaWorker
                 {
                     StudentId = selectedUser.Id,
@@ -433,8 +425,7 @@
 
             if (worker != null)
             {
-                // Soft delete by setting inactive, or remove completely:
-                DbContext.CafeteriaWorkers.Remove(worker); // Or set worker.IsActive = false;
+                DbContext.CafeteriaWorkers.Remove(worker);
                 await DbContext.SaveChangesAsync();
             }
 
@@ -787,7 +778,6 @@
             font-size: 0.875rem;
         }
 
-    /* Responsive Design */
     @@media (max-width: 768px) {
         .admin-users-page {
             padding: 1rem;

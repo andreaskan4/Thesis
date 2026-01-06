@@ -6,26 +6,18 @@ namespace Thesis.Components.Models
     {
         [Key]
         public int Id { get; set; }
-
-        // --- System Configuration ---
         public string AcademicYear { get; set; } = "2024-2025";
         public string GradingScale { get; set; } = "0-100";
         public bool AutoBackup { get; set; } = false;
         public string BackupFrequency { get; set; } = "weekly";
-
-        // --- User Management ---
         public bool AllowStudentRegistration { get; set; } = true;
         public string DefaultUserRole { get; set; } = "Student";
         public string PasswordPolicy { get; set; } = "medium";
-        public int SessionTimeout { get; set; } = 60; // minutes
-
-        // --- Notifications ---
+        public int SessionTimeout { get; set; } = 60;
         public bool EmailNotifications { get; set; } = true;
         public bool GradeAlerts { get; set; } = true;
         public bool NewUserAlerts { get; set; } = true;
         public bool MaintenanceAlerts { get; set; } = false;
-
-        // --- Database / System Info ---
         public DateTime? LastBackup { get; set; } = null;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;

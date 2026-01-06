@@ -17,7 +17,6 @@ namespace Thesis.Models
 
         public DateTime EnrollmentDate { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(StudentId))]
         public User Student { get; set; } = null!;
 

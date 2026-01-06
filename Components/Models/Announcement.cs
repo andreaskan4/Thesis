@@ -24,11 +24,10 @@ namespace Thesis.Models
         public string Content { get; set; } = string.Empty;
 
         [Required]
-        public string Priority { get; set; } = "Normal"; // Normal, Important, Urgent
+        public string Priority { get; set; } = "Normal";
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // Navigation properties
         [ForeignKey(nameof(ProfessorId))]
         public User? Professor { get; set; }
 
