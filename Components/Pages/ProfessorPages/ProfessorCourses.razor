@@ -5,7 +5,7 @@
 @using Thesis.Models
 @using Microsoft.EntityFrameworkCore
 
-<PageTitle>Thesis - Manage Courses</PageTitle>
+<PageTitle>Gnosis - Manage Courses</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -30,17 +30,16 @@ else
     <div class="professor-courses">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>📚 Manage My Courses</h2>
+            <h2>Manage My Courses</h2>
             <div class="header-stats">
                 <span class="stat-badge">Total Courses: @myCourses.Count</span>
             </div>
         </div>
 
         <div class="courses-management">
-            <!-- Course List -->
             <div class="courses-section">
                 <div class="section-header">
-                    <h3>🎯 My Courses</h3>
+                    <h3>My Courses</h3>
                     <div class="search-controls">
                         <input type="text" @bind="searchTerm" @oninput="OnSearch"
                                class="search-input" placeholder="Search courses..." />
@@ -55,16 +54,15 @@ else
                                 <h4 class="course-title">@course.Name</h4>
                                 <div class="course-meta">
                                     <span class="course-code">ID: @course.Id</span>
-                                    <span class="enrollment-count">👥 @GetEnrollmentCount(course.Id) students</span>
+                                    <span class="enrollment-count"> @GetEnrollmentCount(course.Id) students</span>
                                 </div>
                             </div>
 
                             <div class="course-content">
                                 <p class="course-description">@course.Description</p>
 
-                                <!-- Difficulty Rating Management -->
                                 <div class="management-section">
-                                    <h5>📊 Difficulty Rating</h5>
+                                    <h5>Difficulty Rating</h5>
                                     <div class="difficulty-management">
                                         <label class="management-label">Set Course Difficulty:</label>
                                         <div class="difficulty-stars-editable">
@@ -84,9 +82,8 @@ else
                                     </div>
                                 </div>
 
-                                <!-- Grading Method Management -->
                                 <div class="management-section">
-                                    <h5>📝 Grading Method</h5>
+                                    <h5>Grading Method</h5>
                                     <div class="grading-method-management">
                                         <label class="management-label">Select Grading Method:</label>
                                         <div class="grading-options">
@@ -95,7 +92,7 @@ else
                                                        value="0" @onchange="() => UpdateGradingMethod(course.Id, GradingMethod.Exam)"
                                                        checked="@(course.GradingMethod == GradingMethod.Exam)" />
                                                 <span class="radio-label">
-                                                    📄 Exam Only
+                                                    Exam Only
                                                 </span>
                                             </label>
                                             <label class="radio-option">
@@ -103,7 +100,7 @@ else
                                                        value="1" @onchange="() => UpdateGradingMethod(course.Id, GradingMethod.Exercise)"
                                                        checked="@(course.GradingMethod == GradingMethod.Exercise)" />
                                                 <span class="radio-label">
-                                                    📝 Exercise Only
+                                                    Exercise Only
                                                 </span>
                                             </label>
                                             <label class="radio-option">
@@ -111,7 +108,7 @@ else
                                                        value="2" @onchange="() => UpdateGradingMethod(course.Id, GradingMethod.Both)"
                                                        checked="@(course.GradingMethod == GradingMethod.Both)" />
                                                 <span class="radio-label">
-                                                    📚 Both Exam & Exercise
+                                                    Both Exam & Exercise
                                                 </span>
                                             </label>
                                         </div>
@@ -121,9 +118,8 @@ else
                                     </div>
                                 </div>
 
-                                <!-- Course Statistics -->
                                 <div class="management-section">
-                                    <h5>📈 Course Statistics</h5>
+                                    <h5>Course Statistics</h5>
                                     <div class="course-stats-grid">
                                         <div class="stat-item">
                                             <span class="stat-label">Total Enrollments:</span>
@@ -152,27 +148,23 @@ else
                 </div>
             </div>
 
-            <!-- Quick Stats Sidebar -->
             <div class="stats-sidebar">
                 <div class="stats-card">
-                    <h4>📊 Overview</h4>
+                    <h4>Overview</h4>
                     <div class="stats-list">
                         <div class="stat-overview">
-                            <span class="stat-icon">📚</span>
                             <div class="stat-info">
                                 <span class="stat-title">Total Courses</span>
                                 <span class="stat-value">@myCourses.Count</span>
                             </div>
                         </div>
                         <div class="stat-overview">
-                            <span class="stat-icon">👥</span>
                             <div class="stat-info">
                                 <span class="stat-title">Total Students</span>
                                 <span class="stat-value">@totalStudents</span>
                             </div>
                         </div>
                         <div class="stat-overview">
-                            <span class="stat-icon">📝</span>
                             <div class="stat-info">
                                 <span class="stat-title">Avg Grade</span>
                                 <span class="stat-value">@averageGrade.ToString("F1")/10.0</span>
@@ -192,18 +184,12 @@ else
     private bool isAuthChecked = false;
     private bool isAuthorized = false;
     private bool isLoading = true;
-
-    // Data
     private List<Course> myCourses = new();
     private List<Enrollment> courseEnrollments = new();
     private List<Grade> courseGrades = new();
     private List<Announcement> courseAnnouncements = new();
-
-    // Statistics
     private int totalStudents = 0;
     private double averageGrade = 0;
-
-    // UI State
     private string searchTerm = "";
 
     protected override async Task OnInitializedAsync()
@@ -237,29 +223,24 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load professor's courses
             myCourses = await Context.Courses
                 .Where(c => c.ProfessorId == currentUser.Id)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // Load enrollments for statistics
             courseEnrollments = await Context.Enrollments
                 .Include(e => e.Course)
                 .Where(e => myCourses.Select(c => c.Id).Contains(e.CourseId))
                 .ToListAsync();
 
-            // Load grades for statistics
             courseGrades = await Context.Grades
                 .Where(g => myCourses.Select(c => c.Id).Contains(g.CourseId))
                 .ToListAsync();
 
-            // Load announcements for statistics
             courseAnnouncements = await Context.Announcements
                 .Where(a => a.ProfessorId == currentUser.Id)
                 .ToListAsync();
 
-            // Calculate statistics
             CalculateStatistics();
 
             isLoading = false;
@@ -352,7 +333,6 @@ else
         StateHasChanged();
     }
 
-    // Filtered data
     private List<Course> filteredCourses => myCourses
         .Where(c =>
             string.IsNullOrEmpty(searchTerm) ||
@@ -371,7 +351,6 @@ else
         box-sizing: border-box;
     }
 
-    /* Loading and Auth States */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -474,7 +453,6 @@ else
         line-height: 1.6;
     }
 
-    /* Main Container */
     .professor-courses {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -482,7 +460,6 @@ else
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Header Bar */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -539,7 +516,6 @@ else
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-    /* Courses Management Container */
     .courses-management {
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -560,7 +536,6 @@ else
 
     }
 
-    /* Section Header */
     .section-header {
         display: flex;
         justify-content: space-between;
@@ -576,7 +551,6 @@ else
             font-weight: 700;
         }
 
-    /* Search Controls */
     .search-controls {
         flex: 1;
         max-width: 400px;
@@ -598,14 +572,12 @@ else
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
 
-    /* Courses Grid */
     .courses-grid {
         display: flex;
         flex-direction: column;
         gap: 25px;
     }
 
-    /* Course Management Card */
     .course-management-card {
         background: white;
         border-radius: 20px;
@@ -671,7 +643,6 @@ else
         font-size: 0.85rem;
     }
 
-    /* Course Content */
     .course-content {
         display: flex;
         flex-direction: column;
@@ -684,7 +655,6 @@ else
         font-size: 0.95rem;
     }
 
-    /* Management Sections */
     .management-section {
         padding: 20px;
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
@@ -707,7 +677,6 @@ else
         font-size: 0.9rem;
     }
 
-    /* Difficulty Stars */
     .difficulty-management {
         display: flex;
         flex-direction: column;
@@ -753,7 +722,6 @@ else
         border-radius: 10px;
     }
 
-    /* Grading Method */
     .grading-method-management {
         display: flex;
         flex-direction: column;
@@ -808,7 +776,6 @@ else
             color: #667eea;
         }
 
-    /* Course Statistics */
     .course-stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -836,7 +803,6 @@ else
         font-weight: 700;
     }
 
-    /* Course Actions */
     .course-actions {
         display: flex;
         gap: 10px;
@@ -845,7 +811,6 @@ else
         margin-top: 10px;
     }
 
-    /* Stats Sidebar */
     .stats-sidebar {
         display: flex;
         flex-direction: column;
@@ -872,7 +837,6 @@ else
             border-bottom: 2px solid #e2e8f0;
         }
 
-    /* Stats List */
     .stats-list {
         display: flex;
         flex-direction: column;
@@ -924,7 +888,6 @@ else
         font-weight: 700;
     }
 
-    /* Actions List */
     .actions-list {
         display: flex;
         flex-direction: column;
@@ -953,7 +916,6 @@ else
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
-    /* No Courses State */
     .no-courses {
         text-align: center;
         padding: 60px 20px;
@@ -964,7 +926,6 @@ else
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
-    /* Buttons */
     .btn {
         padding: 10px 20px;
         border: none;
@@ -1016,7 +977,6 @@ else
         transform: none !important;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 10px;
     }
@@ -1035,7 +995,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1200px) {
         .courses-management
 

@@ -6,7 +6,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Thesis.Models
 
-<PageTitle>Thesis - Student Profile</PageTitle>
+<PageTitle>Gnosis - Student Profile</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -36,7 +36,6 @@ else if (isLoading)
 else
 {
     <div class="student-profile">
-        <!-- Header -->
         <div class="profile-header">
             <div class="header-content">
                 <button class="back-btn" @onclick="GoBack">
@@ -56,11 +55,8 @@ else
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="profile-content">
-            <!-- Left Column - Personal Info & Stats -->
             <div class="left-column">
-                <!-- Student Card -->
                 <div class="profile-card">
                     <div class="student-card">
                         <div class="student-avatar">
@@ -142,7 +138,6 @@ else
                     </div>
                 </div>
 
-                <!-- Academic Overview -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Academic Overview</h3>
@@ -150,7 +145,7 @@ else
                     <div class="card-content">
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-icon">📚</div>
+                                <div class="stat-icon"></div>
                                 <div class="stat-details">
                                     <div class="stat-value">@totalCourses</div>
                                     <div class="stat-label">Courses</div>
@@ -166,7 +161,7 @@ else
                             </div>
 
                             <div class="stat-card">
-                                <div class="stat-icon">✅</div>
+                                <div class="stat-icon"></div>
                                 <div class="stat-details">
                                     <div class="stat-value">@completedExercises</div>
                                     <div class="stat-label">Submissions</div>
@@ -174,7 +169,7 @@ else
                             </div>
 
                             <div class="stat-card">
-                                <div class="stat-icon">📊</div>
+                                <div class="stat-icon"></div>
                                 <div class="stat-details">
                                     <div class="stat-value">@averageGrade.ToString("F1")</div>
                                     <div class="stat-label">Avg Grade</div>
@@ -184,7 +179,6 @@ else
                     </div>
                 </div>
 
-                <!-- Grade Performance -->
                 @if (courseGrades.Any())
                 {
                     <div class="profile-card">
@@ -230,7 +224,6 @@ else
                     </div>
                 }
 
-                <!-- Cafeteria Worker Details -->
                 @if (IsCafeteriaWorker && cafeteriaWorkerInfo != null)
                 {
                     <div class="profile-card">
@@ -271,11 +264,11 @@ else
                                     <h4>Employee Benefits</h4>
                                     <div class="benefits-list">
                                         <div class="benefit-item">
-                                            <span class="benefit-icon">🍽️</span>
+                                            <span class="benefit-icon"></span>
                                             <span>Free meals during shifts</span>
                                         </div>
                                         <div class="benefit-item">
-                                            <span class="benefit-icon">🏪</span>
+                                            <span class="benefit-icon"></span>
                                             <span>Employee discount on purchases</span>
                                         </div>
                                         <div class="benefit-item">
@@ -285,7 +278,7 @@ else
                                         @if (cafeteriaWorkerInfo.Role != "Volunteer")
                                         {
                                             <div class="benefit-item">
-                                                <span class="benefit-icon">💰</span>
+                                                <span class="benefit-icon"></span>
                                                 <span>Paid position with competitive wages</span>
                                             </div>
                                         }
@@ -297,9 +290,7 @@ else
                 }
             </div>
 
-            <!-- Right Column - Courses & Activities -->
             <div class="right-column">
-                <!-- Current Courses -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Current Courses (@enrolledCourses.Count)</h3>
@@ -366,7 +357,7 @@ else
                         else
                         {
                             <div class="empty-state">
-                                <div class="empty-icon">📚</div>
+                                <div class="empty-icon"></div>
                                 <h4>No Course Enrollments</h4>
                                 <p>You are not currently enrolled in any courses.</p>
                                 <button class="btn-primary" @onclick="BrowseCourses">
@@ -377,7 +368,6 @@ else
                     </div>
                 </div>
 
-                <!-- Recent Activity -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Recent Activity</h3>
@@ -543,7 +533,6 @@ else
                     </div>
                 </div>
 
-                <!-- Campus Engagement -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Campus Engagement</h3>
@@ -586,37 +575,23 @@ else
     private bool isAuthorized = false;
     private bool isLoading = true;
     private string activeTab = "submissions";
-
-    // Student Profile Data
     private User studentProfile = new();
     private DateTime joinDate = DateTime.Now;
-
-    // Academic Stats (REAL DATA from database)
     private int totalCourses = 0;
-    private double overallGPA = 0.0; // REAL: Calculated from actual grades
-    private int completedExercises = 0; // REAL: From ExerciseSubmissions table
-    private double bestGrade = 0.0; // REAL: From Grades table
-    private double averageGrade = 0.0; // REAL: From Grades table
+    private double overallGPA = 0.0;
+    private int completedExercises = 0;
+    private double bestGrade = 0.0;
+    private double averageGrade = 0.0;
     private int totalCredits = 0;
-
-    // Cafeteria Worker Info (REAL DATA from CafeteriaWorkers table)
     private bool IsCafeteriaWorker = false;
     private CafeteriaWorkerInfo? cafeteriaWorkerInfo;
-
-    // Course Data (REAL DATA)
     private List<EnrollmentView> enrolledCourses = new();
     private List<CourseGrade> courseGrades = new();
-
-    // Activity Data (REAL DATA)
     private List<SubmissionView> recentSubmissions = new();
     private List<DueDateView> upcomingDueDates = new();
     private List<AnnouncementView> recentAnnouncements = new();
-
-    // Engagement Stats (REAL DATA)
-    private int professorsRated = 0; // REAL: From ProfessorRatings table
-    private int commentsPosted = 0; // REAL: From Comments table
-
-    // Grade Distribution (REAL DATA calculated from Grades)
+    private int professorsRated = 0;
+    private int commentsPosted = 0;
     private List<GradeDistribution> gradeDistribution = new();
 
     protected override async Task OnInitializedAsync()
@@ -636,7 +611,6 @@ else
 
     private async Task CheckAuthorization()
     {
-        // Wait for AuthStateService to load
         for (int i = 0; i < 30; i++)
         {
             if (AuthStateService.CurrentUser != null)
@@ -657,7 +631,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load student profile from database to get complete info
             var student = await Context.Users
                 .FirstOrDefaultAsync(u => u.Id == currentUser.Id);
 
@@ -666,7 +639,6 @@ else
                 studentProfile = student;
                 joinDate = student.CreatedAt;
 
-                // Check cafeteria worker status (REAL DATA)
                 var cafeteriaWorker = await Context.CafeteriaWorkers
                     .FirstOrDefaultAsync(cw => cw.StudentId == currentUser.Id);
 
@@ -697,7 +669,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load grades (REAL DATA from Grades table)
             var grades = await Context.Grades
                 .Where(g => g.StudentId == currentUser.Id)
                 .Include(g => g.Course)
@@ -710,22 +681,16 @@ else
                 Grade = g.GradeValue
             }).ToList();
 
-            // Calculate stats from REAL DATA
             totalCourses = courseGrades.Select(g => g.CourseId).Distinct().Count();
             if (courseGrades.Any())
             {
-                // For GPA: Use actual grades (0-10 scale) and convert properly
-                // If you want true GPA (4.0 scale), you'll need a conversion table
-                // For now, showing the average grade on 0-10 scale
                 averageGrade = courseGrades.Average(g => g.Grade);
                 bestGrade = courseGrades.Max(g => g.Grade);
 
-                // Calculate GPA on 4.0 scale based on 0-10 grades
                 overallGPA = CalculateGPA(averageGrade);
-                totalCredits = totalCourses * 3; // Assume 3 credits per course
+                totalCredits = totalCourses * 5;
             }
 
-            // Calculate grade distribution from REAL DATA
             CalculateGradeDistribution();
         }
         catch (Exception ex)
@@ -736,18 +701,17 @@ else
 
     private double CalculateGPA(double averageGrade)
     {
-        // Convert 0-10 scale to 4.0 GPA scale
-        if (averageGrade >= 9.0) return 4.0; // A
-        if (averageGrade >= 8.5) return 3.7; // A-
-        if (averageGrade >= 8.0) return 3.3; // B+
-        if (averageGrade >= 7.5) return 3.0; // B
-        if (averageGrade >= 7.0) return 2.7; // B-
-        if (averageGrade >= 6.5) return 2.3; // C+
-        if (averageGrade >= 6.0) return 2.0; // C
-        if (averageGrade >= 5.5) return 1.7; // C-
-        if (averageGrade >= 5.0) return 1.3; // D+
-        if (averageGrade >= 4.5) return 1.0; // D
-        return 0.0; // F
+        if (averageGrade >= 9.0) return 4.0;
+        if (averageGrade >= 8.5) return 3.7;
+        if (averageGrade >= 8.0) return 3.3;
+        if (averageGrade >= 7.5) return 3.0;
+        if (averageGrade >= 7.0) return 2.7;
+        if (averageGrade >= 6.5) return 2.3;
+        if (averageGrade >= 6.0) return 2.0;
+        if (averageGrade >= 5.5) return 1.7;
+        if (averageGrade >= 5.0) return 1.3;
+        if (averageGrade >= 4.5) return 1.0;
+        return 0.0;
     }
 
     private async Task LoadEnrollments()
@@ -757,7 +721,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load enrollments with related data (REAL DATA)
             var enrollments = await Context.Enrollments
                 .Where(e => e.StudentId == currentUser.Id)
                 .Include(e => e.Course)
@@ -805,7 +768,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load recent submissions (REAL DATA)
             var submissions = await Context.ExerciseSubmissions
                 .Where(s => s.StudentId == currentUser.Id)
                 .Include(s => s.Exercise)
@@ -828,11 +790,9 @@ else
             completedExercises = await Context.ExerciseSubmissions
                 .CountAsync(s => s.StudentId == currentUser.Id);
 
-            // Load upcoming due dates (REAL DATA)
             var today = DateTime.Now.Date;
             var nextWeek = today.AddDays(14);
 
-            // Get all exercises for enrolled courses
             var enrolledCourseIds = enrolledCourses.Select(ec => ec.CourseId).ToList();
             var exercises = await Context.Exercises
                 .Where(e => e.IsPublished && enrolledCourseIds.Contains(e.CourseId))
@@ -855,7 +815,6 @@ else
                 .Take(5)
                 .ToList();
 
-            // Load recent announcements for enrolled courses (REAL DATA)
             if (enrolledCourseIds.Any())
             {
                 var announcements = await Context.Announcements
@@ -891,11 +850,9 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Count professors rated (REAL DATA)
             professorsRated = await Context.ProfessorRatings
                 .CountAsync(r => r.StudentId == currentUser.Id);
 
-            // Count comments posted (REAL DATA)
             commentsPosted = await Context.Comments
                 .CountAsync(c => c.StudentId == currentUser.Id && c.IsApproved);
         }
@@ -1102,7 +1059,6 @@ else
         StateHasChanged();
     }
 
-    // View Model Classes
     public class CafeteriaWorkerInfo
     {
         public int WorkerId { get; set; }

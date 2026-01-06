@@ -5,7 +5,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Thesis - Professor Exercises</PageTitle>
+<PageTitle>Gnosis - Professor Exercises</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -48,7 +48,6 @@ else
         else
         {
             <div class="exercises-container">
-                <!-- Left Panel: Exercises List -->
                 <div class="exercises-list-container">
                     <div class="section-header">
                         <h3>Exercises</h3>
@@ -108,7 +107,6 @@ else
                     }
                 </div>
 
-                <!-- Right Panel: Submissions or Exercise Details -->
                 <div class="details-container">
                     @if (selectedExercise != null && showSubmissions)
                     {
@@ -242,7 +240,6 @@ else
     </div>
 }
 
-<!-- Add/Edit Exercise Modal -->
 @if (showExerciseModal)
 {
     <div class="modal-overlay">
@@ -322,13 +319,11 @@ else
     private bool isLoading = false;
     private bool showExerciseModal = false;
     private bool showSubmissions = false;
-
     private List<Course> courses = new();
     private List<Exercise> exercises = new();
     private List<ExerciseSubmission> submissions = new();
     private List<User> enrolledStudents = new();
     private Dictionary<int, int> submissionCounts = new();
-
     private int selectedCourseId = 0;
     private Course? selectedCourse;
     private Exercise? selectedExercise;
@@ -336,7 +331,6 @@ else
     private ElementReference fileInputRef;
     private string dueDatePart = "";
     private string dueTimePart = "23:59";
-
     private int totalExercises = 0;
     private int totalSubmissions = 0;
     private int enrolledStudentsCount = 0;
@@ -431,7 +425,6 @@ else
 
             exercises = await ExercisesService.GetExercisesByCourseAsync(courseId);
 
-            // Pre-load submission counts for all exercises
             submissionCounts.Clear();
             foreach (var exercise in exercises)
             {
@@ -452,7 +445,6 @@ else
     {
         try
         {
-            // Use the new method from GradesService to get actual enrolled students
             var enrollments = await GradesService.GetEnrollmentsForCourseAsync(courseId);
             enrolledStudents = enrollments.Select(e => e.Student).Where(s => s != null).ToList();
             enrolledStudentsCount = enrolledStudents.Count;
@@ -461,7 +453,6 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading students: {ex.Message}");
-            // Fallback: if the method doesn't exist yet, use a default value
             enrolledStudentsCount = await GetDefaultStudentCount(courseId);
         }
     }
@@ -469,12 +460,10 @@ else
     {
         try
         {
-            // Try to get count from GradesService if the method exists
             return await GradesService.GetEnrolledStudentsCountAsync(courseId);
         }
         catch
         {
-            // Fallback: estimate based on total students in the system
             var allStudents = await GradesService.GetStudentsAsync();
             return allStudents.Count / courses.Count; // Rough estimate
         }
@@ -483,7 +472,6 @@ else
     {
         if (enrolledStudentsCount == 0)
         {
-            // If we can't get enrolled students, show submission count only
             return submissions.Count > 0 ? "N/A" : "0";
         }
 
@@ -492,8 +480,6 @@ else
     }
     private async Task<List<Enrollment>> GetEnrollmentsForCourse(int courseId)
     {
-        // You'll need to implement this method in your GradesService
-        // For now, return empty list - implement based on your enrollment structure
         return new List<Enrollment>();
     }
 
@@ -503,7 +489,6 @@ else
         {
             submissions = await ExercisesService.GetSubmissionsByExerciseAsync(exerciseId);
 
-            // Calculate average grade from the loaded submissions, not from service
             CalculateAverageGradeFromSubmissions();
 
             StateHasChanged();
@@ -577,7 +562,6 @@ else
 
         try
         {
-            // Combine date and time
             if (DateTime.TryParse($"{dueDatePart} {dueTimePart}", out DateTime dueDate))
             {
                 editingExercise.DueDate = dueDate;
@@ -618,7 +602,7 @@ else
         {
             await ExercisesService.DeleteExerciseAsync(exerciseId);
             await LoadExercises(selectedCourseId);
-            await LoadStatistics(); // Refresh statistics
+            await LoadStatistics();
             
         }
         catch (Exception ex)
@@ -652,7 +636,6 @@ else
         {
             await ExercisesService.UpdateSubmissionGradeAsync(submission.Id, submission.Grade.Value);
 
-            // Update the grade in our local list
             var localSubmission = submissions.FirstOrDefault(s => s.Id == submission.Id);
             if (localSubmission != null)
             {
@@ -660,7 +643,6 @@ else
                 localSubmission.GradedAt = DateTime.Now;
             }
 
-            // Recalculate average from current submissions
             CalculateAverageGradeFromSubmissions();
 
             StateHasChanged();
@@ -689,7 +671,6 @@ else
 
     private bool IsExerciseFormValid()
     {
-        // Check if due date is valid
         if (!DateTime.TryParse($"{dueDatePart} {dueTimePart}", out DateTime dueDate) || dueDate <= DateTime.Now)
         {
             return false;

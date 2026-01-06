@@ -31,15 +31,14 @@ else if (!isAuthorized)
 else
 {
     <div class="student-food">
-        <!-- Header -->
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>🍽️ Student Food Service</h2>
+            <h2>Student Food Service</h2>
             <div class="header-actions">
                 @if (isCafeteriaWorker)
                 {
                     <button class="btn btn-primary" @onclick="ShowManageScheduleModal">
-                        📅 Manage Weekly Schedule
+                        Manage Weekly Schedule
                     </button>
                 }
                 <div class="food-stats">
@@ -47,23 +46,21 @@ else
                     <span class="stat-item">Available Meals: @(tomorrowMenu?.Meals?.Count ?? 0)</span>
                     @if (isCafeteriaWorker)
                     {
-                        <span class="stat-item worker-badge">👨‍🍳 Cafeteria Worker</span>
+                        <span class="stat-item worker-badge">Cafeteria Worker</span>
                     }
                 </div>
             </div>
         </div>
 
         <div class="food-container">
-            <!-- Tomorrow's Menu -->
             <div class="tomorrow-menu-section">
                 <div class="section-header">
-                    <h3>🍽️ Tomorrow's Menu (@tomorrowMenu?.Day.ToString("MMMM dd, yyyy"))</h3>
+                    <h3>Tomorrow's Menu (@tomorrowMenu?.Day.ToString("MMMM dd, yyyy"))</h3>
                 </div>
 
                 @if (tomorrowMenu == null || !tomorrowMenu.Meals.Any())
                 {
                     <div class="empty-menu">
-                        <div class="empty-icon">🍽️</div>
                         <h4>No Menu Scheduled</h4>
                         <p>@(isCafeteriaWorker ? "Add meals to tomorrow's schedule using the weekly schedule manager." : "Check back later for tomorrow's menu.")</p>
                     </div>
@@ -82,10 +79,10 @@ else
                                     <p class="meal-description">@meal.Description</p>
                                     <div class="meal-details">
                                         <span class="detail-item">
-                                            🕒 @meal.PreparationTime min
+                                            @meal.PreparationTime min
                                         </span>
                                         <span class="detail-item">
-                                            👥 Serves @meal.Servings
+                                            Serves @meal.Servings
                                         </span>
                                         <span class="detail-item @(meal.IsVegetarian ? "vegetarian" : "")">
                                             @(meal.IsVegetarian ? "🌱 Vegetarian" : "🍖 Non-Veg")
@@ -100,7 +97,6 @@ else
                                 </div>
                                 <div class="meal-footer">
                                     <div class="meal-chef">
-                                        <span class="chef-avatar">👨‍🍳</span>
                                         <span class="chef-name">@meal.ChefName</span>
                                     </div>
                                     <div class="meal-price">
@@ -113,18 +109,17 @@ else
                 }
             </div>
 
-            <!-- All Available Meals Section -->
             <div class="all-meals-section">
                 <div class="section-header">
-                    <h3>📋 All Available Meals</h3>
+                    <h3>All Available Meals</h3>
                     <div class="section-actions">
                         <button class="btn btn-outline btn-sm" @onclick="RefreshAllMeals">
-                            🔄 Refresh
+                            Refresh
                         </button>
                         @if (isCafeteriaWorker)
                         {
                             <button class="btn btn-primary btn-sm" @onclick="ShowAddMealModal">
-                                ➕ Add New Meal
+                                Add New Meal
                             </button>
                         }
                     </div>
@@ -133,7 +128,6 @@ else
                 @if (allMeals == null || !allMeals.Any())
                 {
                     <div class="empty-meals">
-                        <div class="empty-icon">🍽️</div>
                         <h4>No Meals Available</h4>
                         <p>@(isCafeteriaWorker ? "Start by adding some meals to the system." : "No meals are currently available.")</p>
                     </div>
@@ -166,7 +160,7 @@ else
                                             </div>
                                             @if (meal.IsVegetarian)
                                             {
-                                                <span class="vegetarian-indicator">🌱 Vegetarian</span>
+                                                <span class="vegetarian-indicator">Vegetarian</span>
                                             }
                                         </td>
                                         <td>
@@ -187,11 +181,11 @@ else
                                         <td class="meal-status-cell">
                                             @if (meal.FoodScheduleId.HasValue)
                                             {
-                                                <span class="status-badge scheduled">📅 Scheduled</span>
+                                                <span class="status-badge scheduled">Scheduled</span>
                                             }
                                             else
                                             {
-                                                <span class="status-badge available">✅ Available</span>
+                                                <span class="status-badge available">Available</span>
                                             }
                                         </td>
                                         @if (isCafeteriaWorker)
@@ -199,7 +193,7 @@ else
                                             <td class="meal-actions-cell">
                                                 <div class="action-buttons">
                                                     <button class="btn-icon" @onclick="() => EditMeal(meal)" title="Edit meal">
-                                                        ✏️
+                                                        ✏
                                                     </button>
                                                     <button class="btn-icon btn-danger" @onclick="() => DeleteMeal(meal)" title="Delete meal">
                                                         🗑️
@@ -215,18 +209,17 @@ else
                 }
             </div>
 
-            <!-- Weekly Schedule (Visible only to workers) -->
             @if (isCafeteriaWorker)
             {
                 <div class="weekly-schedule-section">
                     <div class="section-header">
-                        <h3>📅 Weekly Schedule</h3>
+                        <h3>Weekly Schedule</h3>
                         <div class="schedule-actions">
                             <button class="btn btn-outline btn-sm" @onclick="RefreshSchedule">
-                                🔄 Refresh
+                                Refresh
                             </button>
                             <button class="btn btn-primary btn-sm" @onclick="ShowAddMealModal">
-                                ➕ Add New Meal
+                                Add New Meal
                             </button>
                         </div>
                     </div>
@@ -234,7 +227,6 @@ else
                     @if (weeklySchedule == null || !weeklySchedule.Any())
                     {
                         <div class="empty-schedule">
-                            <div class="empty-icon">📅</div>
                             <h4>No Weekly Schedule</h4>
                             <p>Start by adding meals to the weekly schedule.</p>
                         </div>
@@ -299,13 +291,12 @@ else
         </div>
     </div>
 
-    <!-- Manage Schedule Modal -->
     @if (showManageScheduleModal)
     {
         <div class="modal-overlay">
             <div class="modal-content large-modal">
                 <div class="modal-header">
-                    <h3>📅 Manage Weekly Schedule</h3>
+                    <h3>Manage Weekly Schedule</h3>
                     <button class="close-btn" @onclick="CloseManageScheduleModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -355,7 +346,7 @@ else
                                         @if (!IsPastDay(day))
                                         {
                                             <button class="btn btn-primary btn-sm" @onclick="() => ShowAddMealToDayModal(day)">
-                                                ➕ Add Meals
+                                                Add Meals
                                             </button>
                                         }
                                         else
@@ -377,13 +368,12 @@ else
         </div>
     }
 
-    <!-- Add/Edit Meal Modal -->
     @if (showMealModal)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>@(editingMeal != null ? "✏️ Edit Meal" : "➕ Add New Meal")</h3>
+                    <h3>@(editingMeal != null ? "Edit Meal" : "Add New Meal")</h3>
                     <button class="close-btn" @onclick="CloseMealModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -435,7 +425,7 @@ else
                             <div class="form-group">
                                 <label class="checkbox-label">
                                     <input type="checkbox" @bind="currentMeal.IsVegetarian" />
-                                    🌱 Vegetarian
+                                    Vegetarian
                                 </label>
                             </div>
                         </div>
@@ -457,13 +447,12 @@ else
         </div>
     }
 
-    <!-- Add Meal to Day Modal -->
     @if (showAddMealToDayModal)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>➕ Add Meals to @selectedDaySchedule?.Day.ToString("dddd, MMMM dd")</h3>
+                    <h3>Add Meals to @selectedDaySchedule?.Day.ToString("dddd, MMMM dd")</h3>
                     <button class="close-btn" @onclick="CloseAddMealToDayModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -519,8 +508,6 @@ else
     private bool showManageScheduleModal = false;
     private bool showMealModal = false;
     private bool showAddMealToDayModal = false;
-
-    // Data
     private User? currentUser = null;
     private FoodSchedule? tomorrowMenu = null;
     private List<FoodSchedule> weeklySchedule = new();
@@ -528,8 +515,6 @@ else
     private List<FoodMeal> allMeals = new();
     private HashSet<int> selectedMealsForDay = new();
     private List<DateTime> weekDays = new();
-
-    // Modals
     private FoodMeal currentMeal = new();
     private FoodMeal? editingMeal = null;
     private DateTime selectedDay = DateTime.Today;
@@ -598,23 +583,19 @@ else
             isLoading = true;
             StateHasChanged();
 
-            // Load tomorrow's menu
             var tomorrow = DateTime.Today.AddDays(1);
             tomorrowMenu = await Context.FoodSchedules
                 .Include(fs => fs.Meals)
                 .FirstOrDefaultAsync(fs => fs.Day.Date == tomorrow.Date);
 
-            // Load all meals (for the new section)
             await LoadAllMeals();
 
-            // Load weekly schedule for cafeteria workers
             if (isCafeteriaWorker)
             {
                 await LoadWeeklyScheduleData();
 
-                // Load available meals for scheduling
                 availableMeals = await Context.FoodMeals
-                    .Where(fm => fm.FoodScheduleId == null) // Only show unscheduled meals
+                    .Where(fm => fm.FoodScheduleId == null)
                     .OrderBy(fm => fm.Name)
                     .ToListAsync();
             }
@@ -651,7 +632,7 @@ else
         try
         {
             var weekStart = currentWeekStart;
-            var weekEnd = weekStart.AddDays(4); // Only Monday to Friday
+            var weekEnd = weekStart.AddDays(4);
 
             weeklySchedule = await Context.FoodSchedules
                 .Include(fs => fs.Meals)
@@ -678,24 +659,21 @@ else
 
     private void InitializeWeek()
     {
-        // Start from the most recent Monday
         currentWeekStart = DateTime.Today;
         while (currentWeekStart.DayOfWeek != DayOfWeek.Monday)
         {
             currentWeekStart = currentWeekStart.AddDays(-1);
         }
 
-        // Only include Monday to Friday (5 days)
         weekDays = Enumerable.Range(0, 5)
             .Select(i => currentWeekStart.AddDays(i))
             .ToList();
     }
 
-    // Schedule management
     private async void ShowManageScheduleModal()
     {
         showManageScheduleModal = true;
-        await LoadWeeklyScheduleData(); // Load data when modal opens
+        await LoadWeeklyScheduleData();
         StateHasChanged();
     }
 
@@ -705,25 +683,20 @@ else
         StateHasChanged();
     }
 
-    // Add meal to day functionality
     private async void ShowAddMealToDayModal(DateTime day)
     {
         selectedDay = day;
-
-        // Get or create the schedule for this day
         var existingSchedule = await Context.FoodSchedules
             .Include(fs => fs.Meals)
             .FirstOrDefaultAsync(fs => fs.Day.Date == day.Date);
 
         selectedDaySchedule = existingSchedule ?? new FoodSchedule { Day = day };
 
-        // Load available meals (meals not scheduled for any day, or already in this day's schedule)
         availableMeals = await Context.FoodMeals
             .Where(fm => fm.FoodScheduleId == null || fm.FoodScheduleId == selectedDaySchedule.Id)
             .OrderBy(fm => fm.Name)
             .ToListAsync();
 
-        // Pre-select meals that are already in this day's schedule
         selectedMealsForDay.Clear();
         if (selectedDaySchedule.Meals != null)
         {
@@ -742,13 +715,11 @@ else
         selectedDay = schedule.Day;
         selectedDaySchedule = schedule;
 
-        // Load available meals (meals not scheduled for any day, or already in this day's schedule)
         availableMeals = await Context.FoodMeals
             .Where(fm => fm.FoodScheduleId == null || fm.FoodScheduleId == schedule.Id)
             .OrderBy(fm => fm.Name)
             .ToListAsync();
 
-        // Pre-select meals that are already in this day's schedule
         selectedMealsForDay.Clear();
         if (schedule.Meals != null)
         {
@@ -788,7 +759,6 @@ else
 
         try
         {
-            // Get or create the food schedule for the selected day
             var existingSchedule = await Context.FoodSchedules
                 .Include(fs => fs.Meals)
                 .FirstOrDefaultAsync(fs => fs.Day.Date == selectedDay.Date);
@@ -797,10 +767,9 @@ else
             {
                 existingSchedule = new FoodSchedule { Day = selectedDay.Date };
                 Context.FoodSchedules.Add(existingSchedule);
-                await Context.SaveChangesAsync(); // Save to get the ID
+                await Context.SaveChangesAsync();
             }
 
-            // First, remove all meals from this schedule
             var currentMeals = await Context.FoodMeals
                 .Where(fm => fm.FoodScheduleId == existingSchedule.Id)
                 .ToListAsync();
@@ -811,7 +780,6 @@ else
                 Context.FoodMeals.Update(meal);
             }
 
-            // Then add the selected meals to the schedule
             foreach (var mealId in selectedMealsForDay)
             {
                 var meal = await Context.FoodMeals.FindAsync(mealId);
@@ -823,10 +791,10 @@ else
             }
 
             await Context.SaveChangesAsync();
-            await LoadWeeklyScheduleData(); // Refresh the weekly schedule data
-            await LoadFoodData(); // Also refresh main food data
+            await LoadWeeklyScheduleData();
+            await LoadFoodData();
             CloseAddMealToDayModal();
-            
+
         }
         catch (Exception ex)
         {
@@ -845,7 +813,6 @@ else
                 Context.FoodMeals.Update(meal);
                 await Context.SaveChangesAsync();
 
-                // Check if the schedule has any meals left, if not, remove the schedule
                 var updatedSchedule = await Context.FoodSchedules
                     .Include(fs => fs.Meals)
                     .FirstOrDefaultAsync(fs => fs.Id == schedule.Id);
@@ -856,8 +823,8 @@ else
                     await Context.SaveChangesAsync();
                 }
 
-                await LoadFoodData(); // Refresh data
-               
+                await LoadFoodData();
+
             }
             catch (Exception ex)
             {
@@ -877,7 +844,6 @@ else
                 Context.FoodMeals.Update(meal);
                 await Context.SaveChangesAsync();
 
-                // Remove the schedule if it's now empty
                 var updatedSchedule = await Context.FoodSchedules
                     .Include(fs => fs.Meals)
                     .FirstOrDefaultAsync(fs => fs.Id == schedule.Id);
@@ -888,8 +854,8 @@ else
                     await Context.SaveChangesAsync();
                 }
 
-                await LoadWeeklyScheduleData(); // Refresh weekly schedule data
-                
+                await LoadWeeklyScheduleData();
+
             }
             catch (Exception ex)
             {
@@ -911,11 +877,10 @@ else
                     Context.FoodMeals.Update(meal);
                 }
 
-                // Remove the empty schedule
                 Context.FoodSchedules.Remove(schedule);
                 await Context.SaveChangesAsync();
-                await LoadFoodData(); // Refresh data
-                
+                await LoadFoodData();
+
             }
             catch (Exception ex)
             {
@@ -924,7 +889,6 @@ else
         }
     }
 
-    // Meal management
     private void ShowAddMealModal()
     {
         currentMeal = new FoodMeal();
@@ -978,7 +942,6 @@ else
         {
             if (editingMeal != null)
             {
-                // Update existing meal
                 var existingMeal = await Context.FoodMeals.FindAsync(editingMeal.Id);
                 if (existingMeal != null)
                 {
@@ -998,7 +961,6 @@ else
             }
             else
             {
-                // Add new meal
                 currentMeal.CreatedAt = DateTime.Now;
                 currentMeal.UpdatedAt = DateTime.Now;
 
@@ -1006,9 +968,9 @@ else
             }
 
             await Context.SaveChangesAsync();
-            await LoadFoodData(); // Refresh data to show the new/updated meal
+            await LoadFoodData();
             CloseMealModal();
-            
+
         }
         catch (Exception ex)
         {
@@ -1023,12 +985,10 @@ else
         {
             try
             {
-                // First, check if the meal is scheduled for any days
                 var scheduledDays = await Context.FoodSchedules
                     .Where(fs => fs.Meals.Any(m => m.Id == meal.Id))
                     .ToListAsync();
 
-                // Remove the meal from all schedules
                 foreach (var schedule in scheduledDays)
                 {
                     var mealToRemove = schedule.Meals.FirstOrDefault(m => m.Id == meal.Id);
@@ -1039,7 +999,6 @@ else
                     }
                 }
 
-                // Check if MealVotes table still exists and remove any votes for this meal
                 try
                 {
                     var mealVotes = await Context.MealVotes
@@ -1053,14 +1012,13 @@ else
                 }
                 catch
                 {
-                    // MealVotes table might not exist anymore, ignore this error
+                    //ignore
                 }
 
-                // Now delete the meal
                 Context.FoodMeals.Remove(meal);
                 await Context.SaveChangesAsync();
 
-                await LoadFoodData(); // Refresh data
+                await LoadFoodData();
                 
             }
             catch (Exception ex)
@@ -1088,7 +1046,6 @@ else
         
     }
 
-    // Helper methods
     private string GetMealTypeIcon(string type)
     {
         return type.ToLower() switch
@@ -1105,14 +1062,12 @@ else
     private void RedirectToHome() => Navigation.NavigateTo("/");
 }
 <style>
-    /* Minimal Purple/Blue Theme */
     .student-food {
         min-height: 100vh;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Header */
     .header-bar {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(20px);

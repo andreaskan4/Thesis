@@ -31,10 +31,9 @@ else if (!isAuthorized)
 else
 {
     <div class="student-grades">
-        <!-- Header -->
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>📊 My Grades</h2>
+            <h2>My Grades</h2>
             <div class="header-actions">
                 <div class="overall-stats">
                     <div class="stat-badge">
@@ -61,13 +60,12 @@ else
             else
             {
                 <div class="grades-content">
-                    <!-- Course Grades Section -->
                     <div class="section-card">
                         <div class="section-header">
-                            <h3>📚 Course Grades</h3>
+                            <h3>Course Grades</h3>
                             <div class="section-actions">
                                 <button class="btn btn-outline btn-sm" @onclick="ExportGrades">
-                                    📥 Export Grades
+                                    Export Grades
                                 </button>
                             </div>
                         </div>
@@ -132,7 +130,6 @@ else
                             else
                             {
                                 <div class="empty-state">
-                                    <div class="empty-icon">📊</div>
                                     <h4>No Grades Available</h4>
                                     <p>You haven't been graded in any courses yet.</p>
                                 </div>
@@ -140,10 +137,9 @@ else
                         </div>
                     </div>
 
-                    <!-- Detailed Grades Section -->
                     <div class="section-card">
                         <div class="section-header">
-                            <h3>📝 Detailed Grade Breakdown</h3>
+                            <h3>Detailed Grade Breakdown</h3>
                         </div>
                         <div class="section-content">
                             @if (allGrades.Any())
@@ -192,7 +188,6 @@ else
                             else
                             {
                                 <div class="empty-state">
-                                    <div class="empty-icon">📝</div>
                                     <h4>No Detailed Grades</h4>
                                     <p>Your detailed grade breakdown will appear here once you have graded assignments.</p>
                                 </div>
@@ -200,10 +195,9 @@ else
                         </div>
                     </div>
 
-                    <!-- All Enrollments Section -->
                     <div class="section-card">
                         <div class="section-header">
-                            <h3>🎓 My Enrollments</h3>
+                            <h3>My Enrollments</h3>
                         </div>
                         <div class="section-content">
                             @if (enrollments.Any())
@@ -259,7 +253,6 @@ else
                             else
                             {
                                 <div class="empty-state">
-                                    <div class="empty-icon">🎓</div>
                                     <h4>No Enrollments</h4>
                                     <p>You are not enrolled in any courses yet.</p>
                                     <button class="btn btn-primary" @onclick="NavigateToCourses">
@@ -270,10 +263,9 @@ else
                         </div>
                     </div>
 
-                    <!-- Statistics Section -->
                     <div class="section-card">
                         <div class="section-header">
-                            <h3>📈 Grade Statistics</h3>
+                            <h3>Grade Statistics</h3>
                         </div>
                         <div class="section-content">
                             <div class="statistics-grid">
@@ -337,15 +329,11 @@ else
     private bool isAuthChecked = false;
     private bool isAuthorized = false;
     private bool isLoading = true;
-
-    // Data
     private List<Enrollment> enrollments = new();
     private List<EnrollmentViewModel> enrollmentsWithGrades = new();
     private List<Grade> allGrades = new();
     private double? overallAverage = null;
     private int gradedCoursesCount = 0;
-
-    // Statistics
     private List<GradeDistribution> gradeDistribution = new();
 
     protected override async Task OnInitializedAsync()
@@ -391,7 +379,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load enrollments with courses and professors
             enrollments = await Context.Enrollments
                 .Include(e => e.Course)
                     .ThenInclude(c => c.Professor)
@@ -399,7 +386,6 @@ else
                 .OrderByDescending(e => e.EnrollmentDate)
                 .ToListAsync();
 
-            // Load all grades
             allGrades = await Context.Grades
                 .Include(g => g.Course)
                     .ThenInclude(c => c.Professor)
@@ -407,7 +393,6 @@ else
                 .OrderByDescending(g => g.UpdatedAt)
                 .ToListAsync();
 
-            // Create enrollment view models with grades
             enrollmentsWithGrades = enrollments.Select(e => new EnrollmentViewModel
             {
                 Enrollment = e,
@@ -415,7 +400,6 @@ else
                 GradeValue = allGrades.FirstOrDefault(g => g.CourseId == e.CourseId)?.GradeValue ?? -1
             }).ToList();
 
-            // Calculate statistics
             CalculateStatistics();
 
             isLoading = false;
@@ -431,17 +415,14 @@ else
 
     private void CalculateStatistics()
     {
-        // Calculate overall average
         var validGrades = allGrades.Where(g => g.GradeValue > 0).ToList();
         if (validGrades.Any())
         {
             overallAverage = validGrades.Average(g => g.GradeValue);
         }
 
-        // Count graded courses
         gradedCoursesCount = enrollments.Count(e => allGrades.Any(g => g.CourseId == e.CourseId && g.GradeValue > 0));
 
-        // Calculate grade distribution
         var gradeRanges = new[]
         {
             new { Range = "9-10", Min = 9.0, Max = 10.0 },
@@ -525,10 +506,8 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Create CSV content
             var csvContent = new List<string>();
 
-            // Add header with student info
             csvContent.Add($"Student Grade Report");
             csvContent.Add($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             csvContent.Add($"Student: {currentUser.Name}");
@@ -538,11 +517,9 @@ else
             csvContent.Add($"Overall Average: {(overallAverage.HasValue ? overallAverage.Value.ToString("0.0") : "N/A")}");
             csvContent.Add("");
 
-            // Add course grades header
             csvContent.Add("COURSE GRADES");
             csvContent.Add("Course Name,Description,Professor,Grade,Status,Last Updated,Enrollment Date,Grading Method,Difficulty Rating");
 
-            // Add grade data
             foreach (var enrollment in enrollmentsWithGrades)
             {
                 var course = enrollment.Enrollment.Course;
@@ -561,7 +538,6 @@ else
                 csvContent.Add($"{courseName},{description},{professor},{gradeValue},{status},{lastUpdated},{enrollmentDate},{gradingMethod},{difficultyRating}");
             }
 
-            // Add detailed grades section
             csvContent.Add("");
             csvContent.Add("DETAILED GRADE BREAKDOWN");
             csvContent.Add("Course Name,Grade,Status,Grade Date");
@@ -576,7 +552,6 @@ else
                 csvContent.Add($"{courseName},{gradeValue},{status},{gradeDate}");
             }
 
-            // Add statistics section
             csvContent.Add("");
             csvContent.Add("STATISTICS");
             csvContent.Add("Grade Range,Count,Percentage");
@@ -586,25 +561,19 @@ else
                 csvContent.Add($"{range.Range},{range.Count},{range.Percentage:0.0}%");
             }
 
-            // Combine all lines
             var csvData = string.Join(Environment.NewLine, csvContent);
 
-            // Create filename
             var fileName = $"{SanitizeFileName(currentUser.Name)}_Grades_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
-            // Convert to bytes and base64
             var bytes = System.Text.Encoding.UTF8.GetBytes(csvData);
             var base64Data = Convert.ToBase64String(bytes);
 
-            // Export using your existing JavaScript function - FIXED: Added await
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64Data, "text/csv;charset=utf-8");
 
-            // Show success message - FIXED: Added await
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error exporting grades: {ex.Message}");
-            // FIXED: Added await
             await JSRuntime.InvokeVoidAsync("alert", $"Error exporting grades: {ex.Message}");
         }
     }
@@ -622,7 +591,6 @@ else
         if (string.IsNullOrEmpty(field))
             return "\"\"";
 
-        // If field contains comma, quote, or newline, wrap in quotes and escape existing quotes
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\r") || field.Contains("\n"))
         {
             field = field.Replace("\"", "\"\"");
@@ -634,7 +602,6 @@ else
 
     private string SanitizeFileName(string fileName)
     {
-        // Remove invalid file name characters
         var invalidChars = Path.GetInvalidFileNameChars();
         return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
     }
@@ -643,7 +610,6 @@ else
     private void RedirectToHome() => Navigation.NavigateTo("/");
     private void NavigateToCourses() => Navigation.NavigateTo("/courses");
 
-    // Helper classes
     private class GradeDistribution
     {
         public string Range { get; set; } = "";
@@ -652,14 +618,11 @@ else
     }
 }
 <style>
-    /* Student Grades Styles */
     .student-grades {
         min-height: 100vh;
         background: #f8fafc;
     }
-    /* Add these styles to your existing CSS */
 
-    /* Course Description */
     .course-description {
         color: #718096;
         font-size: 0.9rem;
@@ -678,7 +641,6 @@ else
             overflow: hidden;
         }
 
-    /* Stars for Difficulty Rating */
     .star {
         color: #e5e7eb;
         font-size: 0.9rem;
@@ -688,7 +650,6 @@ else
             color: #f59e0b;
         }
 
-    /* Course Method */
     .course-method {
         background: #e0e7ff;
         color: #3730a3;

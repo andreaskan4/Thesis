@@ -57,7 +57,6 @@ else
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span class="section-icon">⚙️</span>
                             <h3>System Configuration</h3>
                         </div>
                         <p class="section-description">Manage system-wide settings and preferences</p>
@@ -117,7 +116,6 @@ else
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span class="section-icon">👥</span>
                             <h3>User Management</h3>
                         </div>
                         <p class="section-description">Configure user registration and permissions</p>
@@ -160,7 +158,6 @@ else
                 <div class="settings-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span class="section-icon">💾</span>
                             <h3>Database Management</h3>
                         </div>
                         <p class="section-description">Manage database operations and maintenance</p>
@@ -168,7 +165,6 @@ else
 
                     <div class="action-grid">
                         <div class="action-card" @onclick="CreateBackup">
-                            <div class="action-icon">📥</div>
                             <div class="action-content">
                                 <h4>Create Backup</h4>
                                 <p>Create a manual database backup</p>
@@ -181,7 +177,6 @@ else
                         </div>
 
                         <div class="action-card" @onclick="ShowCleanupModal">
-                            <div class="action-icon">🧹</div>
                             <div class="action-content">
                                 <h4>Cleanup Data</h4>
                                 <p>Remove old and unused data</p>
@@ -191,7 +186,6 @@ else
                         </div>
 
                         <div class="action-card" @onclick="ExportData">
-                            <div class="action-icon">📤</div>
                             <div class="action-content">
                                 <h4>Export Data</h4>
                                 <p>Export all data to CSV files</p>
@@ -210,14 +204,14 @@ else
                             }
                             else
                             {
-                                <span>💾 Save All Settings</span>
+                                <span>Save All Settings</span>
                             }
                         </button>
                         <button class="btn btn-secondary" @onclick="ShowResetModal">
-                            🔄 Reset to Defaults
+                            Reset to Defaults
                         </button>
                         <button class="btn btn-outline" @onclick="CancelChanges">
-                            ❌ Cancel
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -231,7 +225,7 @@ else
     <div class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🧹 Data Cleanup</h3>
+                <h3>Data Cleanup</h3>
             </div>
             <div class="modal-body">
                 <p>This will remove old and unused data from the system. This action cannot be undone.</p>
@@ -288,7 +282,7 @@ else
     <div class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🔄 Reset System Settings</h3>
+                <h3>Reset System Settings</h3>
             </div>
             <div class="modal-body">
                 <p class="warning-text">⚠️ This will reset all system settings to their default values. This action cannot be undone.</p>

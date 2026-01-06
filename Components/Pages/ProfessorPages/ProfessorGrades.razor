@@ -4,7 +4,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Thesis - Professor Grades</PageTitle>
+<PageTitle>Gnosis - Professor Grades</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -263,7 +263,6 @@ else
         try
         {
             var professorId = await GetCurrentProfessorId();
-            // Get all courses and filter by professor ID
             var allCourses = await GradesService.GetCoursesAsync();
             courses = allCourses.Where(c => c.ProfessorId == professorId).ToList();
         }
@@ -303,7 +302,6 @@ else
             selectedCourse = courses.FirstOrDefault(c => c.Id == courseId);
             if (selectedCourse == null) return;
 
-            // Get enrollments for this course
             var enrollments = await GradesService.GetEnrollmentsForCourseAsync(courseId);
 
             if (enrollments == null || !enrollments.Any())
@@ -313,7 +311,6 @@ else
                 return;
             }
 
-            // Get grades for this course
             var allGrades = await GradesService.GetAllGradesAsync();
             var courseGrades = allGrades.Where(g => g.CourseId == courseId).ToList();
 
@@ -329,7 +326,6 @@ else
                 UpdatedAt = courseGrades.FirstOrDefault(g => g.StudentId == e.StudentId)?.UpdatedAt
             }).ToList();
 
-            // Reset quick grade form
             quickGradeStudentId = 0;
             quickGradeValue = 0;
             StateHasChanged();
@@ -356,14 +352,12 @@ else
 
             if (existingGrade != null)
             {
-                // Update existing grade
                 existingGrade.GradeValue = student.NewGrade.Value;
                 existingGrade.UpdatedAt = now;
                 await GradesService.UpdateGradeAsync(existingGrade);
             }
             else
             {
-                // Create new grade
                 var newGrade = new Grade
                 {
                     StudentId = student.StudentId,
@@ -375,7 +369,6 @@ else
                 await GradesService.AddGradeAsync(newGrade);
             }
 
-            // Update local state
             student.CurrentGrade = student.NewGrade;
             student.UpdatedAt = now;
             StateHasChanged();

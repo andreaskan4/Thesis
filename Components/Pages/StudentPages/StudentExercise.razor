@@ -6,7 +6,7 @@
 @inject IJSRuntime JSRuntime
 @using Microsoft.AspNetCore.Components.Forms
 
-<PageTitle>Thesis - Student Exercises</PageTitle>
+<PageTitle>Gnosis - Student Exercises</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -49,7 +49,6 @@ else
         else
         {
             <div class="exercises-container">
-                <!-- Left Panel: Course Selection and Exercises List -->
                 <div class="exercises-list-container">
                     <div class="section-header">
                         <h3>Available Exercises</h3>
@@ -123,7 +122,7 @@ else
                                         @if (!string.IsNullOrEmpty(exercise.AttachmentPath))
                                         {
                                             <button class="btn-download" @onclick="() => DownloadFile(exercise.AttachmentPath)">
-                                                📎 Download Exercise File
+                                                Download Exercise File
                                             </button>
                                         }
 
@@ -165,7 +164,6 @@ else
                     }
                 </div>
 
-                <!-- Right Panel: Statistics and Info -->
                 <div class="info-container">
                     <div class="stats-section">
                         <h4>Your Progress</h4>
@@ -188,7 +186,7 @@ else
                     <div class="quick-actions">
                         <h4>Quick Actions</h4>
                         <button class="action-btn" @onclick="RefreshExercises">
-                            🔄 Refresh Exercises
+                            Refresh Exercises
                         </button>
                     </div>
 
@@ -217,7 +215,6 @@ else
     </div>
 }
 
-<!-- Submission Modal -->
 @if (showSubmissionModal && selectedExercise != null)
 {
     <div class="modal-overlay">
@@ -283,7 +280,6 @@ else
     </div>
 }
 
-<!-- View Submission Modal -->
 @if (showViewSubmissionModal && selectedSubmission != null && selectedExercise != null)
 {
     <div class="modal-overlay">
@@ -332,7 +328,7 @@ else
                     <div class="submission-file">
                         <h5>Attached File:</h5>
                         <button class="btn-download" @onclick="() => DownloadFile(selectedSubmission.FilePath)">
-                            📎 Download @GetFileName(selectedSubmission.FilePath)
+                            Download @GetFileName(selectedSubmission.FilePath)
                         </button>
                     </div>
                 }
@@ -403,10 +399,7 @@ else
 
         try
         {
-            // Load enrolled courses
             await LoadEnrolledCourses();
-
-            // Load all student submissions
             await LoadStudentSubmissions();
         }
         catch (Exception ex)
@@ -424,11 +417,7 @@ else
     {
         try
         {
-            // Get all courses and filter by enrollment
             var allCourses = await GradesService.GetCoursesAsync();
-
-            // For now, we'll assume the student is enrolled in all courses
-            // You'll need to implement proper enrollment checking based on your database
             enrolledCourses = allCourses.ToList();
         }
         catch (Exception ex)
@@ -457,11 +446,7 @@ else
             if (selectedCourse == null) return;
 
             exercises = await ExercisesService.GetExercisesByCourseAsync(courseId);
-
-            // Filter to only published exercises
             exercises = exercises.Where(e => e.IsPublished).ToList();
-
-            // Update upcoming exercises
             upcomingExercises = exercises
                 .Where(e => e.DueDate > DateTime.Now)
                 .OrderBy(e => e.DueDate)
@@ -581,11 +566,9 @@ else
         {
             if (existingSubmission != null)
             {
-                // Update existing submission
                 existingSubmission.Answer = submissionAnswer;
                 existingSubmission.SubmittedAt = DateTime.Now;
 
-                // Handle file upload - in a real app, you'd save the file and update the path
                 if (uploadedFile != null)
                 {
                     existingSubmission.FilePath = $"submissions/{currentStudentId}/{selectedExercise.Id}/{uploadedFileName}";
@@ -595,7 +578,6 @@ else
             }
             else
             {
-                // Create new submission
                 var submission = new ExerciseSubmission
                 {
                     ExerciseId = selectedExercise.Id,
@@ -604,7 +586,6 @@ else
                     SubmittedAt = DateTime.Now
                 };
 
-                // Handle file upload
                 if (uploadedFile != null)
                 {
                     submission.FilePath = $"submissions/{currentStudentId}/{selectedExercise.Id}/{uploadedFileName}";
@@ -613,7 +594,6 @@ else
                 await ExercisesService.AddSubmissionAsync(submission);
             }
 
-            // Refresh data
             await LoadStudentSubmissions();
             await LoadExercises(selectedCourseId);
 
@@ -630,7 +610,6 @@ else
     {
         try
         {
-            // Implement file download logic
             await JSRuntime.InvokeVoidAsync("open", $"/files/{filePath}", "_blank");
         }
         catch (Exception ex)

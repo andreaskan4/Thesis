@@ -31,13 +31,12 @@ else if (!isAuthorized)
 else
 {
     <div class="student-forum">
-        <!-- Header -->
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>💬 Student Forum</h2>
+            <h2>Student Forum</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="ShowNewQuestionModal">
-                    📝 Ask Question
+                    Ask Question
                 </button>
                 <div class="forum-stats">
                     <span class="stat-item">Questions: @questions.Count</span>
@@ -55,7 +54,6 @@ else
             else
             {
                 <div class="forum-content">
-                    <!-- Search and Filter -->
                     <div class="forum-controls">
                         <div class="search-box">
                             <input type="text" @bind="searchTerm" @oninput="OnSearch" placeholder="Search questions..." class="search-input" />
@@ -76,7 +74,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Questions List -->
                     <div class="questions-list">
                         @if (filteredQuestions.Any())
                         {
@@ -135,16 +132,14 @@ else
                                         </div>
                                     </div>
 
-                                    <!-- Answers Section -->
                                     <div class="answers-section">
                                         <div class="answers-header">
                                             <h4>Answers (@question.Answers.Count)</h4>
                                             <button class="btn btn-outline btn-sm" @onclick="() => ToggleAnswerForm(question.Id)">
-                                                ✍️ Add Answer
+                                                Add Answer
                                             </button>
                                         </div>
 
-                                        <!-- Answer Form -->
                                         @if (showAnswerForm == question.Id)
                                         {
                                             <div class="answer-form">
@@ -164,7 +159,6 @@ else
                                             </div>
                                         }
 
-                                        <!-- Answers List -->
                                         <div class="answers-list">
                                             @foreach (var answer in question.Answers.OrderByDescending(a => a.IsAccepted).ThenByDescending(a => a.Likes).ThenBy(a => a.CreatedAt))
                                             {
@@ -195,7 +189,7 @@ else
                                                             }
                                                             @if (answer.IsAccepted)
                                                             {
-                                                                <span class="accepted-badge" title="Accepted solution">✅ Accepted</span>
+                                                                <span class="accepted-badge" title="Accepted solution">Accepted</span>
                                                             }
                                                         </div>
                                                     </div>
@@ -237,13 +231,12 @@ else
         </div>
     </div>
 
-    <!-- New Question Modal -->
     @if (showNewQuestionModal)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>📝 Ask a Question</h3>
+                    <h3>Ask a Question</h3>
                     <button class="close-btn" @onclick="CloseNewQuestionModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -286,13 +279,12 @@ else
             </div>
         </div>
     }
-    <!-- Edit Question Modal -->
     @if (showEditQuestionModal)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>✏️ Edit Question</h3>
+                    <h3>✏️Edit Question</h3>
                     <button class="close-btn" @onclick="CloseEditQuestionModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -336,7 +328,6 @@ else
         </div>
     }
 
-    <!-- Edit Answer Modal -->
     @if (showEditAnswerModal)
     {
         <div class="modal-overlay">
@@ -375,8 +366,6 @@ else
     private bool showEditAnswerModal = false;
     private int unansweredCount = 0;
     private int answeredCount = 0;
-
-    // Forum Data
     private List<ForumQuestion> questions = new();
     private List<ForumQuestion> filteredQuestions = new();
     private User? currentUser = null;
@@ -384,15 +373,11 @@ else
     private string activeFilter = "all";
     private int totalAnswers = 0;
     private int myQuestionsCount = 0;
-
-    // New Question
     private ForumQuestion newQuestion = new();
     private ForumQuestion editQuestion = new();
     private ForumAnswer editAnswer = new();
     private Microsoft.AspNetCore.Components.Forms.InputFile? fileInput;
     private Microsoft.AspNetCore.Components.Forms.InputFile? editFileInput;
-
-    // Answer Form
     private int showAnswerForm = 0;
     private string newAnswerContent = "";
 
@@ -438,7 +423,6 @@ else
 
             if (currentUser == null) return;
 
-            // Load questions with answers and students
             questions = await Context.ForumQuestions
                 .Include(q => q.Student)
                 .Include(q => q.Answers)
@@ -446,7 +430,6 @@ else
                 .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
 
-            // Calculate statistics
             totalAnswers = questions.Sum(q => q.Answers.Count);
             myQuestionsCount = questions.Count(q => q.StudentId == currentUser.Id);
             unansweredCount = questions.Count(q => !q.Answers.Any());
@@ -469,7 +452,6 @@ else
     {
         var query = questions.AsQueryable();
 
-        // Apply search filter
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(q =>
@@ -479,7 +461,6 @@ else
             );
         }
 
-        // Apply type filter
         switch (activeFilter)
         {
             case "my":
@@ -496,7 +477,6 @@ else
                 break;
             case "all":
             default:
-                // Show all questions
                 break;
         }
 
@@ -571,7 +551,7 @@ else
             Context.ForumQuestions.Add(newQuestion);
             await Context.SaveChangesAsync();
 
-            await LoadForumData(); // This will refresh all counts
+            await LoadForumData();
             CloseNewQuestionModal();
 
         }
@@ -581,12 +561,10 @@ else
         }
     }
 
-    // EDIT QUESTION FUNCTIONALITY
     private async Task EditQuestion(ForumQuestion question)
     {
         try
         {
-            // Create a copy of the question to edit
             editQuestion = new ForumQuestion
             {
                 Id = question.Id,
@@ -628,14 +606,12 @@ else
                 return;
             }
 
-            // Verify the current user owns this question
             if (existingQuestion.StudentId != currentUser.Id)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "You can only edit your own questions!");
                 return;
             }
 
-            // Update the question
             existingQuestion.Title = editQuestion.Title.Trim();
             existingQuestion.Content = editQuestion.Content.Trim();
             existingQuestion.Tags = editQuestion.Tags?.Trim();
@@ -653,12 +629,10 @@ else
         }
     }
 
-    // EDIT ANSWER FUNCTIONALITY
     private async Task EditAnswer(ForumAnswer answer)
     {
         try
         {
-            // Create a copy of the answer to edit
             editAnswer = new ForumAnswer
             {
                 Id = answer.Id,
@@ -700,14 +674,12 @@ else
                 return;
             }
 
-            // Verify the current user owns this answer
             if (existingAnswer.StudentId != currentUser.Id)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "You can only edit your own answers!");
                 return;
             }
 
-            // Update the answer
             existingAnswer.Content = editAnswer.Content.Trim();
             existingAnswer.UpdatedAt = DateTime.Now;
 
@@ -722,7 +694,6 @@ else
         }
     }
 
-    // Answer Management
     private void ToggleAnswerForm(int questionId)
     {
         showAnswerForm = showAnswerForm == questionId ? 0 : questionId;
@@ -757,7 +728,6 @@ else
         }
     }
 
-    // Helper Methods
     private string GetUserAvatar(User? user)
     {
         return user?.Role switch
@@ -788,7 +758,6 @@ else
 
     private bool HasLikedAnswer(ForumAnswer answer)
     {
-        // In a real app, you'd track which users liked which answers
         return false;
     }
 
@@ -801,7 +770,7 @@ else
             {
                 Context.ForumQuestions.Remove(question);
                 await Context.SaveChangesAsync();
-                await LoadForumData(); // Refresh counts
+                await LoadForumData();
             }
             catch (Exception ex)
             {
@@ -832,7 +801,6 @@ else
     {
         try
         {
-            // Unaccept any previously accepted answers for this question
             var previousAccepted = await Context.ForumAnswers
                 .Where(a => a.QuestionId == answer.QuestionId && a.IsAccepted)
                 .ToListAsync();
@@ -842,7 +810,6 @@ else
                 prev.IsAccepted = false;
             }
 
-            // Accept this answer
             answer.IsAccepted = true;
             await Context.SaveChangesAsync();
             await LoadForumData();
@@ -867,7 +834,6 @@ else
 
     private async Task HandleFileUpload(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
-        // In a real app, you'd upload the file to a server and store the path
         var file = e.File;
         if (file != null)
         {
@@ -878,7 +844,6 @@ else
 
     private async Task HandleEditFileUpload(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
-        // In a real app, you'd upload the file to a server and store the path
         var file = e.File;
         if (file != null)
         {
@@ -903,7 +868,6 @@ else
     private void RedirectToHome() => Navigation.NavigateTo("/");
 }
 <style>
-    /* Remove sidepanel scrollbar - Add this at the top */
     ::deep .sidebar,
     ::deep .sidepanel,
     ::deep .blazor-sidebar,
@@ -922,30 +886,24 @@ else
             height: 0 !important;
         }
 
-    /* Firefox */
     ::deep .sidebar,
     ::deep .sidepanel {
         scrollbar-width: none !important;
     }
 
-    /* IE and Edge */
     ::deep .sidebar,
     ::deep .sidepanel {
         -ms-overflow-style: none !important;
     }
 
-    /* Modern Forum Interface Styles */
-
-    /* Main Container */
     .student-forum {
         min-height: 100vh;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
         flex-direction: column;
-        overflow-y: auto; /* Keep scrollbar for main forum */
+        overflow-y: auto;
     }
 
-        /* Style forum scrollbar */
         .student-forum::-webkit-scrollbar {
             width: 10px;
         }
@@ -964,7 +922,6 @@ else
                 background: rgba(255, 255, 255, 0.5);
             }
 
-    /* Header Bar */
     .header-bar {
         background: rgba(255, 255, 255, 0.98);
         padding: 1.25rem 2rem;

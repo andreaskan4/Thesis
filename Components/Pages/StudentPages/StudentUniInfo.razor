@@ -6,7 +6,7 @@
 @inject AuthStateService AuthStateService
 @inject NavigationManager Navigation
 
-<PageTitle>Thesis - University Information</PageTitle>
+<PageTitle>Gnosis - University Information</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -29,68 +29,60 @@ else if (!isStudent)
 else
 {
     <div class="student-uni-container">
-        <!-- Header Section -->
         <div class="student-uni-header">
             <button class="back-btn" @onclick="GoBack">← Back</button>
-            <h1>🏫 University Information</h1>
+            <h1>University Information</h1>
             <div class="welcome-message">
                 Welcome, @currentUser?.Name! Explore university facilities and professors.
             </div>
         </div>
 
-        <!-- Main Content with Tabs -->
         <div class="student-content-wrapper">
             <div class="student-tabs">
                 <button class="student-tab @(activeTab == "overview" ? "active" : "")"
                         @onclick='() => SwitchTab("overview")'>
-                    🏛️ University Overview
+                    University Overview
                 </button>
                 <button class="student-tab @(activeTab == "facilities" ? "active" : "")"
                         @onclick='() => SwitchTab("facilities")'>
-                    🏢 Facilities
+                    Facilities
                 </button>
                 <button class="student-tab @(activeTab == "professors" ? "active" : "")"
                         @onclick='() => SwitchTab("professors")'>
-                    👨‍🏫 Professors
+                    Professors
                 </button>
             </div>
 
             <div class="student-tab-content">
-                <!-- Overview Tab -->
                 @if (activeTab == "overview")
                 {
                     <div class="overview-section">
-                        <!-- Contact Information Card -->
                         @if (contactInfo != null)
                         {
                             <div class="contact-info-card">
                                 <div class="card-header">
-                                    <h3>📞 University Contact Information</h3>
+                                    <h3>University Contact Information</h3>
                                 </div>
                                 <div class="contact-details">
                                     <div class="contact-item">
-                                        <div class="contact-icon">🏢</div>
                                         <div class="contact-text">
                                             <strong>Main Address:</strong>
                                             <p>@contactInfo.MainAddress</p>
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="contact-icon">📞</div>
                                         <div class="contact-text">
                                             <strong>Phone:</strong>
                                             <p>@contactInfo.PhoneNumber</p>
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="contact-icon">📧</div>
                                         <div class="contact-text">
                                             <strong>Email:</strong>
                                             <p>@contactInfo.Email</p>
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="contact-icon">👤</div>
                                         <div class="contact-text">
                                             <strong>Secretary:</strong>
                                             <p>@contactInfo.SecretaryName</p>
@@ -108,25 +100,25 @@ else
                                                 @if (!string.IsNullOrEmpty(contactInfo.Facebook))
                                                 {
                                                     <a href="@contactInfo.Facebook" target="_blank" class="social-link facebook">
-                                                        📘 Facebook
+                                                        Facebook
                                                     </a>
                                                 }
                                                 @if (!string.IsNullOrEmpty(contactInfo.Twitter))
                                                 {
                                                     <a href="@contactInfo.Twitter" target="_blank" class="social-link twitter">
-                                                        🐦 Twitter
+                                                        Twitter
                                                     </a>
                                                 }
                                                 @if (!string.IsNullOrEmpty(contactInfo.Instagram))
                                                 {
                                                     <a href="@contactInfo.Instagram" target="_blank" class="social-link instagram">
-                                                        📷 Instagram
+                                                        Instagram
                                                     </a>
                                                 }
                                                 @if (!string.IsNullOrEmpty(contactInfo.LinkedIn))
                                                 {
                                                     <a href="@contactInfo.LinkedIn" target="_blank" class="social-link linkedin">
-                                                        💼 LinkedIn
+                                                        LinkedIn
                                                     </a>
                                                 }
                                             </div>
@@ -138,21 +130,17 @@ else
                         else
                         {
                             <div class="no-data-card">
-                                <div class="empty-icon">📞</div>
                                 <h3>No Contact Information Available</h3>
                                 <p>University contact information has not been added yet.</p>
                             </div>
                         }
 
-                        <!-- Quick Stats -->
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-icon">🏢</div>
                                 <div class="stat-number">@facilities.Count</div>
                                 <div class="stat-label">Facilities</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon">👨‍🏫</div>
                                 <div class="stat-number">@professorProfiles.Count</div>
                                 <div class="stat-label">Professors</div>
                             </div>
@@ -165,12 +153,11 @@ else
                     </div>
                 }
 
-                <!-- Facilities Tab -->
                 @if (activeTab == "facilities")
                 {
                     <div class="facilities-section">
                         <div class="facilities-header">
-                            <h2>🏢 University Facilities</h2>
+                            <h2>University Facilities</h2>
                             <div class="facility-filters">
                                 <select class="filter-select" @bind="facilityTypeFilter">
                                     <option value="">All Types</option>
@@ -213,7 +200,6 @@ else
                                             else
                                             {
                                                 <div class="no-image-placeholder">
-                                                    <div class="placeholder-icon">🏛️</div>
                                                 </div>
                                             }
                                             <div class="facility-type-badge">
@@ -223,11 +209,9 @@ else
                                         <div class="facility-card-body">
                                             <h3 class="facility-name">@facility.Name</h3>
                                             <div class="facility-location">
-                                                <span class="location-icon">🏢</span>
                                                 <span>@facility.BuildingName</span>
                                             </div>
                                             <div class="facility-address">
-                                                <span class="address-icon">📍</span>
                                                 <span>@facility.Address</span>
                                             </div>
                                             @if (!string.IsNullOrEmpty(facility.Description))
@@ -239,7 +223,6 @@ else
                                             @if (facility.Photos.Count > 0)
                                             {
                                                 <div class="facility-photos-count">
-                                                    <span class="photos-icon">📸</span>
                                                     <span>@facility.Photos.Count photo(s)</span>
                                                 </div>
                                             }
@@ -250,7 +233,6 @@ else
                                 @if (!filteredFacilities.Any())
                                 {
                                     <div class="empty-facilities">
-                                        <div class="empty-icon">🏛️</div>
                                         <h3>No Facilities Found</h3>
                                         <p>@(facilities.Any() ? "Try adjusting your search filters." : "No facilities have been added yet.")</p>
                                     </div>
@@ -260,12 +242,11 @@ else
                     </div>
                 }
 
-                <!-- Professors Tab -->
                 @if (activeTab == "professors")
                 {
                     <div class="professors-section">
                         <div class="professors-header">
-                            <h2>👨‍🏫 University Professors</h2>
+                            <h2>University Professors</h2>
                             <div class="professor-filters">
                                 <select class="filter-select" @bind="departmentFilter">
                                     <option value="">All Departments</option>
@@ -316,7 +297,7 @@ else
                                                 @if (!string.IsNullOrEmpty(profile.Department))
                                                 {
                                                     <div class="professor-department">
-                                                        📚 @profile.Department
+                                                        @profile.Department
                                                     </div>
                                                 }
                                             </div>
@@ -356,28 +337,24 @@ else
                                             @if (!string.IsNullOrEmpty(profile.User?.Email))
                                             {
                                                 <div class="contact-item">
-                                                    <span class="contact-icon">📧</span>
                                                     <span>@profile.User.Email</span>
                                                 </div>
                                             }
                                             @if (!string.IsNullOrEmpty(profile.OfficeLocation))
                                             {
                                                 <div class="contact-item">
-                                                    <span class="contact-icon">📍</span>
                                                     <span>Office: @profile.OfficeLocation</span>
                                                 </div>
                                             }
                                             @if (!string.IsNullOrEmpty(profile.OfficeHours))
                                             {
                                                 <div class="contact-item">
-                                                    <span class="contact-icon">🕐</span>
                                                     <span>Hours: @profile.OfficeHours</span>
                                                 </div>
                                             }
                                             @if (!string.IsNullOrEmpty(profile.PhoneNumber))
                                             {
                                                 <div class="contact-item">
-                                                    <span class="contact-icon">📞</span>
                                                     <span>@profile.PhoneNumber</span>
                                                 </div>
                                             }
@@ -395,18 +372,17 @@ else
                                             @if (!string.IsNullOrEmpty(profile.Website))
                                             {
                                                 <a href="@profile.Website" target="_blank" class="website-link">
-                                                    🌐 Website
+                                                    Website
                                                 </a>
                                             }
                                             @if (!string.IsNullOrEmpty(profile.LinkedIn))
                                             {
                                                 <a href="@profile.LinkedIn" target="_blank" class="website-link">
-                                                    💼 LinkedIn
+                                                    LinkedIn
                                                 </a>
                                             }
                                         </div>
 
-                                        <!-- Rating Section for Students -->
                                         <div class="rating-section">
                                             <div class="your-rating">
                                                 <strong>Your Rating:</strong>
@@ -437,7 +413,6 @@ else
                                 @if (!filteredProfiles.Any())
                                 {
                                     <div class="empty-professors">
-                                        <div class="empty-icon">👨‍🏫</div>
                                         <h3>No Professors Found</h3>
                                         <p>@(professorProfiles.Any() ? "Try adjusting your search filters." : "No professor profiles have been added yet.")</p>
                                     </div>
@@ -458,13 +433,9 @@ else
 
     private string activeTab = "overview";
     private User? currentUser = null;
-
-    // Facilities
     private List<Facility> facilities = new();
     private string facilityTypeFilter = "";
     private string facilitySearchTerm = "";
-
-    // Professors
     private List<ProfessorProfileEntity> professorProfiles = new();
     private List<string> uniqueDepartments = new();
     private List<ProfessorRatingInfo> professorRatings = new();
@@ -472,11 +443,7 @@ else
     private string departmentFilter = "";
     private string professorSearchTerm = "";
     private int ratingFilter = 0;
-
-    // Contact Information
     private ContactInfo? contactInfo = null;
-
-    // Computed Properties
     private double averageProfessorRating =>
         professorRatings.Any() ? professorRatings.Average(r => r.AverageRating) : 0;
 
@@ -539,11 +506,9 @@ else
             isLoading = true;
             StateHasChanged();
 
-            // Load facilities
             facilities = await Context.Facilities.ToListAsync();
             Console.WriteLine($"Loaded {facilities.Count} facilities");
 
-            // Load professor profiles with user data
             professorProfiles = await Context.ProfessorProfiles
                 .Include(p => p.User)
                 .Where(p => p.User != null)
@@ -551,7 +516,6 @@ else
 
             Console.WriteLine($"Loaded {professorProfiles.Count} professor profiles");
 
-            // Get unique departments
             uniqueDepartments = professorProfiles
                 .Where(p => !string.IsNullOrEmpty(p.Department))
                 .Select(p => p.Department)
@@ -560,11 +524,9 @@ else
 
             Console.WriteLine($"Found {uniqueDepartments.Count} unique departments");
 
-            // Load professor ratings
             var allRatings = await Context.ProfessorRatings.ToListAsync();
             Console.WriteLine($"Loaded {allRatings.Count} total ratings");
 
-            // Calculate average ratings for each professor
             professorRatings = professorProfiles.Select(profile =>
             {
                 var ratings = allRatings.Where(r => r.ProfessorId == profile.UserId).ToList();
@@ -578,7 +540,6 @@ else
 
             Console.WriteLine($"Calculated ratings for {professorRatings.Count} professors");
 
-            // Load current student's ratings if available
             if (currentUser != null)
             {
                 studentRatings = await Context.ProfessorRatings
@@ -587,7 +548,6 @@ else
                 Console.WriteLine($"Loaded {studentRatings.Count} ratings from current student");
             }
 
-            // Load contact information
             contactInfo = await Context.ContactInfo.FirstOrDefaultAsync();
             Console.WriteLine($"Contact info loaded: {contactInfo != null}");
 
@@ -645,7 +605,6 @@ else
         {
             Console.WriteLine($"Starting to rate professor {professorId} with rating {rating} by student {currentUser.Id}");
 
-            // Check if rating already exists
             var existingRating = await Context.ProfessorRatings
                 .FirstOrDefaultAsync(r => r.ProfessorId == professorId && r.StudentId == currentUser.Id);
 
@@ -656,7 +615,6 @@ else
                 existingRating.CreatedAt = DateTime.Now;
                 Context.ProfessorRatings.Update(existingRating);
 
-                // Update local list
                 var localRating = studentRatings.FirstOrDefault(r => r.Id == existingRating.Id);
                 if (localRating != null)
                 {
@@ -675,17 +633,14 @@ else
                 };
                 await Context.ProfessorRatings.AddAsync(newRating);
 
-                // Add to local list
                 studentRatings.Add(newRating);
             }
 
             var saveResult = await Context.SaveChangesAsync();
             Console.WriteLine($"Save changes result: {saveResult} rows affected");
 
-            // Update the professor ratings summary
             await UpdateProfessorRatingSummary(professorId);
 
-            // Force UI refresh
             StateHasChanged();
 
             Console.WriteLine($"Successfully rated professor {professorId} with rating {rating}");
@@ -747,14 +702,12 @@ else
                 Context.ProfessorRatings.Remove(ratingToRemove);
                 await Context.SaveChangesAsync();
 
-                // Remove from local list
                 var localRating = studentRatings.FirstOrDefault(r => r.Id == ratingToRemove.Id);
                 if (localRating != null)
                 {
                     studentRatings.Remove(localRating);
                 }
 
-                // Update the professor ratings summary
                 await UpdateProfessorRatingSummary(professorId);
 
                 StateHasChanged();
@@ -770,7 +723,6 @@ else
     private void GoBack() => Navigation.NavigateTo("/studenthome");
     private void RedirectToHome() => Navigation.NavigateTo("/");
 
-    // Helper classes
     public class ProfessorRatingInfo
     {
         public int ProfessorId { get; set; }

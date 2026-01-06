@@ -5,7 +5,7 @@
 @using Thesis.Models
 @using Microsoft.EntityFrameworkCore
 
-<PageTitle>Thesis - Courses</PageTitle>
+<PageTitle>Gnosis - Courses</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -30,14 +30,13 @@ else
     <div class="student-courses">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>📚 Available Courses</h2>
+            <h2>Available Courses</h2>
         </div>
 
         <div class="courses-container">
-            <!-- Available Courses -->
             <div class="courses-section">
                 <div class="section-header">
-                    <h3>🎯 Available Courses</h3>
+                    <h3>Available Courses</h3>
                     <div class="search-controls">
                         <input type="text" @bind="searchTerm" @oninput="OnSearch"
                                class="search-input" placeholder="Search courses..." />
@@ -51,7 +50,7 @@ else
                             <div class="course-header">
                                 <h4 class="course-title">@course.Name</h4>
                                 <div class="course-meta">
-                                    <span class="course-professor">👨‍🏫 @course.Professor?.Name @course.Professor?.LastName</span>
+                                    <span class="course-professor">@course.Professor?.Name @course.Professor?.LastName</span>
                                     @if (course.Professor != null)
                                     {
                                         <div class="professor-rating">
@@ -120,19 +119,19 @@ else
                                 @if (IsEnrolled(course.Id))
                                 {
                                     <button class="btn btn-success btn-sm" disabled>
-                                        ✅ Enrolled
+                                        Enrolled
                                     </button>
                                     <button class="btn btn-outline btn-sm" @onclick="() => ViewCourseDetails(course.Id)">
-                                        📖 View Details
+                                        View Details
                                     </button>
                                 }
                                 else
                                 {
                                     <button class="btn btn-primary btn-sm" @onclick="() => EnrollInCourse(course.Id)">
-                                        📝 Enroll
+                                        Enroll
                                     </button>
                                     <button class="btn btn-outline btn-sm" @onclick="() => ViewCourseDetails(course.Id)">
-                                        👀 Preview
+                                        Preview
                                     </button>
                                 }
                             </div>
@@ -148,10 +147,9 @@ else
                 </div>
             </div>
 
-            <!-- My Enrolled Courses -->
             <div class="enrolled-section">
                 <div class="section-header">
-                    <h3>🎓 My Enrolled Courses</h3>
+                    <h3>My Enrolled Courses</h3>
                 </div>
 
                 @if (enrolledCourses.Any())
@@ -184,10 +182,10 @@ else
                                 </div>
                                 <div class="enrolled-course-actions">
                                     <button class="btn btn-primary btn-sm" @onclick="() => ViewCourseDetails(enrollment.CourseId)">
-                                        📖 Open Course
+                                        Open Course
                                     </button>
                                     <button class="btn btn-outline btn-sm" @onclick="() => UnenrollFromCourse(enrollment.Id)">
-                                        🗑️ Unenroll
+                                        Unenroll
                                     </button>
                                 </div>
                             </div>
@@ -204,7 +202,6 @@ else
         </div>
     </div>
 
-    <!-- Course Details Modal -->
     @if (showCourseModal && selectedCourse != null)
     {
         <div class="modal-overlay" @onclick="CloseCourseModal">
@@ -215,9 +212,8 @@ else
                 </div>
 
                 <div class="modal-body">
-                    <!-- Course Information -->
                     <div class="course-info-section">
-                        <h4>📋 Course Information</h4>
+                        <h4>Course Information</h4>
                         <div class="course-details-grid">
                             <div class="detail-item">
                                 <span class="detail-label">Professor:</span>
@@ -278,9 +274,8 @@ else
                         </div>
                     </div>
 
-                    <!-- Announcements Section -->
                     <div class="announcements-section">
-                        <h4>📢 Course Announcements</h4>
+                        <h4>Course Announcements</h4>
                         @if (courseAnnouncements.Any())
                         {
                             <div class="announcements-list">
@@ -319,7 +314,7 @@ else
                             Close
                         </button>
                         <button class="btn btn-danger" @onclick="() => UnenrollFromCourseModal(selectedCourse.Id)">
-                            🗑️ Unenroll
+                            Unenroll
                         </button>
                     }
                     else
@@ -328,7 +323,7 @@ else
                             Cancel
                         </button>
                         <button class="btn btn-primary" @onclick="() => EnrollFromModal(selectedCourse.Id)">
-                            📝 Enroll Now
+                            Enroll Now
                         </button>
                     }
                 </div>
@@ -345,8 +340,6 @@ else
     private bool isAuthorized = false;
     private bool isLoading = true;
     private bool showCourseModal = false;
-
-    // Data
     private List<Course> allCourses = new();
     private List<Enrollment> enrolledCourses = new();
     private List<Announcement> courseAnnouncements = new();
@@ -354,8 +347,6 @@ else
     private Dictionary<int, double> professorAverageRatings = new();
     private Dictionary<int, int> professorRatingCounts = new();
     private Dictionary<int, int> userRatings = new();
-
-    // UI State
     private string searchTerm = "";
     private Course? selectedCourse = null;
 
@@ -390,14 +381,12 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load all courses with professor information
             allCourses = await Context.Courses
                 .Include(c => c.Professor)
                 .Where(c => c.ProfessorId != 0)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // Load student's enrollments
             enrolledCourses = await Context.Enrollments
                 .Where(e => e.StudentId == currentUser.Id)
                 .Include(e => e.Course)
@@ -405,7 +394,6 @@ else
                 .OrderByDescending(e => e.EnrollmentDate)
                 .ToListAsync();
 
-            // Load professor ratings
             await LoadProfessorRatings(currentUser.Id);
 
             isLoading = false;
@@ -422,10 +410,8 @@ else
     {
         try
         {
-            // Load all professor ratings for calculation
             professorRatings = await Context.ProfessorRatings.ToListAsync();
 
-            // Calculate average ratings and counts for each professor
             var professorIds = allCourses
                 .Where(c => c.ProfessorId != 0)
                 .Select(c => c.ProfessorId)
@@ -446,7 +432,6 @@ else
                 }
             }
 
-            // Load user's ratings
             var userRatingList = await Context.ProfessorRatings
                 .Where(r => r.StudentId == studentId)
                 .ToListAsync();
@@ -483,27 +468,23 @@ else
                 return;
             }
 
-            // Validate rating range
             if (rating < 1 || rating > 5)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Rating must be between 1 and 5.");
                 return;
             }
 
-            // Check if user has already rated this professor
             var existingRating = await Context.ProfessorRatings
                 .FirstOrDefaultAsync(r => r.ProfessorId == professorId && r.StudentId == currentUser.Id);
 
             if (existingRating != null)
             {
-                // Update existing rating
                 existingRating.Rating = rating;
                 existingRating.CreatedAt = DateTime.Now;
                 Context.ProfessorRatings.Update(existingRating);
             }
             else
             {
-                // Create new rating
                 var newRating = new ProfessorRating
                 {
                     ProfessorId = professorId,
@@ -514,10 +495,8 @@ else
                 Context.ProfessorRatings.Add(newRating);
             }
 
-            // Save changes
             await Context.SaveChangesAsync();
 
-            // Reload ratings data
             await LoadProfessorRatings(currentUser.Id);
 
            
@@ -567,7 +546,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Check if already enrolled
             if (IsEnrolled(courseId))
             {
                 await JSRuntime.InvokeVoidAsync("alert", "You are already enrolled in this course.");
@@ -584,7 +562,6 @@ else
             Context.Enrollments.Add(enrollment);
             await Context.SaveChangesAsync();
 
-            // Reload enrollments
             await LoadData();
             
         }
@@ -613,7 +590,6 @@ else
                     Context.Enrollments.Remove(enrollment);
                     await Context.SaveChangesAsync();
 
-                    // Reload enrollments
                     await LoadData();
                     
                 }
@@ -647,7 +623,6 @@ else
         selectedCourse = allCourses.FirstOrDefault(c => c.Id == courseId);
         if (selectedCourse != null)
         {
-            // Load announcements for this course
             courseAnnouncements = await Context.Announcements
                 .Where(a => a.CourseId == courseId)
                 .Include(a => a.Professor)
@@ -709,7 +684,6 @@ else
         box-sizing: border-box;
     }
 
-    /* Loading and Auth States */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -812,7 +786,6 @@ else
         line-height: 1.6;
     }
 
-    /* Main Container */
     .student-courses {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -820,7 +793,6 @@ else
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Header Bar */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -860,7 +832,6 @@ else
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-    /* Courses Container */
     .courses-container {
         display: grid;
         grid-template-columns: 1fr 400px;
@@ -881,7 +852,6 @@ else
 
     }
 
-    /* Section Header */
     .section-header {
         display: flex;
         justify-content: space-between;
@@ -897,7 +867,6 @@ else
             font-weight: 700;
         }
 
-    /* Search Controls */
     .search-controls {
         flex: 1;
         max-width: 400px;
@@ -919,14 +888,12 @@ else
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
 
-    /* Courses Grid */
     .courses-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
         gap: 25px;
     }
 
-    /* Course Cards */
     .course-card {
         background: white;
         border-radius: 20px;
@@ -983,7 +950,6 @@ else
         font-size: 0.95rem;
     }
 
-    /* Professor Rating */
     .professor-rating {
         display: flex;
         flex-direction: column;
@@ -1037,7 +1003,6 @@ else
         font-style: italic;
     }
 
-    /* Course Content */
     .course-content {
         flex: 1;
     }
@@ -1087,7 +1052,6 @@ else
         font-size: 0.85rem;
     }
 
-    /* Course Actions */
     .course-actions {
         display: flex;
         gap: 10px;
@@ -1095,7 +1059,6 @@ else
         border-top: 2px solid #e2e8f0;
     }
 
-    /* Enrolled Section */
     .enrolled-section {
         background: white;
         border-radius: 20px;
@@ -1169,7 +1132,6 @@ else
         margin-top: 15px;
     }
 
-    /* No Content States */
     .no-courses,
     .no-enrollments,
     .no-announcements {
@@ -1179,7 +1141,6 @@ else
         font-size: 1rem;
     }
 
-    /* Modal */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1270,7 +1231,6 @@ else
         background: #f8f9fa;
     }
 
-    /* Course Info Section */
     .course-info-section {
         margin-bottom: 30px;
     }
@@ -1325,7 +1285,6 @@ else
             line-height: 1.6;
         }
 
-    /* Announcements Section */
     .announcements-section {
         margin-top: 30px;
     }
@@ -1412,7 +1371,6 @@ else
         line-height: 1.6;
     }
 
-    /* Buttons */
     .btn {
         padding: 10px 20px;
         border: none;
@@ -1481,7 +1439,6 @@ else
         transform: none !important;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 10px;
     }
@@ -1500,7 +1457,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1200px) {
         .courses-container
 

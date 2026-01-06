@@ -19,7 +19,6 @@
 }
 else if (AuthStateService.IsLoggedIn)
 {
-    <!-- Top Header -->
     <div class="top-header">
         <div class="header-left">
             <h1>Dashboard</h1>
@@ -30,7 +29,6 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal -->
     @if (showLogoutModal)
     {
         <div class="modal-overlay">
@@ -49,33 +47,27 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     }
 
-    <!-- Content Area -->
     <div class="content-area">
-        <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📚</div>
                 <div class="stat-content">
                     <div class="stat-value">@enrolledCoursesCount</div>
                     <div class="stat-label">Enrolled Courses</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📝</div>
                 <div class="stat-content">
                     <div class="stat-value">@exercisesCount</div>
                     <div class="stat-label">Exercises</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">⏰</div>
                 <div class="stat-content">
                     <div class="stat-value">@pendingExercisesCount</div>
                     <div class="stat-label">Pending</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📊</div>
                 <div class="stat-content">
                     <div class="stat-value">@(averageGrade.HasValue? averageGrade.Value.ToString("0.0") : "N/A")</div>
                     <div class="stat-label">Average Grade</div>
@@ -83,7 +75,6 @@ else if (AuthStateService.IsLoggedIn)
             </div>
         </div>
 
-        <!-- Main Content Cards -->
         <div class="content-grid">
             <div class="content-card recent-activity">
                 <div class="card-header">
@@ -122,19 +113,15 @@ else if (AuthStateService.IsLoggedIn)
                 <div class="card-content">
                     <div class="actions-grid">
                         <button class="action-btn" @onclick="NavigateToCourses">
-                            <span class="action-icon">📚</span>
                             <span class="action-text">My Courses</span>
                         </button>
                         <button class="action-btn" @onclick="NavigateToExercises">
-                            <span class="action-icon">📝</span>
                             <span class="action-text">Exercises</span>
                         </button>
                         <button class="action-btn" @onclick="NavigateToMessages">
-                            <span class="action-icon">💬</span>
                             <span class="action-text">Messages</span>
                         </button>
                         <button class="action-btn" @onclick="NavigateToGrades">
-                            <span class="action-icon">📊</span>
                             <span class="action-text">Grades</span>
                         </button>
                     </div>
@@ -142,7 +129,6 @@ else if (AuthStateService.IsLoggedIn)
             </div>
         </div>
 
-        <!-- Upcoming Exercises -->
         <div class="content-card">
             <div class="card-header">
                 <h3>Upcoming Exercises</h3>
@@ -184,7 +170,6 @@ else if (AuthStateService.IsLoggedIn)
             </div>
         </div>
 
-        <!-- Course Calendar -->
         <div class="content-card full-width">
             <div class="card-header">
                 <h3>Course Schedule</h3>
@@ -239,8 +224,8 @@ else
 {
     <div class="home-container">
         <div class="welcome-section">
-            <h1>Welcome to Thesis Application</h1>
-            <p>This is the main page of your thesis application.</p>
+            <h1>Welcome to Gnosis</h1>
+            <p>This is your Gnosis Dashboard.</p>
             <div class="navigation-links mt-4">
                 <a href="/login" class="btn btn-outline-primary me-2">Login</a>
                 <a href="/register" class="btn btn-primary">Register</a>
@@ -252,8 +237,6 @@ else
 @code {
     private bool isLoading = true;
     private bool showLogoutModal = false;
-
-    // Student Data
     private int enrolledCoursesCount = 0;
     private int exercisesCount = 0;
     private int pendingExercisesCount = 0;
@@ -262,8 +245,6 @@ else
     private List<Exercise> upcomingExercises = new();
     private List<Schedule> courseSchedules = new();
     private List<Enrollment> enrollments = new();
-
-    // Calendar
     private DateTime currentWeekStart;
     private DateTime currentWeekEnd;
     private List<DateTime> weekDays = new();
@@ -283,7 +264,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load enrollments and courses using Enrollment model
             enrollments = await Context.Enrollments
                 .Include(e => e.Course)
                 .Where(e => e.StudentId == currentUser.Id)
@@ -291,7 +271,6 @@ else
 
             enrolledCoursesCount = enrollments.Count;
 
-            // Load exercises for enrolled courses using Exercise model
             var courseIds = enrollments.Select(e => e.CourseId).ToList();
             var exercises = await Context.Exercises
                 .Include(e => e.Course)
@@ -306,7 +285,6 @@ else
                 .Take(5)
                 .ToList();
 
-            // Calculate average grade using Grade model with GradeValue property
             var grades = await Context.Grades
                 .Where(g => g.StudentId == currentUser.Id)
                 .ToListAsync();
@@ -316,14 +294,12 @@ else
                 averageGrade = grades.Where(g => g.GradeValue > 0).Average(g => g.GradeValue);
             }
 
-            // Load recent messages
             recentMessages = await Context.Messages
                 .Where(m => m.RecipientId == currentUser.Id || m.SenderId == currentUser.Id)
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(5)
                 .ToListAsync();
 
-            // Load course schedules for enrolled courses only
             courseSchedules = await Context.Schedules
                 .Include(s => s.Course)
                 .Where(s => courseIds.Contains(s.CourseId))
@@ -367,7 +343,6 @@ else
         var time = TimeSpan.Parse(timeSlot);
         var dayOfWeek = day.DayOfWeek.ToString();
 
-        // Convert TimeOnly to TimeSpan for comparison
         var currentTime = new TimeOnly(time.Hours, time.Minutes);
 
         return courseSchedules.FirstOrDefault(s =>
@@ -378,7 +353,6 @@ else
 
     private string GetCourseColor(int courseId)
     {
-        // Generate a consistent color based on course ID
         var colors = new[] { "#4f46e5", "#059669", "#dc2626", "#7c3aed", "#ea580c", "#0891b2", "#65a30d", "#9333ea" };
         return colors[courseId % colors.Length];
     }
@@ -416,7 +390,6 @@ else
         return dateTime.ToString("MMM dd");
     }
 
-    // Navigation methods
     private void NavigateToCourses() => Navigation.NavigateTo("/studentcourses");
     private void NavigateToExercises() => Navigation.NavigateTo("/studentex");
     private void NavigateToMessages() => Navigation.NavigateTo("/studentmessages");
@@ -432,7 +405,6 @@ else
     }
 }
 <style>
-    /* Modern Minimal Dashboard Styles */
 
     :root {
         --primary: #2563eb;
@@ -457,7 +429,6 @@ else
         --radius-sm: 8px;
     }
 
-    /* Loading State */
     .loading-container {
         display: flex;
         flex-direction: column;

@@ -6,7 +6,7 @@
 @using Thesis.Models
 @using Microsoft.AspNetCore.Components.Forms
 
-<PageTitle>Thesis - Professor Profile</PageTitle>
+<PageTitle>Gnosis - Profile</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -31,13 +31,11 @@ else
     <div class="prof-profile">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>👤 Professor Profile</h2>
+            <h2>Professor Profile</h2>
         </div>
 
         <div class="profile-container">
-            <!-- Left Column - Profile Info & Courses -->
             <div class="profile-left">
-                <!-- Profile Picture Section -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Profile Picture</h3>
@@ -59,10 +57,10 @@ else
 
                             <div class="avatar-actions">
                                 <button class="btn btn-outline btn-sm" @onclick="TriggerFileInput">
-                                    📤 Upload New
+                                    Upload New
                                 </button>
                                 <button class="btn btn-outline btn-sm" @onclick="UseDefaultAvatar" style="margin-left: 8px;">
-                                    🗑️ Remove Photo
+                                    Remove Photo
                                 </button>
                             </div>
 
@@ -79,10 +77,9 @@ else
                     </div>
                 </div>
 
-                <!-- Assigned Courses Section -->
                 <div class="profile-card">
                     <div class="card-header">
-                        <h3>📚 Assigned Courses</h3>
+                        <h3>Assigned Courses</h3>
                     </div>
                     <div class="card-content">
                         @if (assignedCourses.Any())
@@ -113,20 +110,18 @@ else
                 </div>
             </div>
 
-            <!-- Right Column - Editable Profile Info & Ratings -->
             <div class="profile-right">
-                <!-- Personal Information -->
                 <div class="profile-card">
                     <div class="card-header">
                         <h3>Personal Information</h3>
                         <button class="btn btn-outline" @onclick="ToggleEditMode">
                             @if (isEditing)
                             {
-                                <span>💾 Save Changes</span>
+                                <span>Save Changes</span>
                             }
                             else
                             {
-                                <span>✏️ Edit Profile</span>
+                                <span>Edit Profile</span>
                             }
                         </button>
                     </div>
@@ -267,7 +262,7 @@ else
                         {
                             <div class="form-actions">
                                 <button class="btn btn-outline" @onclick="CancelEditing">
-                                    ❌ Cancel
+                                    Cancel
                                 </button>
                                 <button class="btn btn-primary" @onclick="SaveProfile" disabled="@isSaving">
                                     @if (isSaving)
@@ -276,7 +271,7 @@ else
                                     }
                                     else
                                     {
-                                        <span>💾 Save Changes</span>
+                                        <span>Save Changes</span>
                                     }
                                 </button>
                             </div>
@@ -284,10 +279,9 @@ else
                     </div>
                 </div>
 
-                <!-- Teacher Rating Section -->
                 <div class="profile-card">
                     <div class="card-header">
-                        <h3>👑 Teacher Rating</h3>
+                        <h3>Teacher Rating</h3>
                     </div>
                     <div class="card-content">
                         <div class="rating-section">
@@ -318,7 +312,6 @@ else
                                 <div class="rating-count">Based on @totalRatings student ratings</div>
                             </div>
 
-                            <!-- Rating Breakdown -->
                             @if (ratingBreakdown.Any(r => r.Count > 0))
                             {
                                 <div class="rating-breakdown">
@@ -353,10 +346,9 @@ else
                     </div>
                 </div>
 
-                <!-- Contact Information -->
                 <div class="profile-card">
                     <div class="card-header">
-                        <h3>📞 Contact Information</h3>
+                        <h3>Contact Information</h3>
                     </div>
                     <div class="card-content">
                         <div class="contact-info">
@@ -426,12 +418,11 @@ else
                     </div>
                 </div>
 
-                <!-- Student Comments Section -->
                 @if (allComments.Any())
                 {
                     <div class="profile-card">
                         <div class="card-header">
-                            <h3>💬 Student Comments (@allComments.Count)</h3>
+                            <h3>Student Comments (@allComments.Count)</h3>
                         </div>
                         <div class="card-content">
                             <div class="comments-list">
@@ -465,23 +456,15 @@ else
     private bool isUploading = false;
     private int uploadProgress = 0;
     private const long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-
-    // Profile data
     private ProfessorProfile profile = new();
     private ProfessorProfile originalProfile = new();
-
-    // Comment data
     private List<StudentComment> recentComments = new();
     private List<StudentComment> allComments = new();
     private int totalComments = 0;
     private int uniqueStudentsCount = 0;
-
-    // Rating data
     private double averageRating = 0.0;
     private int totalRatings = 0;
     private List<RatingBreakdown> ratingBreakdown = new();
-
-    // Course data
     private List<Thesis.Models.Course> assignedCourses = new();
 
     protected override async Task OnInitializedAsync()
@@ -518,7 +501,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load basic user info
             profile = new ProfessorProfile
             {
                 Id = currentUser.Id,
@@ -529,7 +511,6 @@ else
                 Role = currentUser.Role
             };
 
-            // Try to load extended profile from database
             var extendedProfile = await Context.ProfessorProfiles
                 .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
 
@@ -580,7 +561,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load ratings for this professor
             var ratings = await Context.ProfessorRatings
                 .Where(r => r.ProfessorId == currentUser.Id)
                 .ToListAsync();
@@ -588,7 +568,6 @@ else
             totalRatings = ratings.Count;
             averageRating = totalRatings > 0 ? ratings.Average(r => r.Rating) : 0.0;
 
-            // Calculate rating breakdown
             ratingBreakdown = Enumerable.Range(1, 5)
                 .Select(r => new RatingBreakdown
                 {
@@ -603,7 +582,6 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading professor ratings: {ex.Message}");
-            // If ProfessorRatings table doesn't exist yet, initialize with zeros
             totalRatings = 0;
             averageRating = 0.0;
             ratingBreakdown = new List<RatingBreakdown>();
@@ -617,7 +595,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load comments for this professor
             var comments = await Context.Comments
                 .Where(c => c.ProfessorId == currentUser.Id && c.IsApproved)
                 .Include(c => c.Student)
@@ -627,7 +604,6 @@ else
             totalComments = comments.Count;
             uniqueStudentsCount = comments.Select(c => c.StudentId).Distinct().Count();
 
-            // Convert to view model
             recentComments = comments.Take(3).Select(c => new StudentComment
             {
                 Id = c.Id,
@@ -659,7 +635,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Load courses assigned to this professor
             assignedCourses = await Context.Courses
                 .Where(c => c.ProfessorId == currentUser.Id)
                 .OrderBy(c => c.Name)
@@ -721,7 +696,6 @@ else
             isSaving = true;
             StateHasChanged();
 
-            // Validate required fields
             if (string.IsNullOrEmpty(profile.Name) || string.IsNullOrEmpty(profile.Email))
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Name and Email are required fields.");
@@ -731,7 +705,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Update basic user information
             var user = await Context.Users.FindAsync(currentUser.Id);
             if (user != null)
             {
@@ -740,7 +713,6 @@ else
                 user.Email = profile.Email;
             }
 
-            // Update or create extended profile
             var extendedProfile = await Context.ProfessorProfiles
                 .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
 
@@ -777,7 +749,6 @@ else
 
             await Context.SaveChangesAsync();
 
-            // Update the original profile
             originalProfile = new ProfessorProfile
             {
                 Id = profile.Id,
@@ -817,13 +788,11 @@ else
             return "/images/default-avatar.png";
         }
 
-        // If it's already a data URL, return as is
         if (profile.ProfilePicture.StartsWith("data:"))
         {
             return profile.ProfilePicture;
         }
 
-        // If it's a relative path, ensure it starts with /
         if (!profile.ProfilePicture.StartsWith("/") && !profile.ProfilePicture.StartsWith("http"))
         {
             return "/" + profile.ProfilePicture;
@@ -856,14 +825,12 @@ else
                 return;
             }
 
-            // Check file type
             if (!file.ContentType.StartsWith("image/"))
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Please select an image file (JPEG, PNG, etc.).");
                 return;
             }
 
-            // Check file size
             if (file.Size > MAX_FILE_SIZE)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Image size must be less than 2MB.");
@@ -874,31 +841,25 @@ else
             uploadProgress = 0;
             StateHasChanged();
 
-            // Simulate progress
             await SimulateUploadProgress();
 
-            // Read the file and convert to base64
             using var stream = file.OpenReadStream(MAX_FILE_SIZE);
             using var memoryStream = new MemoryStream();
 
             await stream.CopyToAsync(memoryStream);
             var imageBytes = memoryStream.ToArray();
 
-            // Convert to base64 data URL
             var base64String = Convert.ToBase64String(imageBytes);
             var dataUrl = $"data:{file.ContentType};base64,{base64String}";
 
-            // Update profile picture
             profile.ProfilePicture = dataUrl;
 
-            // Auto-save the profile
             if (isEditing)
             {
                 await SaveProfile();
             }
             else
             {
-                // If not in edit mode, save just the profile picture
                 await SaveProfilePictureOnly();
             }
 
@@ -923,7 +884,6 @@ else
             var currentUser = AuthStateService.CurrentUser;
             if (currentUser == null) return;
 
-            // Update profile picture in database
             var extendedProfile = await Context.ProfessorProfiles
                 .FirstOrDefaultAsync(p => p.UserId == currentUser.Id);
 
@@ -953,7 +913,6 @@ else
 
             await Context.SaveChangesAsync();
 
-            // Update original profile
             originalProfile.ProfilePicture = profile.ProfilePicture;
 
             StateHasChanged();
@@ -971,7 +930,6 @@ else
             profile.ProfilePicture = null;
             StateHasChanged();
 
-            // Auto-save if in edit mode
             if (isEditing)
             {
                 await SaveProfile();
@@ -1009,7 +967,6 @@ else
         Navigation.NavigateTo("/");
     }
 
-    // Model Classes
     public class ProfessorProfile
     {
         public int Id { get; set; }
@@ -1051,7 +1008,6 @@ else
         box-sizing: border-box;
     }
 
-    /* Loading and Auth States */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -1154,7 +1110,6 @@ else
         line-height: 1.6;
     }
 
-    /* Main Container */
     .prof-profile {
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -1162,7 +1117,6 @@ else
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    /* Header Bar */
     .header-bar {
         display: flex;
         justify-content: space-between;
@@ -1202,7 +1156,6 @@ else
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-    /* Profile Container */
     .profile-container {
         display: grid;
         grid-template-columns: 400px 1fr;
@@ -1223,7 +1176,6 @@ else
 
     }
 
-    /* Profile Card */
     .profile-card {
         background: white;
         border-radius: 20px;
@@ -1272,14 +1224,13 @@ else
         padding: 30px;
     }
 
-    /* Avatar Section */
     .avatar-section {
-        text-align: center; /* Add this to center everything */
+        text-align: center;
     }
 
     .avatar-container {
         position: relative;
-        display: inline-block; /* Keep this but it will be centered by parent */
+        display: inline-block;
         margin-bottom: 15px;
     }
 
@@ -1321,12 +1272,11 @@ else
 
     .avatar-actions {
         display: flex;
-        justify-content: center; /* Ensure buttons are centered */
+        justify-content: center;
         gap: 10px;
         margin-top: 15px;
     }
 
-    /* Courses List */
     .courses-list {
         display: flex;
         flex-direction: column;
@@ -1383,7 +1333,6 @@ else
         color: #718096;
     }
 
-    /* Profile Form */
     .profile-form {
         display: flex;
         flex-direction: column;
@@ -1469,7 +1418,6 @@ else
         border-top: 2px solid #e2e8f0;
     }
 
-    /* Rating Section */
     .rating-section {
         display: flex;
         flex-direction: column;
@@ -1530,7 +1478,6 @@ else
         font-size: 0.95rem;
     }
 
-    /* Rating Breakdown */
     .rating-breakdown {
         padding: 20px;
         background: #f8f9fa;
@@ -1582,7 +1529,6 @@ else
         color: #4a5568;
     }
 
-    /* Contact Information */
     .contact-info {
         display: flex;
         flex-direction: column;
@@ -1626,7 +1572,6 @@ else
                 text-decoration: underline;
             }
 
-    /* Comments Section */
     .comments-list {
         display: flex;
         flex-direction: column;
@@ -1676,7 +1621,6 @@ else
         margin: 0;
     }
 
-    /* Buttons */
     .btn {
         padding: 12px 24px;
         border: none;
@@ -1728,7 +1672,6 @@ else
         transform: none !important;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 10px;
     }
@@ -1747,7 +1690,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1200px) {
         .profile-container
 

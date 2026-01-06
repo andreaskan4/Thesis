@@ -8,7 +8,7 @@
 @inject IConfiguration Configuration
 @implements IDisposable
 
-<PageTitle>Thesis - Student Settings</PageTitle>
+<PageTitle>Gnosis - Student Settings</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -52,37 +52,33 @@ else
         else
         {
             <div class="settings-container">
-                <!-- Left Navigation -->
                 <div class="settings-nav">
                     <div class="nav-section">
                         <h4>Settings</h4>
                         <button class="nav-btn @(activeSection == "profile" ? "active" : "")" @onclick='() => SetActiveSection("profile")'>
-                            <span class="nav-icon">👤</span>
+                            <span class="nav-icon"></span>
                             <span class="nav-text">Profile</span>
                         </button>
                         <button class="nav-btn @(activeSection == "files" ? "active" : "")" @onclick='() => SetActiveSection("files")'>
-                            <span class="nav-icon">📁</span>
+                            <span class="nav-icon"></span>
                             <span class="nav-text">File Upload</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Right Content -->
                 <div class="settings-content">
-                    <!-- Profile Settings -->
                     @if (activeSection == "profile")
                     {
                         <div class="settings-section">
                             <div class="section-header">
                                 <div class="section-title">
-                                    <span class="section-icon">👤</span>
+                                    <span class="section-icon"></span>
                                     <h3>Profile Settings</h3>
                                 </div>
                                 <p class="section-subtitle">Manage your personal information and preferences</p>
                             </div>
 
                             <div class="settings-grid">
-                                <!-- Profile Picture Upload -->
                                 <div class="setting-item">
                                     <label class="setting-label">
                                         <div class="label-header">
@@ -100,7 +96,7 @@ else
                                                          class="preview-image" />
                                                     <div class="preview-overlay">
                                                         <button type="button" class="preview-change-btn" @onclick="TriggerFileInput">
-                                                            <span class="change-icon">🔄</span>
+                                                            <span class="change-icon"></span>
                                                             Change
                                                         </button>
                                                     </div>
@@ -113,12 +109,12 @@ else
                                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                          class="preview-image" />
                                                     <div class="preview-fallback" style="display: none;">
-                                                        <span class="fallback-icon">📷</span>
+                                                        <span class="fallback-icon"></span>
                                                         <span>Current image not accessible</span>
                                                     </div>
                                                     <div class="preview-overlay">
                                                         <button type="button" class="preview-change-btn" @onclick="TriggerFileInput">
-                                                            <span class="change-icon">🔄</span>
+                                                            <span class="change-icon"></span>
                                                             Change
                                                         </button>
                                                     </div>
@@ -127,20 +123,19 @@ else
                                             else
                                             {
                                                 <div class="profile-placeholder" @onclick="TriggerFileInput">
-                                                    <span class="placeholder-icon">👤</span>
+                                                    <span class="placeholder-icon"></span>
                                                     <span class="placeholder-text">Upload Profile Picture</span>
                                                     <span class="placeholder-subtext">Click to select an image</span>
                                                 </div>
                                             }
                                         </div>
 
-                                        <!-- Hidden file input -->
                                         <InputFile OnChange="OnFileSelected" id="profileUpload"
                                                    accept="image/*" style="display: none;" />
 
                                         <div class="upload-actions">
                                             <button type="button" class="upload-btn" @onclick="TriggerFileInput">
-                                                <span class="upload-icon">📁</span>
+                                                <span class="upload-icon"></span>
                                                 Select Image
                                             </button>
                                             @if (!string.IsNullOrEmpty(profileImageDataUrl))
@@ -162,15 +157,15 @@ else
 
                                         <div class="upload-info">
                                             <div class="info-row">
-                                                <span class="info-icon">📏</span>
+                                                <span class="info-icon"></span>
                                                 <span>Recommended: 500x500 pixels</span>
                                             </div>
                                             <div class="info-row">
-                                                <span class="info-icon">💾</span>
+                                                <span class="info-icon"></span>
                                                 <span>Max size: 5MB</span>
                                             </div>
                                             <div class="info-row">
-                                                <span class="info-icon">🖼️</span>
+                                                <span class="info-icon"></span>
                                                 <span>Formats: JPG, PNG, GIF, WebP</span>
                                             </div>
                                         </div>
@@ -179,7 +174,7 @@ else
                                         {
                                             <div class="file-info">
                                                 <div class="file-name">
-                                                    <span class="file-icon">📄</span>
+                                                    <span class="file-icon"></span>
                                                     <span>@selectedFile.Name</span>
                                                 </div>
                                                 <div class="file-details">
@@ -194,7 +189,6 @@ else
                                     </div>
                                 </div>
 
-                                <!-- Bio -->
                                 <div class="setting-item">
                                     <label class="setting-label">
                                         <div class="label-header">
@@ -209,7 +203,6 @@ else
                                     <small class="setting-description">Share a brief introduction about yourself</small>
                                 </div>
 
-                                <!-- Contact Info -->
                                 <div class="settings-row">
                                     <div class="setting-item">
                                         <label class="setting-label">
@@ -246,7 +239,6 @@ else
                                     </div>
                                 </div>
 
-                                <!-- Address -->
                                 <div class="setting-item">
                                     <label class="setting-label">
                                         <div class="label-header">
@@ -262,13 +254,11 @@ else
                         </div>
                     }
 
-                    <!-- File Upload Settings -->
                     @if (activeSection == "files")
                     {
                         <div class="settings-section">
                             <div class="section-header">
                                 <div class="section-title">
-                                    <span class="section-icon">📁</span>
                                     <h3>File Upload Settings</h3>
                                 </div>
                                 <p class="section-subtitle">Configure file upload preferences for assignments and submissions</p>
@@ -307,12 +297,11 @@ else
 
                                     <div class="file-types-info">
                                         <div class="info-header">
-                                            <span class="info-icon">💡</span>
                                             <h4>Common file types:</h4>
                                         </div>
                                         <div class="file-categories">
                                             <div class="category">
-                                                <span class="category-title">📸 Images</span>
+                                                <span class="category-title">Images</span>
                                                 <div class="file-tags">
                                                     <span class="file-tag">jpg</span>
                                                     <span class="file-tag">jpeg</span>
@@ -322,7 +311,7 @@ else
                                                 </div>
                                             </div>
                                             <div class="category">
-                                                <span class="category-title">📄 Documents</span>
+                                                <span class="category-title">Documents</span>
                                                 <div class="file-tags">
                                                     <span class="file-tag">pdf</span>
                                                     <span class="file-tag">doc</span>
@@ -331,14 +320,14 @@ else
                                                 </div>
                                             </div>
                                             <div class="category">
-                                                <span class="category-title">📊 Presentations</span>
+                                                <span class="category-title">Presentations</span>
                                                 <div class="file-tags">
                                                     <span class="file-tag">ppt</span>
                                                     <span class="file-tag">pptx</span>
                                                 </div>
                                             </div>
                                             <div class="category">
-                                                <span class="category-title">📈 Spreadsheets</span>
+                                                <span class="category-title">Spreadsheets</span>
                                                 <div class="file-tags">
                                                     <span class="file-tag">xls</span>
                                                     <span class="file-tag">xlsx</span>
@@ -352,29 +341,26 @@ else
                         </div>
                     }
 
-                    <!-- Action Buttons -->
                     <div class="settings-actions">
                         <div class="actions-left">
                             <span class="last-saved">
                                 @if (settingsLoaded && studentSettings.Id > 0)
                                 {
-                                    <span class="saved-icon">🕒</span>
+                                    <span class="saved-icon"></span>
                                     <span>Last saved: @studentSettings.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
                                 }
                                 else
                                 {
-                                    <span class="saved-icon">⚠️</span>
+                                    <span class="saved-icon">⚠</span>
                                     <span>Not saved yet</span>
                                 }
                             </span>
                         </div>
                         <div class="actions-right">
                             <button type="button" class="cancel-btn" @onclick="GoBack">
-                                <span class="btn-icon">❌</span>
                                 <span class="btn-text">Cancel</span>
                             </button>
                             <button type="button" class="reset-btn" @onclick="ResetToDefaults">
-                                <span class="btn-icon">🔄</span>
                                 <span class="btn-text">Reset Defaults</span>
                             </button>
                             <button type="button" class="save-btn" @onclick="SaveSettingsWithImage" disabled="@isSaving">
@@ -387,7 +373,6 @@ else
                                 }
                                 else
                                 {
-                                    <span class="btn-icon">💾</span>
                                     <span class="btn-text">Save Settings</span>
                                 }
                             </button>
@@ -405,12 +390,9 @@ else
     private bool isLoading = false;
     private bool isSaving = false;
     private bool loadError = false;
-
     private string activeSection = "profile";
     private Thesis.Models.StudentSettings studentSettings = new();
     private bool settingsLoaded = false;
-
-    // File upload variables
     private IBrowserFile? selectedFile = null;
     private string profileImageDataUrl = string.Empty;
     private string uploadError = string.Empty;
@@ -561,17 +543,15 @@ else
             uploadError = string.Empty;
             selectedFile = e.File;
 
-            // Validate file size (max 5MB)
-            const long maxFileSize = 5 * 1024 * 1024; // 5MB
+            const long maxFileSize = 10 * 1024 * 1024;
             if (selectedFile.Size > maxFileSize)
             {
-                uploadError = $"File size exceeds 5MB limit. Selected file: {(selectedFile.Size / 1024 / 1024):0.00} MB";
+                uploadError = $"File size exceeds 10MB limit. Selected file: {(selectedFile.Size / 1024 / 1024):0.00} MB";
                 selectedFile = null;
                 StateHasChanged();
                 return;
             }
 
-            // Validate file type
             var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
             if (!allowedTypes.Contains(selectedFile.ContentType))
             {
@@ -581,7 +561,6 @@ else
                 return;
             }
 
-            // Read and display the image
             var resizedImage = await selectedFile.RequestImageFileAsync(selectedFile.ContentType, 500, 500);
             var buffer = new byte[resizedImage.Size];
             await resizedImage.OpenReadStream(maxFileSize).ReadAsync(buffer);
@@ -627,7 +606,6 @@ else
 
         try
         {
-            // If a new image was selected, upload it
             if (selectedFile != null && !string.IsNullOrEmpty(profileImageDataUrl))
             {
                 studentSettings.ProfilePicture = profileImageDataUrl;
@@ -763,14 +741,12 @@ else
     }
 }
 <style>
-    /* Base Styles */
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
     }
 
-    /* Loading and Auth States */
     .loading-container {
         display: flex;
         flex-direction: column;

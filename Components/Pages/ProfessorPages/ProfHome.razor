@@ -17,7 +17,6 @@
 }
 else if (AuthStateService.IsLoggedIn)
 {
-    <!-- Top Header -->
     <div class="top-header">
         <div class="header-left">
             <h1>Professor Dashboard</h1>
@@ -28,7 +27,6 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     </div>
 
-    <!-- Logout Confirmation Modal -->
     @if (showLogoutModal)
     {
         <div class="modal-overlay">
@@ -47,7 +45,6 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     }
 
-    <!-- Success/Error Message Toast -->
     @if (!string.IsNullOrEmpty(toastMessage))
     {
         <div class="toast @toastType">
@@ -58,33 +55,27 @@ else if (AuthStateService.IsLoggedIn)
         </div>
     }
 
-    <!-- Content Area -->
     <div class="content-area">
-        <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📈</div>
                 <div class="stat-content">
                     <div class="stat-value">@courses.Count</div>
                     <div class="stat-label">Courses</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">✅</div>
                 <div class="stat-content">
                     <div class="stat-value">@completedCoursesCount</div>
                     <div class="stat-label">Completed</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">⏰</div>
                 <div class="stat-content">
                     <div class="stat-value">@ongoingCoursesCount</div>
                     <div class="stat-label">Ongoing</div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
                 <div class="stat-content">
                     <div class="stat-value">@totalStudents</div>
                     <div class="stat-label">Students</div>
@@ -92,7 +83,6 @@ else if (AuthStateService.IsLoggedIn)
             </div>
         </div>
 
-        <!-- Main Content Cards -->
         <div class="content-grid">
             <div class="content-card recent-activity">
                 <div class="card-header">
@@ -129,19 +119,15 @@ else if (AuthStateService.IsLoggedIn)
                 <div class="card-content">
                     <div class="actions-grid">
                         <button class="action-btn" @onclick="CreateAssignment">
-                            <span class="action-icon">➕</span>
                             <span class="action-text">New Exercise</span>
                         </button>
                         <button class="action-btn" @onclick="ViewCourses">
-                            <span class="action-icon">📚</span>
                             <span class="action-text">View Courses</span>
                         </button>
                         <button class="action-btn" @onclick="NewMessage">
-                            <span class="action-icon">👥</span>
                             <span class="action-text">New Message</span>
                         </button>
                         <button class="action-btn" @onclick="GradeSubmissions">
-                            <span class="action-icon">📝</span>
                             <span class="action-text">Grade Management</span>
                         </button>
                     </div>
@@ -149,7 +135,6 @@ else if (AuthStateService.IsLoggedIn)
             </div>
         </div>
 
-        <!-- Course Overview -->
         <div class="content-card full-width">
             <div class="card-header">
                 <h3>Course Overview</h3>
@@ -234,14 +219,11 @@ else
     private string toastMessage = "";
     private string toastType = "toast-success";
     private int selectedCourseId = 0;
-
-    // Real data from database
     private List<Course> courses = new();
     private List<Enrollment> enrollments = new();
     private List<Grade> grades = new();
     private List<ActivityItem> recentActivities = new();
     private List<GradeDistribution> gradeDistribution = new();
-
     private int completedCoursesCount = 0;
     private int ongoingCoursesCount = 0;
     private int totalStudents = 0;
@@ -269,12 +251,10 @@ else
         var currentUser = AuthStateService.CurrentUser;
         if (currentUser == null) return;
 
-        // Load professor's courses
         courses = await Context.Courses
             .Where(c => c.ProfessorId == currentUser.Id)
             .ToListAsync();
 
-        // Load enrollments for professor's courses
         var courseIds = courses.Select(c => c.Id).ToList();
         if (courseIds.Any())
         {
@@ -283,7 +263,6 @@ else
                 .ToListAsync();
         }
 
-        // Load grades for professor's courses
         if (courseIds.Any())
         {
             grades = await Context.Grades
@@ -295,11 +274,8 @@ else
     private void CalculateStatistics()
     {
         totalStudents = enrollments.Select(e => e.StudentId).Distinct().Count();
-
-        // For simplicity, consider all courses as ongoing
-        // In a real app, you might have a status field or date-based logic
         ongoingCoursesCount = courses.Count;
-        completedCoursesCount = 0; // You could implement completion logic based on dates
+        completedCoursesCount = 0;
     }
 
     private void CalculateGradeDistribution()
@@ -343,7 +319,6 @@ else
         var currentUser = AuthStateService.CurrentUser;
         if (currentUser == null) return;
 
-        // Recent grade entries
         var recentGrades = await Context.Grades
             .Where(g => courses.Select(c => c.Id).Contains(g.CourseId))
             .OrderByDescending(g => g.CreatedAt)
@@ -367,7 +342,6 @@ else
             }
         }
 
-        // Recent enrollments
         var recentEnrollments = await Context.Enrollments
             .Where(e => courses.Select(c => c.Id).Contains(e.CourseId))
             .OrderByDescending(e => e.EnrollmentDate)
@@ -391,7 +365,6 @@ else
             }
         }
 
-        // Recent messages (if any)
         var recentMessages = await Context.Messages
             .Where(m => m.SenderRole == "Student")
             .OrderByDescending(m => m.CreatedAt)
@@ -409,7 +382,6 @@ else
             });
         }
 
-        // Sort by time (most recent first)
         recentActivities = recentActivities
             .OrderByDescending(a => GetActivityDateTime(a.TimeAgo))
             .Take(5)
@@ -498,14 +470,12 @@ else
         }
     }
 
-    // Navigation Methods
     private void CreateAssignment() => Navigation.NavigateTo("/profex");
     private void ViewCourses() => Navigation.NavigateTo("/profcourse");
     private void NewMessage() => Navigation.NavigateTo("/profmess");
     private void GradeSubmissions() => Navigation.NavigateTo("/profgrades");
     private void CreateCourse() => Navigation.NavigateTo("/");
 
-    // Toast Methods
     private void ShowToast(string message, string type = "success")
     {
         toastMessage = message;
@@ -519,7 +489,6 @@ else
         StateHasChanged();
     }
 
-    // Logout Methods
     private void ShowLogoutModal() => showLogoutModal = true;
     private void CloseLogoutModal() => showLogoutModal = false;
 
@@ -529,7 +498,6 @@ else
         Navigation.NavigateTo("/", true);
     }
 
-    // Helper classes for UI
     public class ActivityItem
     {
         public string Icon { get; set; } = "";
@@ -552,7 +520,6 @@ else
         box-sizing: border-box;
     }
 
-    /* Loading Container */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -588,7 +555,6 @@ else
         letter-spacing: 0.5px;
     }
 
-    /* Top Header */
     .top-header {
         background: white;
         padding: 30px 40px;
@@ -643,7 +609,6 @@ else
         border: 2px solid rgba(102, 126, 234, 0.2);
     }
 
-    /* Content Area */
     .content-area {
         display: flex;
         flex-direction: column;
@@ -664,7 +629,6 @@ else
 
     }
 
-    /* Stats Grid */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -744,14 +708,12 @@ else
         font-weight: 600;
     }
 
-    /* Content Grid */
     .content-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 30px;
     }
 
-    /* Content Cards */
     .content-card {
         background: white;
         border-radius: 20px;
@@ -801,7 +763,6 @@ else
         padding: 30px;
     }
 
-    /* Activity List */
     .activity-list {
         display: flex;
         flex-direction: column;
@@ -858,7 +819,6 @@ else
         font-size: 1rem;
     }
 
-    /* Quick Actions */
     .actions-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -901,7 +861,6 @@ else
         text-align: center;
     }
 
-    /* Form Select */
     .form-select {
         padding: 10px 16px;
         border: 2px solid #e2e8f0;
@@ -918,7 +877,6 @@ else
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-    /* Course Analytics */
     .course-analytics {
         display: flex;
         flex-direction: column;
@@ -951,7 +909,6 @@ else
         color: #667eea;
     }
 
-    /* Chart Container */
     .chart-container {
         padding: 25px;
         background: #f8f9fa;
@@ -1003,7 +960,6 @@ else
         color: #4a5568;
     }
 
-    /* Placeholder Content */
     .placeholder-content {
         text-align: center;
         padding: 60px 40px;
@@ -1015,7 +971,6 @@ else
             margin-bottom: 25px;
         }
 
-    /* Toast Messages */
     .toast {
         position: fixed;
         top: 30px;
@@ -1079,7 +1034,6 @@ else
             background: rgba(255, 255, 255, 0.2);
         }
 
-    /* Modal */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -1149,7 +1103,6 @@ else
         gap: 12px;
     }
 
-    /* Buttons */
     .btn {
         padding: 12px 24px;
         border: none;
@@ -1193,7 +1146,6 @@ else
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
         }
 
-    /* Home Container (Logged Out) */
     .home-container {
         min-height: 100vh;
         display: flex;
@@ -1247,7 +1199,6 @@ else
             color: white;
         }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 10px;
     }
@@ -1266,7 +1217,6 @@ else
             background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
         }
 
-    /* Responsive Design */
     @@media (max-width: 1200px) {
         .content-grid
 

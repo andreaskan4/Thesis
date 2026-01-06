@@ -39,10 +39,8 @@ else
             </div>
         </div>
 
-        <!-- Statistics Overview -->
         <div class="stats-overview">
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
                 <div class="stat-content">
                     <h3>@totalUsers</h3>
                     <p>Total Users</p>
@@ -64,7 +62,6 @@ else
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">📚</div>
                 <div class="stat-content">
                     <h3>@totalCourses</h3>
                     <p>Total Courses</p>
@@ -75,7 +72,6 @@ else
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">🎓</div>
                 <div class="stat-content">
                     <h3>@totalGrades</h3>
                     <p>Grades Recorded</p>
@@ -86,7 +82,6 @@ else
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">🏛️</div>
                 <div class="stat-content">
                     <h3>@totalFacilities</h3>
                     <p>Facilities</p>
@@ -99,14 +94,13 @@ else
 
         <div class="reports-section">
             <div class="section-header">
-                <h3>📈 Generate Reports</h3>
+                <h3>Generate Reports</h3>
                 <p>Select report type and customize parameters</p>
             </div>
 
             <div class="reports-grid">
                 <div class="report-card">
                     <div class="report-header">
-                        <div class="report-icon">👥</div>
                         <h4>User Analytics</h4>
                     </div>
                     <div class="report-description">
@@ -149,7 +143,6 @@ else
 
                 <div class="report-card">
                     <div class="report-header">
-                        <div class="report-icon">📚</div>
                         <h4>Academic Performance</h4>
                     </div>
                     <div class="report-description">
@@ -194,7 +187,6 @@ else
 
                 <div class="report-card">
                     <div class="report-header">
-                        <div class="report-icon">⚙️</div>
                         <h4>System Usage</h4>
                     </div>
                     <div class="report-description">
@@ -235,7 +227,6 @@ else
 
                 <div class="report-card">
                     <div class="report-header">
-                        <div class="report-icon">🏛️</div>
                         <h4>Facility Usage</h4>
                     </div>
                     <div class="report-description">
@@ -271,7 +262,7 @@ else
         {
             <div class="recent-reports">
                 <div class="section-header">
-                    <h3>📋 Recent Reports</h3>
+                    <h3>Recent Reports</h3>
                     <button class="btn btn-outline" @onclick="ClearRecentReports">Clear All</button>
                 </div>
                 <div class="reports-list">
@@ -307,10 +298,10 @@ else
                             </div>
                             <div class="report-item-actions">
                                 <button class="btn btn-sm btn-outline" @onclick="() => DownloadReport(report)">
-                                    📥 Download
+                                    Download
                                 </button>
                                 <button class="btn btn-sm btn-outline" @onclick="() => ViewReport(report)">
-                                    👁️ View
+                                    View
                                 </button>
                             </div>
                         </div>
@@ -321,11 +312,10 @@ else
 
         <div class="quick-actions">
             <div class="section-header">
-                <h3>⚡ Quick Actions</h3>
+                <h3>Quick Actions</h3>
             </div>
             <div class="actions-grid">
                 <div class="action-card" @onclick="ExportAllData">
-                    <div class="action-icon">💾</div>
                     <div class="action-content">
                         <h4>Export All Data</h4>
                         <p>Export complete database as CSV files</p>
@@ -334,7 +324,6 @@ else
                 </div>
 
                 <div class="action-card" @onclick="GenerateBackupReport">
-                    <div class="action-icon">📊</div>
                     <div class="action-content">
                         <h4>Backup Report</h4>
                         <p>Generate system backup and storage report</p>
@@ -343,7 +332,6 @@ else
                 </div>
 
                 <div class="action-card" @onclick="ShowCustomReportModal">
-                    <div class="action-icon">🎛️</div>
                     <div class="action-content">
                         <h4>Custom Report</h4>
                         <p>Create custom report with specific parameters</p>

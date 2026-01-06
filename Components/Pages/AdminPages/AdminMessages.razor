@@ -31,10 +31,10 @@ else
     <div class="admin-messages">
         <div class="header-bar">
             <button class="back-btn" @onclick="GoBack">← Back to Dashboard</button>
-            <h2>Message Center</h2>
+            <h2>Messages</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="ShowNewMessageModal">
-                    ✉️ New Message
+                    New Message
                 </button>
                 <div class="message-stats">
                     <span class="stat-item @(activeFilter == "all" ? "active" : "")" @onclick='() => SetFilter("all")'>
@@ -189,11 +189,11 @@ else
                                         <button class="btn btn-outline" @onclick="MarkAsRead" title="Mark as read">
                                             @if (selectedMessage.IsRead)
                                             {
-                                                <span>📭 Mark Unread</span>
+                                                <span>Mark Unread</span>
                                             }
                                             else
                                             {
-                                                <span>📬 Mark Read</span>
+                                                <span>Mark Read</span>
                                             }
                                         </button>
                                     }
@@ -259,7 +259,6 @@ else
                         {
                             <div class="no-message-selected">
                                 <div class="select-message-prompt">
-                                    <div class="prompt-icon">📨</div>
                                     <h3>Select a Message</h3>
                                     <p>Choose a message from the list to view its contents and reply.</p>
                                 </div>
@@ -276,7 +275,7 @@ else
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>✉️ New Message</h3>
+                    <h3>New Message</h3>
                     <button class="close-btn" @onclick="CloseNewMessageModal">×</button>
                 </div>
                 <div class="modal-body">
@@ -358,7 +357,6 @@ else
                                 else
                                 {
                                     <div class="no-users-found">
-                                        <div class="empty-icon">👤</div>
                                         <h4>No Users Found</h4>
                                         <p>Try adjusting your search or filter criteria</p>
                                         <p style="font-size: 12px; margin-top: 10px;">

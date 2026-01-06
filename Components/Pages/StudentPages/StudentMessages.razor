@@ -6,7 +6,7 @@
 @using Thesis.Models
 @using Microsoft.EntityFrameworkCore
 
-<PageTitle>Thesis - Student Messages</PageTitle>
+<PageTitle>Gnosis - Student Messages</PageTitle>
 
 @if (!isAuthChecked)
 {
@@ -34,17 +34,17 @@ else
             <h2>Message Center</h2>
             <div class="header-actions">
                 <button class="btn btn-primary" @onclick="ShowNewMessageModal">
-                    ✉️ New Message
+                    New Message
                 </button>
                 <div class="message-stats">
                     <span class="stat-item @(activeFilter == "all" ? "active" : "")" @onclick='() => SetFilter("all")'>
-                        📬 All: @allMessagesCount
+                        All: @allMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "unread" ? "active" : "")" @onclick='() => SetFilter("unread")'>
-                        📪 Unread: @unreadMessagesCount
+                        Unread: @unreadMessagesCount
                     </span>
                     <span class="stat-item @(activeFilter == "sent" ? "active" : "")" @onclick='() => SetFilter("sent")'>
-                        📤 Sent: @sentMessagesCount
+                        Sent: @sentMessagesCount
                     </span>
                 </div>
             </div>
@@ -58,7 +58,6 @@ else
             else
             {
                 <div class="messages-layout">
-                    <!-- Messages List -->
                     <div class="messages-list">
                         <div class="list-header">
                             <h3>Messages</h3>
@@ -135,7 +134,7 @@ else
                             @if (!filteredMessages.Any())
                             {
                                 <div class="empty-messages">
-                                    <div class="empty-icon">📨</div>
+                                    <div class="empty-icon"></div>
                                     <h3>No Messages Found</h3>
                                     <p>@(string.IsNullOrEmpty(searchTerm) ? "You don't have any messages yet." : "No messages match your search.")</p>
                                 </div>
@@ -143,7 +142,6 @@ else
                         </div>
                     </div>
 
-                    <!-- Message Detail -->
                     <div class="message-detail">
                         @if (selectedMessage != null)
                         {
@@ -185,11 +183,11 @@ else
                                         <button class="btn btn-outline" @onclick="MarkAsRead" title="Mark as read">
                                             @if (selectedMessage.IsRead)
                                             {
-                                                <span>📭 Mark Unread</span>
+                                                <span>Mark Unread</span>
                                             }
                                             else
                                             {
-                                                <span>📬 Mark Read</span>
+                                                <span>Mark Read</span>
                                             }
                                         </button>
                                     }
@@ -197,9 +195,7 @@ else
                             </div>
 
                             <div class="message-conversation">
-                                <!-- Conversation Scroll Area -->
                                 <div class="conversation-scroll-area">
-                                    <!-- Original Message -->
                                     <div class="conversation-item @(IsCurrentUserSender(selectedMessage) ? "sent" : "received")">
                                         <div class="message-content">
                                             <div class="message-text">@selectedMessage.Content</div>
@@ -213,7 +209,6 @@ else
                                         </div>
                                     </div>
 
-                                    <!-- Replies -->
                                     @foreach (var reply in selectedMessage.Replies.OrderBy(r => r.CreatedAt))
                                     {
                                         <div class="conversation-item @(reply.SenderRole == currentUserRole ? "sent" : "received")">
@@ -235,7 +230,6 @@ else
                                     }
                                 </div>
 
-                                <!-- Reply Section - Fixed Position -->
                                 <div class="reply-section">
                                     <form class="reply-form">
                                         <div class="form-group">
@@ -259,7 +253,7 @@ else
                         {
                             <div class="no-message-selected">
                                 <div class="select-message-prompt">
-                                    <div class="prompt-icon">📨</div>
+                                    <div class="prompt-icon"></div>
                                     <h3>Select a Message</h3>
                                     <p>Choose a message from the list to view its contents and reply.</p>
                                 </div>
@@ -271,7 +265,6 @@ else
         </div>
     </div>
 
-    <!-- New Message Modal -->
     @if (showNewMessageModal)
     {
         <div class="modal-overlay">
@@ -283,14 +276,12 @@ else
                 <div class="modal-body">
 
                     <form class="new-message-form">
-                        <!-- Search Bar for Users -->
                         <div class="form-group">
                             <label>Search Users</label>
                             <input type="text" @bind="userSearchTerm" @oninput="OnUserSearch"
                                    placeholder="Search by name or email..." class="form-control search-input" />
                         </div>
 
-                        <!-- User Type Filter -->
                         <div class="form-group">
                             <label>Filter by Role</label>
                             <div class="role-filter-buttons">
@@ -313,7 +304,6 @@ else
                             </div>
                         </div>
 
-                        <!-- User Selection -->
                         <div class="form-group">
                             <label>Select Recipient</label>
                             <div class="users-list">
@@ -366,7 +356,7 @@ else
                                 else
                                 {
                                     <div class="no-users-found">
-                                        <div class="empty-icon">👤</div>
+                                        <div class="empty-icon"></div>
                                         <h4>No Users Found</h4>
                                         <p>Try adjusting your search or filter criteria</p>
                                         <p style="font-size: 12px; margin-top: 10px;">
@@ -380,14 +370,12 @@ else
                             </div>
                         </div>
 
-                        <!-- Message Subject -->
                         <div class="form-group">
                             <label>Subject</label>
                             <input type="text" @bind="newMessage.Subject" class="form-control"
                                    placeholder="Enter message subject..." />
                         </div>
 
-                        <!-- Message Content -->
                         <div class="form-group">
                             <label>Message</label>
                             <textarea @bind="newMessage.Content" class="form-control message-textarea"
@@ -984,7 +972,6 @@ else
     }
 }
 <style>
-    /* Student Messages Page - Blue/Purple Gradient with White Balance */
 
     :root {
         --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
